@@ -1,0 +1,4 @@
+{ "EXTENSION":
+    { "IF NOT EXISTS": "pgcrypto"
+    }
+}

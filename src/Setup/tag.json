@@ -1,0 +1,14 @@
+{ "TABLE":
+    { "tag":
+        { "id":
+            [ "BIGSERIAL"
+            , "PRIMARY KEY"
+            ]
+        , "name":
+            [ "VARCHAR(35)"
+            , "NOT NULL"
+            , "UNIQUE"
+            ]
+        }
+    }
+}

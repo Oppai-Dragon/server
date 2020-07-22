@@ -1,0 +1,33 @@
+{ "TABLE":
+    { "person":
+        { "id":
+            [ "BIGSERIAL"
+            , "PRIMARY KEY"
+            ]
+        , "first_name":
+            [ "VARCHAR(50)"
+            , "NOT NULL"
+            ]
+        , "last_name":
+            [ "VARCHAR(50)"
+            , "NOT NULL"
+            ]
+        , "date_of_creation":
+            [ "DATE"
+            , "NOT NULL"
+            ]
+        , "avatar":
+            [ "VARCHAR(50)"
+            , "DEFAULT 'https://oppai-dragon.site/images/avatar.jpg'"
+            ]
+        , "is_admin":
+            [ "BOOLEAN"
+            , "DEFAULT FALSE"
+            ]
+        , "access_key":
+            [ "UUID"
+            , "DEFAULT gen_random_uuid()"
+            ]
+        }
+    }
+}

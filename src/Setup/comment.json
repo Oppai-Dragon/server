@@ -1,0 +1,29 @@
+{ "TABLE":
+    { "comment":
+        { "id":
+            [ "BIGSERIAL"
+            , "PRIMARY KEY"
+            ]
+        , "news_id":
+            [ "BIGINT"
+            , "NOT NULL"
+            , "REFERENCES news (id)"
+            , "ON DELETE CASCADE"
+            ]
+        , "person_id":
+            [ "BIGINT"
+            , "NOT NULL"
+            , "REFERENCES person (id)"
+            , "ON DELETE CASCADE"
+            ]
+        , "date_of_creation":
+            [ "DATE"
+            , "NOT NULL"
+            ]
+        , "content":
+            [ "TEXT"
+            , "NOT NULL"
+            ]
+        }
+    }
+}

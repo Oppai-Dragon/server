@@ -1,0 +1,45 @@
+{ "TABLE":
+    { "news":
+        { "id":
+            [ "BIGSERIAL"
+            , "PRIMARY KEY"
+            ]
+        , "draft_id":
+            [ "INT"
+            , "NOT NULL"
+            , "UNIQUE"
+            ]
+        , "name":
+            [ "VARCHAR(50)"
+            , "NOT NULL"
+            ]
+        , "date_of_creation":
+            [ "DATE"
+            , "NOT NULL"
+            ]
+        , "author_id":
+            [ "INT"
+            , "NOT NULL"
+            , "REFERENCES author (id)"
+            ]
+        , "category_id":
+            [ "INT"
+            , "NOT NULL"
+            , "REFERENCES category (id)"
+            ]
+        , "tag_ids":
+            [ "INTEGER[]"
+            ]
+        , "content":
+            [ "TEXT"
+            , "NOT NULL"
+            ]
+        , "main_photo":
+            [ "VARCHAR(50)"
+            ]
+        , "optional_photos":
+            [ "VARCHAR(50)[]"
+            ]
+        }
+    }
+}

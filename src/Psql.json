@@ -1,0 +1,7 @@
+{ "userName":"postgres"
+, "password":"0000"
+, "server":"localhost"
+, "port":"5432"
+, "database":"webserv"
+, "page": 10
+}

@@ -1,0 +1,18 @@
+{ "TABLE":
+    { "author":
+        { "id":
+            [ "BIGSERIAL"
+            , "PRIMARY KEY"
+            ]
+        , "person_id":
+            [ "BIGINT"
+            , "NOT NULL"
+            , "REFERENCES person (id)"
+            , "UNIQUE"
+            ]
+        , "description":
+            [ "VARCHAR(150)"
+            ]
+        }
+    }
+}

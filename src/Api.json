@@ -1,0 +1,96 @@
+{ "api":
+    { "create":"create"
+    , "edit":"edit"
+    , "get":"get"
+    , "delete":"delete"
+    , "publish":"create"
+    }
+, "method":
+    { "POST":
+        [ "create"
+        , "edit"
+        , "delete"
+        , "publish"
+        ]
+    , "GET":
+        [ "get"
+        ]
+    }
+, "essences":
+    [ "person"
+    , "author"
+    , "category"
+    , "tag"
+    , "draft"
+    , "news"
+    , "comment"
+    ]
+, "relations":
+    { "person":"access_key"
+    , "author":"person_id"
+    , "category":""
+    , "tag":""
+    , "draft":"author_id"
+    , "news":"draft_id"
+    }
+, "access":
+    { "person":
+        { "create": "Everyone"
+        , "get": "Everyone"
+        , "delete": "Admin"
+        }
+    , "author":
+        { "create": "Admin"
+        , "edit": "Admin"
+        , "get": "Admin"
+        , "delete": "Admin"
+        }
+    , "category":
+        { "create": "Admin"
+        , "edit": "Admin"
+        , "get": "Everyone"
+        , "delete": "Admin"
+        }
+    , "tag":
+        { "create": "Admin"
+        , "edit": "Admin"
+        , "get": "Everyone"
+        , "delete": "Admin"
+        }
+    , "draft":
+        { "create": "Author"
+        , "edit": "Author"
+        , "get": "Author"
+        , "delete": "Author"
+        , "publish": "Author"
+        }
+    , "news":
+        { "get": "Everyone"
+        }
+    , "comment":
+        { "create": "Person"
+        , "edit": "Person"
+        , "get": "Everyone"
+        , "delete": "Person"
+        }
+    }
+, "news":
+    { "filter_created_in":["DATE"]
+    , "filter_created_after":["DATE"]
+    , "filter_created_before":["DATE"]
+    , "filter_author_name":["VARCHAR(50)"]
+    , "filter_tag":["INT"]
+    , "filter_tags_in":["INT[]"]
+    , "filter_tags_all":["INT[]"]
+    , "filter_name":["VARCHAR(20)"]
+    , "filter_content":["VARCHAR(30)"]
+    , "search_content":["VARCHAR(20)"]
+    , "search_author_name":["VARCHAR(50)"]
+    , "search_category_name":["VARCHAR(25)"]
+    , "search_tag_name":["VARCHAR(20)"]
+    , "sort_date_of_creation":["DATE"]
+    , "sort_author_name":["VARCHAR(50)"]
+    , "sort_category_name":["VARCHAR(30)"]
+    , "sort_number_of_photos":["INT"]
+    }
+}
