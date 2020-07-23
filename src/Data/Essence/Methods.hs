@@ -1,10 +1,12 @@
 module Data.Essence.Methods
-    ( getEssenceDB
+    ( addList
+    , deletePair
+    , getEssenceDB
     , getHashMapDesctiprion
     , iterateHashMapDBList
     , setDescription
     , getEssenceDB'
-    , getValueExpect
+    , getMyValue
     , getMaybeDataField
     , parseListOfPairs
     , parseOnlyValues
@@ -13,7 +15,7 @@ module Data.Essence.Methods
     , toList
     , parseBSValue
     , parseFieldValue
-    , fromQuery
+    , toEssenceList
     ) where
 
 import Config
@@ -31,15 +33,27 @@ import           Data.Aeson.Types (parseMaybe)
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Text       as T
 import qualified Data.ByteString as BS
-import           Data.List              (intercalate)
+import qualified Data.List       as L
+
+import           Control.Monad.Trans.Reader
+
+type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
+
+addList :: List -> Essence List -> Essence List
+addList list1 (EssenceList name action list2) =
+    EssenceList name action $ list1 <> list2
+
+deletePair :: String -> Essence List -> Essence List
+deletePair field essenceList@(EssenceList name action list) =
+    EssenceList name action $ L.deleteBy (\(l1,_) (l2,_) -> l1==l2) (field,undefined) list
 
 getEssenceDB :: T.Text -> T.Text -> Config -> Essence DB
 getEssenceDB essence action conf =
     case getEssenceDB' essence action conf of
-        Essence name action hashMapDB ->
-            Essence name action $ getHashMapDesctiprion hashMapDB
+        EssenceDatabase name action hashMapDB ->
+            EssenceDB name action $ getHashMapDesctiprion hashMapDB
         _                             ->
-            Essence "" "" HM.empty
+            EssenceDB "" "" HM.empty
 
 getHashMapDesctiprion :: Database -> DB
 getHashMapDesctiprion = HM.fromList . iterateHashMapDBList . HM.toList
@@ -53,7 +67,7 @@ iterateHashMapDBList ((field,description):rest) =
 setDescription :: List -> Description
 setDescription description =
     let
-        valueExpect = getValueExpect $ fromJust $ lookup "type" description
+        valueExpect = getMyValue $ fromJust $ lookup "type" description
         value       = getMaybeDataField $ lookup "value" description
         relations   = getMaybeDataField $ lookup "relations" description
         constraint  = getMaybeDataField $ lookup "constraint" description
@@ -67,35 +81,36 @@ getEssenceDB' essence action conf =
             return (T.unpack field, resultArr)
     in case parseMaybe (.: essence) conf of
         Just (Object obj) ->
-            Essence essence action $ HM.fromList $ unpackObj obj
-        _                 -> Essence "" "" HM.empty
+            EssenceDatabase essence action $ HM.fromList $ unpackObj obj
+        _                 -> EssenceDatabase "" "" HM.empty
 
 getMaybeDataField :: Read a => Maybe String -> Maybe a
 getMaybeDataField Nothing      = Nothing
 getMaybeDataField (Just value) = Just $ read value
 
-getValueExpect :: String -> ValueExpect
-getValueExpect = read
+getMyValue :: String -> MyValue
+getMyValue = read
 
 parseListOfPairs :: String -> List -> String
-parseListOfPairs "edit" = intercalate "," . map (\(l,r) -> l <> "=" <> r)
-parseListOfPairs "get" = intercalate " AND " . map (\(l,r) -> l <> "=" <> r)
-parseListOfPairs "delete" = intercalate " AND " . map (\(l,r) -> l <> "=" <> r)
+parseListOfPairs "edit" = L.intercalate "," . map (\(l,r) -> l <> "=" <> r)
+parseListOfPairs "get" = L.intercalate " AND " . map (\(l,r) -> l <> "=" <> r)
+parseListOfPairs "delete" = L.intercalate " AND " . map (\(l,r) -> l <> "=" <> r)
+--parseListOfPairs "array" = L.intercalate " OR " . map (\(l,r) -> map (\x -> l <> "=" <>) r)
 
 parseOnlyValues :: List -> String
 parseOnlyValues fieldValue =
-    intercalate ","
+    L.intercalate ","
     $ snd
     $ unzip fieldValue
 
 parseOnlyFields :: List -> String
 parseOnlyFields fieldValue =
-    intercalate ","
+    L.intercalate ","
     $ fst
     $ unzip fieldValue
 
 --parseFildsValues ::
-parseFildsValues func fieldValue = intercalate "," $ func $ unzip fieldValue
+parseFildsValues func fieldValue = L.intercalate "," $ func $ unzip fieldValue
 
 withoutEmpty :: [(String, MyValue)] -> [(String, MyValue)]
 withoutEmpty [] = []
@@ -123,15 +138,12 @@ parseFieldValue (field:fields) bss =
     let bss' = map (\(l,r) -> (bsToStr l,r)) bss
     in parseBSValue field bss' : parseFieldValue fields bss
 
-fromQuery ::
-    T.Text -> T.Text -> [(BS.ByteString, Maybe BS.ByteString)] -> Config -> Essence List
-fromQuery essence action queryBS conf =
-    let
-        essenceFields = map T.unpack $ getEssenceFields essence conf
-        listOfPairs = toList $ parseFieldValue essenceFields queryBS
-    in Essence essence action listOfPairs
+toEssenceList :: Essence DB -> QueryMBS -> ReaderT Config IO (Essence List)
+toEssenceList (EssenceDB name action hashMap) queryMBS = do
+    config <- ask
+    let essenceFields = map T.unpack $ getEssenceFields name config
+    let listOfPairs = toList $ parseFieldValue essenceFields queryMBS
+    let nameStr = T.unpack name
+    let actioStr = T.unpack action
+    pure $ EssenceList nameStr actioStr listOfPairs
 
-toEssenceList :: Essence DB -> WriterT (Essence List) (ReaderT Config IO) ()
-toEssenceList = do
-    essenceDB@(Essence name action hashMap) <- get
-    [case HM.lookup key hashMap of {Just description -> relationsOf description }| key <- HM.keys hashMap]

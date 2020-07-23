@@ -1,10 +1,11 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeFamilies #-}
 module Data.Essence
     ( Essence (..)
     , Database
     , DB
+    , List
     , Description (..)
-    , ValueExpect (..)
     , VALUE (..)
     , Relations (..)
     , Constraint (..)
@@ -12,9 +13,9 @@ module Data.Essence
 
 import Data.MyValue
 
-import Data.Maybe (fromJust)
+import qualified Data.Aeson as A
 import Data.HashMap.Strict (HashMap)
-import Data.Text (Text,unpack)
+import Data.Text (Text,unpack,pack)
 
 type Field    = String
 type Value    = String
@@ -22,46 +23,28 @@ type List     = [(Field,Value)]
 type Database = HashMap String List
 type DB       = HashMap String Description
 
-data Essence a = Essence
-    { name          :: Text
-    , action        :: Text
-    , fields        :: a
-    } deriving (Show, Eq)
+data family Essence a
+data instance Essence [(Field,A.Value)] = EssenceValue String String [(Field,A.Value)]
+data instance Essence Database = EssenceDatabase Text Text Database deriving Show
+data instance Essence DB = EssenceDB
+    { nameOf          :: Text
+    , actionOf        :: Text
+    , fieldsOf        :: DB
+    } deriving Show
+data instance Essence List = EssenceList
+    { name          :: String
+    , action        :: String
+    , list          :: List
+    }
 
 instance Monoid (Essence List) where
-    mempty = Essence "" "" []
+    mempty = EssenceList "" "" []
 instance Semigroup (Essence List) where
-    Essence name1 action listOfPairs1 <> Essence name2 _ listOfPairs =
+    EssenceList name1 action listOfPairs1 <> EssenceList name2 _ listOfPairs2 =
         let
             nameArr = name1 <> "," <> name2
             listArr = listOfPairs1 <> listOfPairs2
-        Essence nameArr action listArr
-instance Show (Essence List) where
-    show (Essence name "create" listOfPairs) =
-        let
-            fields = parseOnlyFields listOfPairs
-            values = parseOnlyValues listOfPairs
-            nameStr = unpack name
-        in create nameStr fields values
-    show (Essence name action@("edit") listOfPairs)   =
-        let
-            oldEssence =
-                "id=" <> (fromJust $ lookup "id" listOfPairs)
-            newEssence = parseListOfPairs action listOfPairs
-            nameStr = unpack name
-        in edit nameStr oldEssence newEssence
-    show (Essence name action@("get") listOfPairs)    =
-        let
-            fieldsAndValue = parseListOfPairs action listOfPairs
-            fields = "*"
-            nameStr = unpack name
-        in get nameStr fields fieldsAndValue
-    show (Essence name "delete" listOfPairs) =
-        let
-            essence =
-                "id=" <> (fromJust $ lookup "id" listOfPairs)
-            nameStr = unpack name
-        in delete nameStr essence
+        in EssenceList nameArr action listArr
 
 data Description = Description
     { valueTypeOf   :: MyValue
@@ -69,22 +52,6 @@ data Description = Description
     , relationsOf   :: Maybe Relations
     , constraintOf  :: Maybe Constraint
     } deriving Show
-
-instance Show ValueExpect where
-    show StrV    = "string"
-    show StrArrV = "array string"
-    show IntV    = "int"
-    show IntArrV = "array int"
-    show BoolV   = "bool"
-instance Read ValueExpect where
-    readsPrec _ input = case input of
-        "int"           -> [(IntV,"")]
-        "array int"     -> [(IntArrV,"")]
-        "string"        -> [(StrV,"")]
-        "array string"  -> [(StrArrV,"")]
-        "bool"          -> [(BoolV,"")]
-        "date"          -> [(StrV,"")]
-        "uuid"          -> [(StrV,"")]
 
 data VALUE = NULL | NOT VALUE
     deriving Show
@@ -94,15 +61,15 @@ instance Read VALUE where
         "not null" -> [(NOT NULL,"")]
 
 data Relations = Relations
-    { table :: String
-    , field :: String
+    { table :: Text
+    , field :: Text
     } deriving Show
 instance Read Relations where
     readsPrec _ input =
         let
             valueArr = words input
-            table = valueArr !! 1
-            field = valueArr !! 3
+            table = pack $ valueArr !! 1
+            field = pack $ valueArr !! 3
         in [(Relations table field,"")]
 
 data Constraint = UNIQUE | PRIMARY | OnAction

@@ -55,49 +55,33 @@ notFound = responseBuilder status404 [] "Not found"
 pathHandler :: Request -> ReaderT Config IO Response
 pathHandler req = do
     config <- ask
-    let action' = head . tail . pathInfo $ req
-    let essence' = head $ pathInfo req
-    let essence =
-            ifElseThen
-            [essence' == "draft",action == "publish"]
-            [essence',essence',"news"]
-    (isCorrect, response) <- isRequestCorrect req config
-    (essenceResp,)  <- essenceResponse req
-    pure $ ifElseThen [isCorrect] [response,essenceResp]
+    (isValidRequest, response) <- isRequestCorrect req config
+    if isValidRequest
+        then essenceResponse req
+        else pure response
 
-getEssence :: Request -> ReaderT Config IO Response
-getEssence req =
-
-
-
-updateActionAndEssence :: T.Text -> T.Text -> IO (T.Text,T.Text)
-updateActionAndEssence essence action = do
+getEssenseList :: Request -> ReaderT Config IO (Essence List)
+getEssenseList req =
+    config <- ask
+    let pathReq = pathInfo req
+    let essence' = head pathReq
+    let action = head $ tail pathReq
     api <- setApi
     let actionDB = getDBAction action api
-    let essenceNew = if action == "publish" then "news" else essence
-    return (actionDB,essenceNew)
+    let essence = if action == "publish" then "news" else essence'
+    let queryBS = queryString req
+    let essenceDB = getEssenceDB essence actionDB config
+    essenceList <- toEssenceList essenceDB queryBS
+    return essenceList
 
-essenceResponse :: Request -> ReaderT Config IO (Response,ParsedRequest)
+essenceResponse :: Request -> ReaderT Config IO Response
 essenceResponse req = do
     config <- ask
-
-    let queryBS = queryString req
-    let essenceDB = getEssenceDB essence action config
-    let parsedReq =
-            (essenceDB,queryBS)
-    obj <-
-        lift $
-        ifElseThen
-        [isEssenceRelations essence config]
-        [return HM.empty,relationsHandler essence queryBS config]
-    case HM.toList obj of
-        [("result", A.Number 0)] ->
-            pure (notFound,(HM.empty,[]))
-        _                      ->
-            case requestMethod req of
-                        "POST"  -> runStateT postEssenceResponse parsedReq
-                        "GET"   -> runStateT getEssenceResponse parsedReq
-                        _       -> pure (notFound,(HM.empty,[]))
+    essenceList <- getEssenseList req
+    case requestMethod req of
+        "POST"  -> execStateT postEssenceResponse essenceList
+        "GET"   -> execStateT getEssenceResponse essenceList
+        _       -> pure notFound
 
 -- | Build a successful JSON response
 jsonResponse :: A.ToJSON a => a -> Response
@@ -106,20 +90,13 @@ jsonResponse = responseBuilder
     [(hContentType, "application/json")]
     . A.fromEncoding . A.toEncoding
 ---------------------------------Set via POST------------------------------------------
-postEssenceResponse :: Handler Response
+postEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Response
 postEssenceResponse = do
-    action <- getAction
-    essence' <- getEssence
-    let essence =
-            ifElseThen
-            [essence' == "draft",action == "publish"]
-            [essence',essence',"news"]
-    queryBS <- getQueryBS
+    Essence name action hashMap <- get
     config <- getConfig
-    let dbAction' = getApiDBMethod action config
     let dbAction =
             ifElseThen
-            [dbAction'=="create",fst $ ifExisteGetPairBoolQueryBS essence queryBS config]
+            [dbAction'=="create",fst $ ifExisteGetPairBoolQueryBS essence queryMBS config]
             [dbAction',dbAction',"edit"]
     let wrapResponse = pure . jsonResponse
     addRelationsFields <-
@@ -141,7 +118,7 @@ postEssenceResponse = do
         _        -> pure notFound
 
 ---------------------------------Set via GET-------------------------------------------
-getEssenceResponse :: Handler Response
+getEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Response
 getEssenceResponse = do
     queryBS <- getQueryBS
     essence <- getEssence

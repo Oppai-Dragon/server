@@ -42,12 +42,30 @@ buildConfigJson :: IO ()
 buildConfigJson = do
     path <- setConfigPath
     api <- setApi
+    psql <- setPsql
+    let pageObj = case HM.lookup "page" psql of
+            Just value -> HM.singleton "page" value
+            Nothing    -> HM.empty
+    let uriObj = HM.singleton "uriDB" . String . T.pack $ getUriDB psql
     objEssenceList <- collectEssenceJson
-    let jsonObj =  HM.unions objEssenceList
+    let jsonObj' =  HM.unions objEssenceList
     let essences = getEssences api
-    let methodFieldsObj = getMethodsFields essences jsonObj
-    let json = Object $ methodFieldsObj `HM.union` jsonObj `HM.union`
+    jsonObj <- updateEssenceFields essences jsonObj'
+    let json = Object $ HM.unions [jsonObj,pageObj,uriObj]
     encodeFile path json
+
+updateEssenceFields :: [T.Text] -> Object -> IO Object
+updateEssenceFields []             jsonObj = jsonObj
+updateEssenceFields (essence:rest) jsonObj = do
+    api <- setApi
+    case HM.lookup essence api of
+        Just (Object essenceObj) ->
+            case HM.lookup essence jsonObj of
+                Just (Object obj) ->
+                    updateEssenceFields rest $
+                    HM.insert essence (Object $ HM.union essenceObj obj) jsonObj
+                _                 -> updateEssenceFields rest jsonObj
+        _                        -> updateEssenceFields rest jsonObj
 
 createTables :: IO ()
 createTables = do

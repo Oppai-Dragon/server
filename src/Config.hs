@@ -15,6 +15,7 @@ module Config
     , getActionsForEssence
     , getAccess
     , getActionsAccess
+    , getUri
     , getUriDB
     , getMethodActions
     , getApiDBMethod
@@ -129,6 +130,12 @@ getActionsAccess essence api =
             map (\(l, String text) -> (l, read $ T.unpack text))
             $ HM.toList obj
         Nothing           -> []
+
+getUri :: Config -> String
+getUri conf =
+    case AT.parseMaybe (.: "uriDB") conf of
+        Just str -> str
+        _        -> ""
 
 getUriDB :: Psql -> String
 getUriDB psql =

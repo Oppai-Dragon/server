@@ -9,10 +9,10 @@ module Data.MyValue
     , myIntegers
     , myStrings
     , chooseMyValue
+    , fromValue
     ) where
 
-import Data.Empty
-
+import Data.Aeson
 import qualified Data.ByteString as BS  (ByteString)
 import Data.ByteString.Char8 (unpack)
 import           Data.Char              (isDigit, toUpper, toLower)
@@ -29,13 +29,14 @@ data MyValue
     deriving (Show, Eq)
 instance Read MyValue where
     readsPrec _ input = case input of
-        "int"           -> MyInteger empty
-        "array int"     -> MyIntegers empty
-        "string"        -> MyString empty
-        "array string"  -> MyStrings empty
-        "date"          -> MyString emty
-        "bool"          -> MyDate empty
-        "uuid"          -> MyString empty
+        "int"           -> [(MyInteger 0,"")]
+        "array int"     -> [(MyIntegers [],"")]
+        "string"        -> [(MyString [],"")]
+        "array string"  -> [(MyStrings [],"")]
+        "date"          -> [(MyString [],"")]
+        "bool"          -> [(MyDate [],"")]
+        "uuid"          -> [(MyString [],"")]
+
 parseStrings :: String -> String
 parseStrings [] = []
 parseStrings (x:xs) =
@@ -60,7 +61,7 @@ myInteger, myString, myBool, myIntegers, myStrings,myDate ::
 myInteger = MyInteger . read . bsToStr
 myString = MyString . bsToStr
 myBool = MyBool . read . parseBool . bsToStr
-myDate = MyDate
+myDate = MyDate . bsToStr
 myIntegers = MyIntegers . read . bsToStr
 myStrings = MyStrings . read . parseStrings . bsToStr
 myNextval = MyNextval . bsToStr
@@ -75,10 +76,13 @@ chooseMyValue valueBS =
                 else myStrings valueBS
         "FALSE"  -> myBool valueBS
         "TRUE"   -> myBool valueBS
-        date@(x1:x2:x3:x4:'-':x5:x6:'-'x7:x8) -> myDate valueBS
-        date@(x1:x2:'-':x3:x4:'-'x5:x6:x7:x8) -> myDate valueBS
+        date@(x1:x2:x3:x4:'-':x5:x6:'-':x7:x8) -> myDate valueBS
+        date@(x1:x2:'-':x3:x4:'-':x5:x6:x7:x8) -> myDate valueBS
         'N':'E':'X':'T':'V':'A':'L':'(':rest -> myNextval valueBS
         x:xs     ->
             if isDigit x
                 then myInteger valueBS
                 else myString valueBS
+
+fromValue :: Value -> MyValue
+fromValue = undefined

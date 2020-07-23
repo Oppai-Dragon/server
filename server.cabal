@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7e58a8802d091afb4b26cfdd2618ee1ae681f6594d6b851dcd106df050b3441f
+-- hash: 73d86ad14ae153b0441e35f3435c0c62dfbbd5c57f26fb94269b9eda39871b48
 
 name:           server
 version:        0.1.0.0
@@ -29,16 +29,31 @@ library
   exposed-modules:
       Config
       Data.Base
+      Data.DataBase.Create
+      Data.DataBase.Delete
+      Data.DataBase.Edit
+      Data.DataBase.Get
       Data.Empty
       Data.Essence
       Data.Essence.Methods
       Data.Essence.Parse
       Data.Essence.RelationsTree
+      Data.FromValue
       Data.Handler
       Data.MyValue
+      Data.Request.Access
+      Data.Request.Access.Methods
+      Data.Request.Access.Methods.Test
+      Data.Request.Control
+      Data.Request.Control.Test
       Data.Request.Handling
+      Data.Request.Method.Methods
+      Data.Request.Method.Methods.Test
+      Data.Request.Params.Methods
       Data.SQL
+      Data.SQL.Actions
       Data.SQL.Clause
+      Data.SQL.ToValue
       Lib
       Setup
       Setup.Test
