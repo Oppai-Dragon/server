@@ -55,7 +55,7 @@ buildConfigJson = do
     encodeFile path json
 
 updateEssenceFields :: [T.Text] -> Object -> IO Object
-updateEssenceFields []             jsonObj = jsonObj
+updateEssenceFields []             jsonObj = return jsonObj
 updateEssenceFields (essence:rest) jsonObj = do
     api <- setApi
     case HM.lookup essence api of

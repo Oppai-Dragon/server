@@ -1,5 +1,7 @@
 module Config
     ( Config
+    , Api
+    , Psql
     , setConfig
     , setPsql
     , setApi
@@ -9,6 +11,7 @@ module Config
     , setPsqlPath
     , setApiPath
     , parsePath
+    , getApiActions
     , getEssenceFields
     , parseFieldsFunc
     , getEssences
@@ -89,6 +92,12 @@ parsePath = return
     . L.group
     )
 
+getApiActions :: Api -> Actions
+getApiActions api =
+    case AT.parseMaybe (.: "api") api of
+        Just (Object obj) -> HM.keys obj
+        Nothing           -> []
+
 getEssenceFields :: Essence -> Config -> Fields
 getEssenceFields essence conf =
     case AT.parseMaybe (.: essence) conf of
@@ -102,7 +111,7 @@ parseFieldsFunc (field:rest) obj =
     obj .: field >>= parseFieldsFunc rest
 
 getEssences :: Config -> [T.Text]
-getEssences obj = case AT.parseMaybe (.: "essences") obj of
+getEssences conf = case AT.parseMaybe (.: "essences") conf of
     Just arr@(Array vector) -> toTextArr arr
     _                       -> []
 

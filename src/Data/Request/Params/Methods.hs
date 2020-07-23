@@ -25,7 +25,7 @@ type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
 type QueryBS = [(BS.ByteString, BS.ByteString)]
 
 isRightParams :: Essence DB -> QueryMBS -> Bool
-isRightParams (Essence name action hashMap) queryMBS =
+isRightParams (EssenceDB name action hashMap) queryMBS =
     let
         queryBS = queryBSWithoutMaybe queryMBS
         iterateBS []     = []
@@ -46,16 +46,17 @@ queryBSWithoutMaybe ((l,maybeR):rest) =
 
 isTypeParamsCorrect :: Essence DB -> [(String,MyValue)] -> [Bool]
 isTypeParamsCorrect _                                     []                     = []
-isTypeParamsCorrect essence@(Essence name action hashMap) ((field,myValue):rest) =
+isTypeParamsCorrect essence@(EssenceDB name action hashMap) ((field,myValue):rest) =
     case HM.lookup field hashMap of
         Just description -> compareValueType (valueTypeOf description) myValue
             : isTypeParamsCorrect essence rest
         Nothing          -> isTypeParamsCorrect essence rest
 
-compareValueType :: ValueExpect -> MyValue -> Bool
-compareValueType IntV (MyInteger _)     = True
-compareValueType StrV (MyString _)      = True
-compareValueType IntArrV (MyIntegers _) = True
-compareValueType StrArrV (MyStrings _)  = True
-compareValueType BoolV (MyBool _)       = True
-compareValueType _     _                = False
+compareValueType :: MyValue -> MyValue -> Bool
+compareValueType (MyInteger _) (MyInteger _)     = True
+compareValueType (MyString _) (MyString _)       = True
+compareValueType (MyIntegers _) (MyIntegers _)   = True
+compareValueType (MyStrings _) (MyStrings _)     = True
+compareValueType (MyBool _) (MyBool _)           = True
+compareValueType (MyDate _) (MyDate _)           = True
+compareValueType _     _                         = False

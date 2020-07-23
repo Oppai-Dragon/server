@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 73d86ad14ae153b0441e35f3435c0c62dfbbd5c57f26fb94269b9eda39871b48
+-- hash: 09d9ac69ff72f28d2de4fe938705e9485e70570dc8f02b573288a22a974a0b9e
 
 name:           server
 version:        0.1.0.0
@@ -50,10 +50,17 @@ library
       Data.Request.Method.Methods
       Data.Request.Method.Methods.Test
       Data.Request.Params.Methods
+      Data.Required
+      Data.Required.Methods
+      Data.Required.Methods.Test
       Data.SQL
       Data.SQL.Actions
       Data.SQL.Clause
       Data.SQL.ToValue
+      DataBase.Create
+      DataBase.Delete
+      DataBase.Edit
+      DataBase.Get
       Lib
       Setup
       Setup.Test

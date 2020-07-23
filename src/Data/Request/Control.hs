@@ -5,9 +5,9 @@ module Data.Request.Control
 import           Config
 import           Data.Base
 import           Data.Essence
-import qualified Data.Essence.Builder                   as DEB
 import           Data.Essence.Methods
-import           Data.MyValue                                   (bsToStr)
+import           Data.Empty
+import           Data.MyValue
 import           Data.Required.Methods                          (getRequiredFields)
 import           Data.Request.Access
 import           Data.Request.Access.Methods                    (isAccess)
@@ -41,11 +41,18 @@ isPathRequestCorrect req api
             [essence,action] = pathInfo req
             essences = getEssences api
             apiActions = getApiActions api
-        in case find essence essence of
-            Just _  -> case find action apiActions of
+        in case findText essence essences of
+            Just _  -> case findText action apiActions of
                 Just _  -> True
                 Nothing -> False
             Nothing -> False
+
+findText :: T.Text -> [T.Text] -> Maybe T.Text
+findText _    []           = Nothing
+findText text (textX:rest) =
+    if text == textX
+        then Just textX
+        else findText text rest
 
 isRequestCorrect :: Request -> Config -> (Bool, Response)
 isRequestCorrect req conf = do
@@ -58,14 +65,16 @@ isRequestCorrect req conf = do
     let access = getAccess essence action api
     let essenceDB'' = getEssenceDB essence action conf
     let essenceDB' = if access > Everyone
-            then DEB.insert "access_key"
-                (Description StrV (Just $ NOT NULL) Nothing Nothing)
-                essenceDB''
+            then EssenceDB (nameOf essenceDB'') (actionOf essenceDB'')
+                $ HM.insert "access_key"
+                (Description (MyString empty) (Just $ NOT NULL) Nothing Nothing)
+                (fieldsOf essenceDB'')
             else essenceDB''
     let essenceDB = if action == "get"
-            then DEB.insert "page"
-                (Description IntV Nothing Nothing Nothing)
-                essenceDB'
+            then EssenceDB (nameOf essenceDB') (actionOf essenceDB')
+                $ HM.insert "page"
+                (Description (MyInteger empty) Nothing Nothing Nothing)
+                (fieldsOf essenceDB')
             else essenceDB'
     let essenceFields = map T.unpack $ getEssenceFields essence conf
     let listOfPairs = parseFieldValue essenceFields queryBS

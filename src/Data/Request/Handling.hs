@@ -61,7 +61,7 @@ pathHandler req = do
         else pure response
 
 getEssenseList :: Request -> ReaderT Config IO (Essence List)
-getEssenseList req =
+getEssenseList req = do
     config <- ask
     let pathReq = pathInfo req
     let essence' = head pathReq
