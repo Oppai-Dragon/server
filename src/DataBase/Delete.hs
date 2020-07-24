@@ -3,34 +3,13 @@ module DataBase.Delete
     ) where
 
 import Config
-    ( Config
-    , getUriDB
-    )
 import Data.Base
-    ( ifElseThen )
 import Data.Handler
 import Data.Essence
-    ( Essence ( Essence )
-    )
-import Data.Essence.Parse
-    ( fromQuery
-    )
-import Data.SQL.Actions
-    ( Action ( deleting )
-    )
+import Data.Essence.Methods
 import Data.SQL.ToValue
-    ( integerToValue
-    )
-import DataBase.Types
-    ( EssenceApi
-    , QueryBS
-    )
-
+import Data.SQL.Actions
 import Data.Aeson
-    ( Value
-    , object
-    , (.=)
-    )
 import Database.HDBC
     ( disconnect
     , run
@@ -41,20 +20,19 @@ import Database.HDBC.PostgreSQL
     , Connection
     )
 
-dbDelete :: Handler Value
+import           Control.Monad.Trans.Reader
+import           Control.Monad.Trans.State.Strict
+import           Control.Monad.Trans.Class          (lift)
+
+dbDelete :: StateT (Essence List) (ReaderT Config IO) Value
 dbDelete = do
-    essence <- getEssence
-    queryBS <- getQueryBS
-    config <- getConfig
-    let thing@(Essence name action listOfPairs) = fromQuery essence queryBS config
-    let deleteQuery = case deleting thing of
-            Just str -> str
-            Nothing  -> ";"
-    let uriDB = getUriDB config
-    conn <- fromIO $ connectPostgreSQL uriDB
-    result <- fromIO $ run conn deleteQuery []
-    fromIO $ commit conn
-    let essenceParsed = ifElseThen [essence=="user"] [essence,"users"]
+    essenceList <- get
+    config <- lift ask
+    let deleteQuery = show essenceList
+    let uriDB = getUri config
+    conn <- lift . lift $ connectPostgreSQL uriDB
+    result <- lift . lift $ run conn deleteQuery []
+    lift . lift $ commit conn
     let value = object [ "result" .= integerToValue result]
-    fromIO $ disconnect conn
+    lift . lift $ disconnect conn
     pure value

@@ -5,15 +5,14 @@ module Data.Request.Handling
 import           Config
 import           Data.Base                                      (ifElseThen)
 import           Data.Handler
-import           Data.MyValue                                   (bsToStr)
+import           Data.MyValue                                   (fromBS)
 import           Data.Request.Control                           (isRequestCorrect)
 import           Data.SQL.Actions
 import           Data.SQL.ToValue                               (sqlValuesArrToValue,integerToValue)
 import qualified Data.Empty                             as E
 import           Data.Essence
 import           Data.Essence.Methods
-import           Data.Essence.Parse                             (fromQuery)
-import           Data.Essence.Relations.Methods
+import           Data.Essence.RelationsTree.Methods
 import           DataBase.Get
 import           DataBase.Edit
 import           DataBase.Create
@@ -55,7 +54,7 @@ notFound = responseBuilder status404 [] "Not found"
 pathHandler :: Request -> ReaderT Config IO Response
 pathHandler req = do
     config <- ask
-    (isValidRequest, response) <- isRequestCorrect req config
+    (isValidRequest, response) <- isRequestCorrect req
     if isValidRequest
         then essenceResponse req
         else pure response
@@ -66,8 +65,8 @@ getEssenseList req = do
     let pathReq = pathInfo req
     let essence' = head pathReq
     let action = head $ tail pathReq
-    api <- setApi
-    let actionDB = getDBAction action api
+    api <- lift setApi
+    let actionDB = getApiDBMethod action api
     let essence = if action == "publish" then "news" else essence'
     let queryBS = queryString req
     let essenceDB = getEssenceDB essence actionDB config
@@ -77,11 +76,14 @@ getEssenseList req = do
 essenceResponse :: Request -> ReaderT Config IO Response
 essenceResponse req = do
     config <- ask
-    essenceList <- getEssenseList req
-    case requestMethod req of
-        "POST"  -> execStateT postEssenceResponse essenceList
-        "GET"   -> execStateT getEssenceResponse essenceList
-        _       -> pure notFound
+    essenceList@(EssenceList name action list) <- getEssenseList req
+    relationObj <- evalStateT (updateRelationsFields $ T.pack name) essenceList
+    if HM.null relationObj
+        then pure notFound
+        else case requestMethod req of
+            "POST"  -> evalStateT postEssenceResponse essenceList
+            "GET"   -> evalStateT getEssenceResponse essenceList
+            _       -> pure notFound
 
 -- | Build a successful JSON response
 jsonResponse :: A.ToJSON a => a -> Response
@@ -92,26 +94,12 @@ jsonResponse = responseBuilder
 ---------------------------------Set via POST------------------------------------------
 postEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Response
 postEssenceResponse = do
-    Essence name action hashMap <- get
-    config <- getConfig
-    let dbAction =
-            ifElseThen
-            [dbAction'=="create",fst $ ifExisteGetPairBoolQueryBS essence queryMBS config]
-            [dbAction',dbAction',"edit"]
+    essenceList <- get
+    config <- lift ask
     let wrapResponse = pure . jsonResponse
-    addRelationsFields <-
-            fromIO
-            $ fmap (<>)
-            $ ifElseThen
-            [isEssenceRelations essence config]
-            [return [],getRelationsFields essence queryBS config]
-    let newQueryBS =
-            (<>)
-            (snd $ ifExisteGetPairBoolQueryBS essence queryBS config)
-            $ addRelationsFields queryBS
-    updateEssence essence
-    updateQueryBS newQueryBS
-    case dbAction of
+    ifExisteAddEssenceId
+    (EssenceList name action list) <- get
+    case action of
         "create" -> dbCreate >>= wrapResponse
         "edit"   -> dbEdit >>= wrapResponse
         "delete" -> dbDelete >>= wrapResponse
@@ -119,16 +107,4 @@ postEssenceResponse = do
 
 ---------------------------------Set via GET-------------------------------------------
 getEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Response
-getEssenceResponse = do
-    queryBS <- getQueryBS
-    essence <- getEssence
-    config <- getConfig
-    addRelationsFields <-
-            fromIO
-            $ fmap (<>)
-            $ ifElseThen
-            [isEssenceRelations essence config]
-            [return [],getRelationsFields essence queryBS config]
-    updateQueryBS $ addRelationsFields queryBS
-    value <- dbGet
-    pure . jsonResponse $ value
+getEssenceResponse = dbGet >>= pure . jsonResponse

@@ -3,34 +3,15 @@ module DataBase.Edit
     ) where
 
 import Config
-    ( Config
-    , getUriDB
-    )
 import Data.Base
     ( ifElseThen )
 import Data.Handler
 import Data.Essence
-    ( Essence ( Essence )
-    )
-import Data.Essence.Parse
-    ( fromQuery
-    )
+import Data.Essence.Methods
 import Data.SQL.Actions
-    ( Action ( editing )
-    )
 import Data.SQL.ToValue
-    ( integerToValue
-    )
-import DataBase.Types
-    ( EssenceApi
-    , QueryBS
-    )
 
 import Data.Aeson
-    ( Value
-    , object
-    , (.=)
-    )
 import Database.HDBC
     ( disconnect
     , quickQuery'
@@ -42,25 +23,19 @@ import Database.HDBC.PostgreSQL
     , Connection
     )
 
-dbEdit :: Handler Value
+import           Control.Monad.Trans.Reader
+import           Control.Monad.Trans.State.Strict
+import           Control.Monad.Trans.Class          (lift)
+
+dbEdit :: StateT (Essence List) (ReaderT Config IO) Value
 dbEdit = do
-    essence <- getEssence
-    queryBS <- getQueryBS
-    config <- getConfig
-    let thing@(Essence name action listOfPairs) = fromQuery essence queryBS config
-    let getId = case lookup "id" listOfPairs of
-            Just id -> id
-            Nothing -> "0"
-    let oldThing = Essence name action [("id", getId)]
-    let newThing = thing
-    let editQuery = case editing oldThing newThing of
-            Just str -> str
-            Nothing  -> ";"
-    let uriDB = getUriDB config
-    conn <- fromIO $ connectPostgreSQL uriDB
-    result <- fromIO $ run conn editQuery []
-    fromIO $ commit conn
-    let essenceParsed = ifElseThen [essence=="user"] [essence,"users"]
+    essenceList <- get
+    config <- lift ask
+    let editQuery = show essenceList
+    let uriDB = getUri config
+    conn <- lift . lift $ connectPostgreSQL uriDB
+    result <- lift . lift $ run conn editQuery []
+    lift . lift $ commit conn
     let value = object [ "result" .= integerToValue result]
-    fromIO $ disconnect conn
+    lift . lift $ disconnect conn
     pure value

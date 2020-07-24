@@ -7,7 +7,10 @@ module Data.Base
     , deletePair
     , insertPair
     , mapToListOfPair
+    , findText
     ) where
+
+import qualified Data.Text as T
 
 ifElseThen :: [Bool] -> [a] -> a
 ifElseThen []           [act]      = act
@@ -56,3 +59,10 @@ mapToListOfPair :: (a -> b) -> [(a,a)] -> [(b,b)]
 mapToListOfPair _    []           = []
 mapToListOfPair func ((l,r):rest) =
     (func l, func r) : mapToListOfPair func rest
+
+findText :: T.Text -> [T.Text] -> Maybe T.Text
+findText _    []           = Nothing
+findText text (textX:rest) =
+    if text == textX
+        then Just textX
+        else findText text rest

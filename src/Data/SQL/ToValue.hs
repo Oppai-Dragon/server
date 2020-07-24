@@ -8,7 +8,6 @@ module Data.SQL.ToValue
     , sqlValuesToJsonValue
     , sqlValuesArrToObj
     , sqlValuesArrToValue
-    , strToValue
     ) where
 
 import           Config

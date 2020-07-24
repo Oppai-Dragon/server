@@ -1,27 +1,23 @@
 module Data.Request.Method.Methods
-    ( isFindAction
-    , isMethodCorrect
+    ( isMethodCorrect
     ) where
 
 import Config
+import Data.Base
 
+import qualified Data.ByteString.Char8 as BSC8
 import Data.ByteString (ByteString)
-import Data.Text (Text)
+import qualified Data.Text as T
 
-type Action = Text
+type Action = T.Text
 type Actions = [Action]
 type Method = ByteString
 
-isFindAction :: Action -> Actions -> Bool
-isFindAction _      []                = False
-isFindAction action (actionX:actions) =
-    if action == actionX
-        then True
-        else isFindAction action actions
-
-isMethodCorrect :: Method -> Action -> Config -> Bool
-isMethodCorrect method action conf =
-    let methodActions = getMethodActions conf
-    in case lookup method methodActions of
-        Just actions -> isFindAction action actions
-        Nothing      -> False
+isMethodCorrect :: Method -> Action -> Api -> Bool
+isMethodCorrect method action api =
+    let
+        methodT = T.pack $ BSC8.unpack method
+        actions = getMethodActions methodT api
+    in case findText action actions of
+        Just _  -> True
+        Nothing -> False

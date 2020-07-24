@@ -1,20 +1,5 @@
 module Data.Essence.RelationsTree.Methods
-    ( isEssenceRelations
-    , getRelationsFields
-    , beforeUnderscore
-    , parseObjEssence
-    , afterUnderscore
-    , findEssence
-    , getQueryBSFromObj
-    , checkQueryBS
-    , unpackLeafs
-    , iterateRelations
-    , getNextField
-    , relationsHandler
-    , isRightRelations
-    , getIdFromQueryBS
-    , ifExisteGetPairBoolQueryBS
-    ) where
+     where
 
 import Prelude hiding (null, tail, takeWhile, dropWhile)
 
@@ -22,22 +7,22 @@ import Config
 import Data.Base
 import Data.SQL.Actions
 import Data.Essence
-import Data.Essence.Relations
-import Data.Essence.Parse
+import Data.Essence.RelationsTree
+import Data.Essence.Methods
 import Data.Empty
 import Data.MyValue
 import Data.FromValue (toQueryBS, toBS)
-import DataBase.Get (dbGetOne)
+import DataBase.Get
 
 import Database.HDBC
 import Database.HDBC.PostgreSQL
 
 import Data.Aeson
 import Data.Aeson.Types (parseMaybe, Parser)
-import Data.ByteString (ByteString)
-import Data.Text hiding (null, head, singleton)
+import qualified Data.ByteString        as BS
+import qualified Data.Text              as T
 import Data.Text.Encoding (encodeUtf8, decodeUtf8)
-import Data.HashMap.Strict hiding (lookup)
+import qualified Data.HashMap.Strict    as HM
 
 import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State.Strict
@@ -45,46 +30,46 @@ import           Control.Monad.Trans.Class          (lift)
 
 import System.IO.Unsafe (unsafePerformIO)
 
-type QueryBS = [(ByteString, Maybe ByteString)]
-type Name   = Text
-type Field  = Text
+type QueryBS = [(BS.ByteString, Maybe BS.ByteString)]
+type Name   = T.Text
+type Field  = T.Text
 type Fields = [Field]
 
-isEssenceRelations :: Essence -> Config -> Bool
+isEssenceRelations :: Name -> Config -> Bool
 isEssenceRelations essence conf =
-    let relations = getEssenceRelations essence conf
+    let relations = getRelationsTree essence conf
     in case relations of
         Root r (Trunk t rlt)               -> True
         Root r (Branch b (Leaf l : leafs)) -> True
         _                                  -> False
 
-getRelationsFields :: Name -> StateT (Essence List) (ReaderT Config IO) ()
-getRelationsFields name = do
+updateRelationsFields :: Name -> StateT (Essence List) (ReaderT Config IO) Object
+updateRelationsFields name = do
     api <- lift . lift $ setApi
     essenceList <- get
     let relations = getRelationsTree name api
     let listOfPair field obj = case HM.lookup field obj of
-            Just value -> [(T.unpack tableField,value)]
+            Just value -> [(T.unpack field,value)]
             Nothing    -> []
     case relations of
         Root rEssence trunk@(Trunk tEssence rlt)            ->
             do
-                obj1 <- getRelationsFields (beforeUnderscore rEssence)
+                obj1 <- updateRelationsFields (beforeUnderscore rEssence)
                 (Object obj2) <- lift $ findEssence tEssence (listOfPair rEssence obj1)
                 iterateRelations trunk obj2
         Root rEssence branch@(Branch bEssence leafs)        ->
             do
-                obj1 <- getRelationsFields (beforeUnderscore rEssence) queryBS conf
-                iterateRelations (Trunk rEssence branch) queryBS conf obj1
+                obj1 <- updateRelationsFields (beforeUnderscore rEssence)
+                iterateRelations (Trunk rEssence branch) obj1
         Root rEssence (Leaf key)                            ->
-            case lookup (encodeUtf8 key) queryBS of
-                Just (Just accessKey) ->
-                    dbGetOne rEssence [(encodeUtf8 key, Just accessKey)] conf
-                    >>= \(Object obj) -> return obj
-                _              -> put essenceList
-        _                                                   -> put essenceList
+            case lookup (T.unpack key) (list essenceList) of
+                (Just accessKey) -> do
+                    (Object obj) <- lift $ dbGetOne (EssenceValue (T.unpack rEssence) "get" [(T.unpack key, strToValue accessKey)])
+                    return obj
+                _              -> return HM.empty
+        _                                                   -> return HM.empty
 
-iterateRelations :: Relations Field -> Object -> StateT (Essence List) (ReaderT Config IO) ()
+iterateRelations :: RelationsTree Field -> Object -> StateT (Essence List) (ReaderT Config IO) Object
 iterateRelations (Trunk t (Branch b leafs)) objOld = do
     essenceList@(EssenceList name action list) <- get
     let listOfPair = checkList t list
@@ -92,31 +77,35 @@ iterateRelations (Trunk t (Branch b leafs)) objOld = do
         [(field, value)] ->
             case b of
                 "news" -> do
-                    (Object objNew) <- lift $ dbGetOne (EssenceValue (beforeUnderscore t) action listOfPair)
+                    (Object objNew) <- lift $ dbGetOne (EssenceValue (T.unpack $ beforeUnderscore t) "get" listOfPair)
                     if isRightRelations objOld objNew t b
-                        then put $ unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objNew
-                        else put essenceList
-                _      ->
-                    dbGetOne b [(field, Just value)] conf
-                    >>= \(Object objNew) ->
+                        then put (addList
+                            (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objNew)
+                            essenceList) >> return objNew
+                        else return HM.empty
+                _      -> do
+                    (Object objNew) <- lift $ dbGetOne (EssenceValue (T.unpack b) "get" [(field,value)])
                     if isRightRelations objOld objNew t b
-                        then put $ unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld
-                        else put essenceList
+                        then put (addList
+                            (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld)
+                            essenceList) >> return objNew
+                        else return HM.empty
         []                   ->
-            put $ unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld
-iterateRelations (Trunk t1 trunk@(Trunk t2 rlt)) queryBS conf objOld =
-    findEssence t2 (getQueryBSFromObj t1 objOld) conf
-    >>= \(Object objNew) -> iterateRelations trunk queryBS conf objNew
+            put (addList (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld) essenceList)
+            >> return HM.empty
+iterateRelations (Trunk t1 trunk@(Trunk t2 rlt)) objOld = do
+    (Object objNew) <- lift $ findEssence t2 (getListOfPairFromObj t1 objOld)
+    iterateRelations trunk objNew
 
-findEssence :: Name -> [(String,Value)] -> Config -> ReaderT Config IO Value
-findEssence name listOfPair conf =
+findEssence :: Name -> [(String,Value)] -> ReaderT Config IO Value
+findEssence name listOfPair =
     case listOfPair of
         [(field, value)] ->
-            dbGetOne (EssenceValue (beforeUnderscore essence) "get" listOfPair)
+            dbGetOne (EssenceValue (T.unpack $ beforeUnderscore name) "get" listOfPair)
         []                    ->
-            return . Object . singleton "result" $ Number 0
+            return . Object . HM.singleton "result" $ Number 0
 
-unpackLeafs :: Name -> [Relations Field] -> Object -> [(String, String)]
+unpackLeafs :: Name -> [RelationsTree Field] -> Object -> [(String, String)]
 unpackLeafs _       []            _   = []
 unpackLeafs root (Leaf field :rest) obj =
     let
@@ -127,28 +116,28 @@ unpackLeafs root (Leaf field :rest) obj =
         Nothing    -> unpackLeafs root rest obj
 
 beforeUnderscore :: Name -> Name
-beforeUnderscore = takeWhile (/='_')
+beforeUnderscore = T.takeWhile (/='_')
 
 parseObjEssence :: Name -> Name
-parseObjEssence root = ifElseThen [root=="user"] [root,"users"] <> "1"
+parseObjEssence name = name <> "1"
 
 afterUnderscore :: Name -> Field
-afterUnderscore = tail . dropWhile (/='_')
+afterUnderscore = T.tail . T.dropWhile (/='_')
 
-getQueryBSFromObj :: Field -> Object -> QueryBS
-getQueryBSFromObj field obj =
+getListOfPairFromObj :: Field -> Object -> [(String,Value)]
+getListOfPairFromObj field obj =
     let
         key1 = parseObjEssence $ beforeUnderscore field
         key2 = afterUnderscore field
         parseFunc = parseFieldsFunc [key1,key2]
     in case parseMaybe parseFunc obj of
-        Just value -> [(encodeUtf8 field,Just $ toBS value)]
+        Just value -> [(T.unpack field, value)]
         Nothing    -> []
 
 checkList :: Field -> [(String,String)] -> [(String,Value)]
 checkList field listOfPair =
     let
-        findKey = T.unpack . afterUnderscore . T.pack
+        findKey = T.unpack . afterUnderscore
         key = findKey field
     in case lookup key listOfPair of
         (Just value) -> [(key, strToValue value)]
@@ -160,7 +149,7 @@ strToValue = toValue . fromString
 valueToStr :: Value -> String
 valueToStr = parseEmpty . fromValue
 
-getNextField :: Relations a -> a
+getNextField :: RelationsTree a -> a
 getNextField relations =
     case relations of
         Root r (Branch b leafs)  -> b
@@ -174,7 +163,7 @@ isRightRelations rootObj branchObj rootEssence "news"        =
     let
         k1 = beforeUnderscore rootEssence
         k2 = afterUnderscore rootEssence
-        parseFunc n = parseFieldsFunc [k1 <> (pack . show) n, k2]
+        parseFunc n = parseFieldsFunc [k1 <> (T.pack . show) n, k2]
 
         iterateObjs obj = iterateObjs' obj 1
         iterateObjs' obj n =
@@ -203,33 +192,27 @@ isRightRelations rootObj branchObj rootEssence branchEssence =
         branchValue = getValue bKey1 bKey2 branchObj
     in (==) rootValue branchValue
 
-getIdFromQueryBS :: Name -> Object -> QueryBS
-getIdFromQueryBS name obj =
-    let parseFieldBS = encodeUtf8 . afterUnderscore . decodeUtf8
-    in case getQueryBSFromObj (essence <> "_id") obj of
-        [(fieldBS, Just valueBS)] -> [(parseFieldBS fieldBS, Just valueBS)]
-        _                         -> []
+getIdPairFromObj :: Name -> Object -> [(String,String)]
+getIdPairFromObj name obj =
+    case getListOfPairFromObj (name <> "_id") obj of
+        [(field,value)] -> [(field, valueToStr value)]
+        other           -> []
 
-ifExisteGetPairBoolQueryBS :: Name -> QueryBS -> Config -> (Bool,QueryBS)
-ifExisteGetPairBoolQueryBS _       []      _    = (False, [])
-ifExisteGetPairBoolQueryBS name queryBS conf =
-    let
-        parseFunc = parseFieldsFunc
-            ["psql","relations",essence,"find"]
-        getRoot = head . keys
-        getFindField obj field = getRoot obj <> "_" <> field
-    in case parseMaybe parseFunc conf of
+ifExisteAddEssenceId :: StateT (Essence List) (ReaderT Config IO) ()
+ifExisteAddEssenceId = do
+    api <- lift . lift $ setApi
+    essenceList@(EssenceList name action list) <- get
+    let essence = T.pack name
+    let parseFunc = parseFieldsFunc ["relations",essence]
+    let getRoot = T.unpack . head . HM.keys
+    let changeAction = if action == "create" then "edit" else action
+    case parseMaybe parseFunc api of
         Just (Object obj1) ->
-            case parseMaybe (.: getRoot obj1) obj1 of
-                Just (String text) ->
-                    case lookup (encodeUtf8 text) queryBS of
-                        Just (Just valueBS) ->
-                            (\(Object obj2) ->
-                            (not $ null obj2,getIdFromQueryBS name obj2)
-                            ) $ unsafePerformIO
-                            (dbGetOne essence
-                            [(encodeUtf8 $ getFindField obj1 text, Just valueBS)]
-                            conf)
-                        _                   -> (False, [])
-                _            -> (False, [])
-        _          -> (False, [])
+            case lookup (getRoot obj1) list of
+                Just value -> do
+                    (Object obj2) <- lift $ dbGetOne (EssenceValue name "get" [(getRoot obj1,strToValue value)])
+                    if HM.null obj2
+                        then return ()
+                        else put $ addList (getIdPairFromObj (T.pack name) obj2) (EssenceList name changeAction list)
+                _          -> return ()
+        _                  -> return ()

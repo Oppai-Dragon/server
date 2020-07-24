@@ -75,7 +75,7 @@ setApi = set setApiPath
 
 setPath :: FilePath -> IO FilePath
 setPath path =
-    fmap (flip (<>) $ "\\src\\" <> path)
+    fmap (flip (<>) $ "\\server\\src\\" <> path)
     $ parsePath <*> getCurrentDirectory
 setConfigPath,setPsqlPath,setApiPath :: IO FilePath
 setConfigPath = setPath "Config.json"
@@ -85,7 +85,7 @@ setApiPath  = setPath "Api.json"
 parsePath :: IO (FilePath -> FilePath)
 parsePath = return
     ( L.intercalate "\\"
-    . takeWhile (/="src")
+    . takeWhile (/="server")
     . L.words
     . L.intercalate ""
     . map (\x -> if x == "\\" then " " else x)
@@ -165,28 +165,16 @@ getUriDB psql =
     <> ":" <> port psql
     <> "/" <> database psql
 
-getMethodActions :: Config -> [(Method, Actions)]
-getMethodActions conf =
-    let
-        parseFunc = parseFieldsFunc
-            ["request","method"]
-
-        iterateMethods []               _   = []
-        iterateMethods (method:methods) obj =
-            case HM.lookup method obj of
-                Just arr@(Array vector) ->
-                    (TE.encodeUtf8 method, toTextArr arr) :
-                    iterateMethods methods obj
-                Nothing             ->
-                    iterateMethods methods obj
-    in case AT.parseMaybe parseFunc conf of
-        Just (Object obj) -> iterateMethods (HM.keys obj) obj
-        Nothing           -> []
-
-getApiDBMethod :: Action -> Config -> Action
-getApiDBMethod action conf =
+getMethodActions :: Field -> Api -> Actions
+getMethodActions method api =
+    let parseFunc obj = obj .: "method" >>= (.: method)
+    in case AT.parseMaybe parseFunc api of
+        Just actions -> actions
+        Nothing      -> []
+getApiDBMethod :: Action -> Api -> Action
+getApiDBMethod action api =
     let parseFunc = parseFieldsFunc ["api",action]
-    in case AT.parseMaybe parseFunc conf of
+    in case AT.parseMaybe parseFunc api of
         Just (String text) -> text
         _                  -> ""
 

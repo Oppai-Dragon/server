@@ -30,10 +30,11 @@ import Data.Maybe (fromJust)
 
 import           Data.Aeson
 import           Data.Aeson.Types (parseMaybe)
-import qualified Data.HashMap.Strict as HM
-import qualified Data.Text       as T
-import qualified Data.ByteString as BS
-import qualified Data.List       as L
+import qualified Data.HashMap.Strict   as HM
+import qualified Data.Text             as T
+import qualified Data.ByteString       as BS
+import qualified Data.ByteString.Char8 as BSC8
+import qualified Data.List             as L
 
 import           Control.Monad.Trans.Reader
 
@@ -135,7 +136,7 @@ parseFieldValue ::
     -> [(String, MyValue)]
 parseFieldValue []             _   = []
 parseFieldValue (field:fields) bss =
-    let bss' = map (\(l,r) -> (bsToStr l,r)) bss
+    let bss' = map (\(l,r) -> (BSC8.unpack l,r)) bss
     in parseBSValue field bss' : parseFieldValue fields bss
 
 toEssenceList :: Essence DB -> QueryMBS -> ReaderT Config IO (Essence List)

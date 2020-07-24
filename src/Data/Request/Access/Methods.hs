@@ -42,10 +42,10 @@ findAction action ((actions, access):rest) =
         Just var -> Just access
         Nothing  -> findAction action rest
 
-iterateActions :: Name -> Action -> [Access] -> Config -> Bool
-iterateActions essence action accessArr conf =
+iterateActions :: Name -> Action -> [Access] -> Api -> Bool
+iterateActions essence action accessArr api =
     let
-        listOfActionsAccess = getActionsAccess essence conf
+        listOfActionsAccess = getActionsAccess essence api
         actionsAccessArr = groupActionsAccess listOfActionsAccess
     in case findAction action actionsAccessArr of
         Just access -> isFindAccess access accessArr
@@ -58,9 +58,9 @@ isFindEssence essence (essenceX:rest) =
         then True
         else isFindEssence essence rest
 
-isAccess :: Name -> Action -> [Access] -> Config -> Bool
-isAccess essence action accessArr conf =
-    let essenceArr = getEssences conf
+isAccess :: Name -> Action -> [Access] -> Api -> Bool
+isAccess essence action accessArr api =
+    let essenceArr = getEssences api
     in if isFindEssence essence essenceArr
-        then iterateActions essence action accessArr conf
+        then iterateActions essence action accessArr api
         else False

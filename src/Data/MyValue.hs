@@ -3,7 +3,7 @@ module Data.MyValue
     , fromArray
     , parseStrings
     , parseBool
-    , bsToStr
+    , fromBS
     , myInteger
     , myString
     , myBool
@@ -73,7 +73,7 @@ parseBool str =
     in letter : word
 
 myInteger, myString, myBool, myIntegers, myStrings,myDate ::
-    Read a => a -> MyValue
+    String -> MyValue
 myInteger = MyInteger . read
 myString = MyString
 myBool = MyBool . read . parseBool
@@ -82,10 +82,10 @@ myIntegers = MyIntegers . read
 myStrings = MyStrings . read . parseStrings
 myNextval = MyNextval
 
-chooseMyValue :: Read a => String -> (a -> MyValue)
+chooseMyValue :: String -> (String -> MyValue)
 chooseMyValue str = case str of
     '[':x:xs ->
-        if isDigit x
+        if C.isDigit x
             then myIntegers
             else myStrings
     "FALSE"  -> myBool
@@ -94,7 +94,7 @@ chooseMyValue str = case str of
     date@(x1:x2:'-':x3:x4:'-':x5:x6:x7:x8) -> myDate
     'N':'E':'X':'T':'V':'A':'L':'(':rest -> myNextval
     x:xs     ->
-        if isDigit x
+        if C.isDigit x
             then myInteger
             else myString
 
@@ -108,11 +108,11 @@ fromValue value = case value of
     Number num   -> MyInteger $ scientificToInteger (Number num)
     String text  -> MyString $ T.unpack text
     Bool bool    -> MyBool bool
-    Array vector ->
+    Array vector -> fromArray . map fromValue $ V.toList vector
 
 fromString :: String -> MyValue
 fromString str =
-    let valueStr = map toUpper $ bsToStr str
+    let valueStr = map C.toUpper str
     in chooseMyValue valueStr str
 
 toString :: MyValue -> String
@@ -128,7 +128,7 @@ toString myValue = case myValue of
 
 toValue :: MyValue -> Value
 toValue myValue = case myValue of
-    MyInteger num -> scientific num 0
+    MyInteger num -> Number $ scientific num 0
     MyString str  -> String $ T.pack str
     MyBool bool   -> Bool bool
 

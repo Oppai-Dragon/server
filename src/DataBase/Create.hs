@@ -3,37 +3,23 @@ module DataBase.Create
     ) where
 
 import Config
-    ( Config
-    , getUriDB
-    )
 import Data.Base
     ( ifElseThen )
 import Data.Handler
 import Data.Essence
-    ( Essence (..) )
-import Data.Essence.Parse
-    ( fromQuery )
-import Data.Essence.Relations.Methods
-    ( isEssenceRelations
-    , getRelationsFields
-    )
-import Data.SQL.Actions
-    ( Action ( creating, getting ) )
+import Data.Essence.Methods
+import Data.Essence.RelationsTree.Methods
 import Data.SQL.ToValue
     ( integerToValue
     , sqlValuesArrToValue
     )
 
 import Data.Aeson
-    ( Value )
-import Data.Text
-    ( unpack
-    , pack
-    )
+import qualified Data.HashMap.Strict    as HM
+import qualified Data.Text              as T
 import Data.Text.Encoding
     ( encodeUtf8 )
 import Data.Time.Clock
-    ( getCurrentTime )
 import Database.HDBC
     ( disconnect
     , run
@@ -54,31 +40,31 @@ dbCreate :: StateT (Essence List) (ReaderT Config IO) Value
 dbCreate = do
     config <- lift $ ask
     addingDefault
-    addingRelationsFields
+--    addingRelationsFields
     essenceList@(EssenceList name action list) <- get
     let createQuery = show essenceList
     let uriDB = getUri config
-    let essence = T.pack $ name essenceList
+    let essence = T.pack name
     conn <- lift . lift $ connectPostgreSQL uriDB
     lift . lift $ run conn createQuery []
     lift . lift $ commit conn
     let getQueryId = "SELECT currval('" <> name <> "_id_seq');"
     [[SqlInteger idEssence]] <- lift . lift $ quickQuery' conn getQueryId []
-    let getQueryEssence = show (Essence name "get" [("id",show idEssence)])
+    let getQueryEssence = show (EssenceList name "get" [("id",show idEssence)])
     sqlValues <- lift . lift $ quickQuery' conn getQueryEssence []
     let value = sqlValuesArrToValue essenceList sqlValues config
     lift . lift $ disconnect conn
     pure value
 
-addingRelationsFields :: StateT (Essence List) (ReaderT Config IO) ()
-addingRelationsFields =
-    config <- lift ask
-    essenceList@(EssenceList name action list) <- get
-    let essenceDB = getEssenceDB (T.pack name) (T.pack action) config
-    relationsFields <- getRelationsFields name
-    if isRelationsFieldsNeeded essenceDB
-        then put $ addList relationsFields essenceList
-        else put essenceList
+--addingRelationsFields :: StateT (Essence List) (ReaderT Config IO) ()
+--addingRelationsFields = do
+--    config <- lift ask
+--    essenceList@(EssenceList name action list) <- get
+--    let essenceDB = getEssenceDB (T.pack name) (T.pack action) config
+--    relationsFields <- getRelationsFields name
+--    if isRelationsFieldsNeeded essenceDB
+--        then put $ addList relationsFields essenceList
+--        else put essenceList
 
 addingDefault :: StateT (Essence List) (ReaderT Config IO) ()
 addingDefault = do
@@ -89,7 +75,7 @@ addingDefault = do
             Just _  -> True
             Nothing -> False
     let idValue = "nextval('" <> name <> "_id_seq')"
-    date <- getCurrentTime
+    date <- lift . lift $ getCurrentTime
     let dateValue = show $ utctDay date
     if isDateOfCreation
         then put $ addList [("id",idValue),("date_of_creation",dateValue)] essenceList

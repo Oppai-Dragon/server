@@ -28,9 +28,7 @@
 , "relations":
     { "person":"access_key"
     , "author":
-        { "person_id":
-            [ "person_id"
-            ]
+        { "person_id": []
         }
     , "draft":
         { "author_id":
