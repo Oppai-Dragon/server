@@ -8,9 +8,11 @@ module Data.SQL.ToValue
     , sqlValuesToJsonValue
     , sqlValuesArrToObj
     , sqlValuesArrToValue
+    , strToValue
     ) where
 
 import           Config
+import           Data.Essence
 
 import           Data.Aeson
 
@@ -22,6 +24,7 @@ import qualified Data.Vector         as V
 import qualified Data.Scientific     as S
 
 import qualified Data.Text           as T
+import qualified Data.List           as L
 
 import           Database.HDBC
 import           Database.HDBC.PostgreSQL
@@ -64,22 +67,29 @@ sqlToValue SqlNull = Null
 fromZip :: [T.Text] -> [Value] -> Object
 fromZip = (HM.fromList .) . zip
 
-sqlValuesToJsonValue :: T.Text -> [SqlValue] -> Config -> Value
-sqlValuesToJsonValue essence sqlValues conf =
-    let fields = getEssenceFields essence conf
-    in Object
-    $ fromZip fields
-    $ map sqlToValue sqlValues
-
-sqlValuesArrToObj :: Int -> T.Text -> [[SqlValue]] -> Config -> Object
-sqlValuesArrToObj _ _       []                             _    = HM.empty
-sqlValuesArrToObj n essence sql@(sqlValues : sqlValuesArr) conf =
+sqlValuesToJsonValue :: Essence List -> [SqlValue] -> Config -> Value
+sqlValuesToJsonValue (EssenceList name action list) sqlValues conf =
     let
-        essenceField = essence `T.append` (T.pack $ show n)
-        essenceValue = sqlValuesToJsonValue essence sqlValues conf
+        nameT = T.pack name
+        fields = case [name,action] of
+            ["person","create"] -> getEssenceFields nameT conf
+            ["person",_]        -> L.delete "access_key" $ getEssenceFields nameT conf
+            _                   -> getEssenceFields nameT conf
+        sqlValuesNeeded =
+            case L.elemIndex "access_key" (getEssenceFields nameT conf) of
+                Just index -> flip L.delete sqlValues $ (!!) sqlValues index
+                Nothing    -> sqlValues
+    in Object . fromZip fields $ map sqlToValue sqlValuesNeeded
+
+sqlValuesArrToObj :: Int -> Essence List -> [[SqlValue]] -> Config -> Object
+sqlValuesArrToObj _ _       []                             _    = HM.empty
+sqlValuesArrToObj n essenceList sql@(sqlValues : sqlValuesArr) conf =
+    let
+        essenceField = T.pack $ name essenceList <> show n
+        essenceValue = sqlValuesToJsonValue essenceList sqlValues conf
     in
         HM.singleton essenceField essenceValue `HM.union`
-        sqlValuesArrToObj (n+1) essence sqlValuesArr conf
+        sqlValuesArrToObj (n+1) essenceList sqlValuesArr conf
 
-sqlValuesArrToValue :: T.Text -> [[SqlValue]] -> Config -> Value
+sqlValuesArrToValue :: Essence List -> [[SqlValue]] -> Config -> Value
 sqlValuesArrToValue = ((Object .) .) . sqlValuesArrToObj 1

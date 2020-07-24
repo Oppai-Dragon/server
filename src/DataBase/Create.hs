@@ -46,43 +46,51 @@ import Database.HDBC.PostgreSQL
     , Connection
     )
 
-dbCreate :: Handler Value
+import           Control.Monad.Trans.Reader
+import           Control.Monad.Trans.State.Strict
+import           Control.Monad.Trans.Class          (lift)
+
+dbCreate :: StateT (Essence List) (ReaderT Config IO) Value
 dbCreate = do
-    essence <- getEssence
-    queryBS <- getQueryBS
-    config <- getConfig
-    let essenceStr = unpack essence
-    newQueryBS <- fromIO $ getUpdatedQueryBS essence queryBS config
-    let thing@(Essence name action listOfPairs) = fromQuery essence newQueryBS config
-    let createQuery = case creating thing of
-            Just str -> str
-            Nothing  -> ";"
-    let uriDB = getUriDB config
-    conn <- fromIO $ connectPostgreSQL uriDB
-    fromIO $ run conn createQuery []
-    fromIO $ commit conn
-    let getQueryId = "SELECT currval('" <> essenceStr <> "_id_seq');"
-    [[SqlInteger idEssence]] <- fromIO $ quickQuery' conn getQueryId []
-    let getQueryEssence =
-            case getting $ Essence essenceStr [("id",show idEssence)] of
-                Just query -> query
-                Nothing    -> ";"
-    sqlValues <- fromIO $ quickQuery' conn getQueryEssence []
-    let essence' = ifElseThen [essence == "user"] [essence,"oneUser"]
-    let value = sqlValuesArrToValue essence' sqlValues config
-    fromIO $ disconnect conn
+    config <- lift $ ask
+    addingDefault
+    addingRelationsFields
+    essenceList@(EssenceList name action list) <- get
+    let createQuery = show essenceList
+    let uriDB = getUri config
+    let essence = T.pack $ name essenceList
+    conn <- lift . lift $ connectPostgreSQL uriDB
+    lift . lift $ run conn createQuery []
+    lift . lift $ commit conn
+    let getQueryId = "SELECT currval('" <> name <> "_id_seq');"
+    [[SqlInteger idEssence]] <- lift . lift $ quickQuery' conn getQueryId []
+    let getQueryEssence = show (Essence name "get" [("id",show idEssence)])
+    sqlValues <- lift . lift $ quickQuery' conn getQueryEssence []
+    let value = sqlValuesArrToValue essenceList sqlValues config
+    lift . lift $ disconnect conn
     pure value
 
-getUpdatedQueryBS :: EssenceApi -> QueryBS -> Config -> IO QueryBS
-getUpdatedQueryBS essence queryBS conf = do
+addingRelationsFields :: StateT (Essence List) (ReaderT Config IO) ()
+addingRelationsFields =
+    config <- lift ask
+    essenceList@(EssenceList name action list) <- get
+    let essenceDB = getEssenceDB (T.pack name) (T.pack action) config
+    relationsFields <- getRelationsFields name
+    if isRelationsFieldsNeeded essenceDB
+        then put $ addList relationsFields essenceList
+        else put essenceList
+
+addingDefault :: StateT (Essence List) (ReaderT Config IO) ()
+addingDefault = do
+    config <- lift ask
+    essenceList@(EssenceList name action list) <- get
+    let essenceDB = getEssenceDB (T.pack name) (T.pack action) config
+    let isDateOfCreation = case HM.lookup "date_of_creation" (fieldsOf essenceDB) of
+            Just _  -> True
+            Nothing -> False
+    let idValue = "nextval('" <> name <> "_id_seq')"
     date <- getCurrentTime
-    let essenceParsed = ifElseThen [essence=="user"] [essence,"users"]
-    let dateBS = encodeUtf8 $ pack $ show date
-    let idValueT = "nextval('" <> essenceParsed <> "_id_seq')"
-    let idValueBS = encodeUtf8 idValueT
-    let addDateAndId = (<>)
-            [("date_of_creation", Just dateBS)
-            ,("id", Just idValueBS)
-            ]
-    let resultQueryBS = addDateAndId queryBS
-    pure resultQueryBS
+    let dateValue = show $ utctDay date
+    if isDateOfCreation
+        then put $ addList [("id",idValue),("date_of_creation",dateValue)] essenceList
+        else put $ addList [("id",idValue)] essenceList

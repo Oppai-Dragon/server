@@ -27,11 +27,28 @@
     ]
 , "relations":
     { "person":"access_key"
-    , "author":"person_id"
-    , "category":""
-    , "tag":""
-    , "draft":"author_id"
-    , "news":"draft_id"
+    , "author":
+        { "person_id":
+            [ "person_id"
+            ]
+        }
+    , "draft":
+        { "author_id":
+            [ "author_id"
+            ]
+        }
+    , "news":
+        { "draft_id":
+            [ "draft_id"
+            , "author_id"
+            , "category_id"
+            , "main_photo"
+            , "content"
+            , "name"
+            , "tag_ids"
+            , "optional_photos"
+            ]
+        }
     }
 , "access":
     { "person":

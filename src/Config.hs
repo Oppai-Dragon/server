@@ -190,31 +190,27 @@ getApiDBMethod action conf =
         Just (String text) -> text
         _                  -> ""
 
-getRelationsTree :: Essence -> Config -> RelationsTree Field
-getRelationsTree essence conf = getRelationsTree' essence 0 essence conf
+getRelationsTree :: Essence -> Api -> RelationsTree Field
+getRelationsTree essence api = getRelationsTree' essence 0 essence api
 
-getRelationsTree' :: Essence -> Int -> Field -> Config -> RelationsTree Field
-getRelationsTree' essence n field conf =
+getRelationsTree' :: Essence -> Int -> Field -> Api -> RelationsTree Field
+getRelationsTree' essence n field api =
     let
         parseFind = parseFieldsFunc
-            ["psql", "relations",essence,"find"]
+            ["relations", essence]
         parseFill name = parseFieldsFunc
-            ["psql", "relations",essence,"fill",name]
-        getRootName = head . HM.keys
-        getRoot obj = case AT.parseMaybe (.: getRootName obj) obj of
-            Just (String text) -> getRootName obj <> "_" <> text
-            _                  -> getRootName obj
-        getLeafs name = case AT.parseMaybe (parseFill name) conf of
-            Just arr@(Array vector) ->
-                map (\x -> Leaf $ name <> "_" <> x)
-                $ toTextArr arr
+            ["relations", essence, name]
+        getRootName =  T.takeWhile (/='_') . getRoot
+        getRoot = head . HM.keys
+        getLeafs name = case AT.parseMaybe (parseFill name) api of
+            Just arr@(Array vector) -> map (\x -> Leaf x) $ toTextArr arr
             _                   -> []
-    in case AT.parseMaybe parseFind conf of
+    in case AT.parseMaybe parseFind api of
         Just (Object obj) ->
-            getRelationsTree' (getRootName obj) 1 (getRoot obj) conf
+            getRelationsTree' (getRootName obj) 1 (getRoot obj) api
             <> if n == 0
-                then Branch essence (getLeafs $ getRootName obj)
-                else Branch field (getLeafs $ getRootName obj)
+                then Branch essence (getLeafs $ getRoot obj)
+                else Branch field (getLeafs $ getRoot obj)
         Just (String key) ->
             Root field
             $ Leaf key

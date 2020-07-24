@@ -14,6 +14,7 @@ import qualified Data.HashMap.Strict as HM
 import qualified Data.Vector         as V
 import qualified Data.Text           as T
 import Data.Text.Encoding (encodeUtf8)
+import qualified Data.List as L
 
 toTextArr :: Value -> [T.Text]
 toTextArr (Array vector) = map toText $ V.toList vector
@@ -67,4 +68,4 @@ toQueryBS obj =
     in iterateKeys iterateArr
 
 toInt :: Value -> Int
-toInt (Number num) = read . takeWhile (/='.') . show $ num
+toInt (Number num) = read . L.delete '.' . takeWhile (/='e') $ show num

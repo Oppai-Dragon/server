@@ -39,31 +39,24 @@ import           Control.Monad.Trans.Class          (lift)
 dbGet :: StateT (Essence List) (ReaderT Config IO) Value
 dbGet = do
     config <- lift $ ask
-    addingOffset
-    essenceList <- get
-    let getQuery = show essenceList
-    let uriDB = getUriDB config
-    let essence = T.pack $ name essenceList
+    essenceList@(EssenceList name action list) <- get
+    let pageCounter = case lookup "page" list of
+            Just num -> read num
+            Nothing  -> 1
+    let getQuery = init (show essenceList) <> " " <> getOffsetLimit pageCounter config
+    let uriDB = getUri config
+    let essence = T.pack name
     conn <- lift . lift $ connectPostgreSQL uriDB
     sqlValues <- lift . lift $ quickQuery' conn getQuery []
-    let pageObj = case sqlValuesArrToValue essence sqlValues config of
+    let pageObj = case sqlValuesArrToValue essenceList sqlValues config of
             Object obj -> obj
             _          -> HM.empty
     lift . lift $ disconnect conn
     value <- lift $ nesteEssences pageObj
     pure value
 
-addingOffset :: StateT (Essence List) (ReaderT Config IO) ()
-addingOffset = do
-    config <- lift $ ask
-    essenceList@(EssenceList name action list) <- get
-    let pageCounter = case lookup "page" list of
-            Just num -> read num
-            Nothing  -> 1
-    put . deletePair "page" $
-        addList [("offsetLimit", getOffsetLimit pageCounter config)] essenceList
-
 dbGetOne :: Essence [(String,Value)] -> ReaderT Config IO Value
+dbGetOne (EssenceValue _     _      [(_,    Null )]) = return (Object HM.empty)
 dbGetOne (EssenceValue table action [(field,value)]) = do
     config <- ask
     let uriDB = getUri config
@@ -72,7 +65,7 @@ dbGetOne (EssenceValue table action [(field,value)]) = do
     let getQuery = SQL.get table "*" wherePart
     conn <- lift $ connectPostgreSQL uriDB
     sqlValuesArr <- lift $ quickQuery' conn getQuery []
-    let value = sqlValuesArrToValue (T.pack table) sqlValuesArr config
+    let value = sqlValuesArrToValue (EssenceList table action []) sqlValuesArr config
     lift $ disconnect conn
     pure value
 
@@ -107,7 +100,7 @@ dbGetArray (EssenceValue table action [(field,value)]) = do
     let getQuery = SQL.get table "*" wherePart
     sqlValuesArr <- lift $ quickQuery' conn getQuery []
     lift $ disconnect conn
-    let value = sqlValuesArrToValue (T.pack table) sqlValuesArr config
+    let value = sqlValuesArrToValue (EssenceList table action []) sqlValuesArr config
     pure value
 
 vectorToStrList :: Value -> [String]
@@ -134,8 +127,9 @@ nesteEssence ((field,Relations table tableField) : rest) = do
             Just value -> [(T.unpack tableField,value)]
             Nothing    -> []
     (Object essenceObj) <- lift $ dbGetOne (EssenceValue (T.unpack table) "get" listOfPair)
-    completeValue <- lift $ nesteEssences essenceObj
+    (Object completeObj) <- lift $ nesteEssences essenceObj
     let objWithoutField = HM.delete (T.pack field) fieldsObj
-    let nestedObj = HM.singleton table completeValue
-    put $ HM.union nestedObj objWithoutField
+    if HM.null completeObj
+        then put $ HM.union essenceObj fieldsObj
+        else put $ HM.union completeObj objWithoutField
     nesteEssence rest

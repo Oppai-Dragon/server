@@ -1,5 +1,6 @@
 module Data.MyValue
     ( MyValue (..)
+    , fromArray
     , parseStrings
     , parseBool
     , bsToStr
@@ -8,14 +9,22 @@ module Data.MyValue
     , myBool
     , myIntegers
     , myStrings
-    , chooseMyValue
+    , fromBS
     , fromValue
+    , toValue
+    , fromString
+    , toString
+    , scientificToInteger
     ) where
 
 import Data.Aeson
-import qualified Data.ByteString as BS  (ByteString)
-import Data.ByteString.Char8 (unpack)
-import           Data.Char              (isDigit, toUpper, toLower)
+import Data.Scientific
+import qualified Data.Vector           as V
+import qualified Data.ByteString       as BS
+import qualified Data.ByteString.Char8 as BSC8
+import qualified Data.Text             as T
+import qualified Data.Char             as C
+import qualified Data.List             as L
 
 data MyValue
     = MyString      String
@@ -37,6 +46,15 @@ instance Read MyValue where
         "bool"          -> [(MyDate [],"")]
         "uuid"          -> [(MyString [],"")]
 
+unpack :: Read a => MyValue -> a
+unpack = read . toString
+
+fromArray :: [MyValue] -> MyValue
+fromArray myValueArr = case myValueArr of
+    MyString _ : rest  -> MyStrings  $ map unpack myValueArr
+    MyInteger _ : rest -> MyIntegers $ map unpack myValueArr
+    _                  -> MyEmpty
+
 parseStrings :: String -> String
 parseStrings [] = []
 parseStrings (x:xs) =
@@ -50,39 +68,79 @@ parseStrings (x:xs) =
 parseBool :: String -> String
 parseBool str =
     let
-        letter = toUpper $ head str
-        word   = map toLower $ tail str
+        letter = C.toUpper $ head str
+        word   = map C.toLower $ tail str
     in letter : word
 
-bsToStr :: BS.ByteString -> String
-bsToStr = unpack
 myInteger, myString, myBool, myIntegers, myStrings,myDate ::
-    BS.ByteString -> MyValue
-myInteger = MyInteger . read . bsToStr
-myString = MyString . bsToStr
-myBool = MyBool . read . parseBool . bsToStr
-myDate = MyDate . bsToStr
-myIntegers = MyIntegers . read . bsToStr
-myStrings = MyStrings . read . parseStrings . bsToStr
-myNextval = MyNextval . bsToStr
+    Read a => a -> MyValue
+myInteger = MyInteger . read
+myString = MyString
+myBool = MyBool . read . parseBool
+myDate = MyDate
+myIntegers = MyIntegers . read
+myStrings = MyStrings . read . parseStrings
+myNextval = MyNextval
 
-chooseMyValue :: BS.ByteString -> MyValue
-chooseMyValue valueBS =
-    let valueStr = map toUpper $ bsToStr valueBS
-    in case valueStr of
-        '[':x:xs ->
-            if isDigit x
-                then myIntegers valueBS
-                else myStrings valueBS
-        "FALSE"  -> myBool valueBS
-        "TRUE"   -> myBool valueBS
-        date@(x1:x2:x3:x4:'-':x5:x6:'-':x7:x8) -> myDate valueBS
-        date@(x1:x2:'-':x3:x4:'-':x5:x6:x7:x8) -> myDate valueBS
-        'N':'E':'X':'T':'V':'A':'L':'(':rest -> myNextval valueBS
-        x:xs     ->
-            if isDigit x
-                then myInteger valueBS
-                else myString valueBS
+chooseMyValue :: Read a => String -> (a -> MyValue)
+chooseMyValue str = case str of
+    '[':x:xs ->
+        if isDigit x
+            then myIntegers
+            else myStrings
+    "FALSE"  -> myBool
+    "TRUE"   -> myBool
+    date@(x1:x2:x3:x4:'-':x5:x6:'-':x7:x8) -> myDate
+    date@(x1:x2:'-':x3:x4:'-':x5:x6:x7:x8) -> myDate
+    'N':'E':'X':'T':'V':'A':'L':'(':rest -> myNextval
+    x:xs     ->
+        if isDigit x
+            then myInteger
+            else myString
+
+fromBS :: BS.ByteString -> MyValue
+fromBS valueBS =
+    let valueStr = map C.toUpper $ BSC8.unpack valueBS
+    in chooseMyValue valueStr (BSC8.unpack valueBS)
 
 fromValue :: Value -> MyValue
-fromValue = undefined
+fromValue value = case value of
+    Number num   -> MyInteger $ scientificToInteger (Number num)
+    String text  -> MyString $ T.unpack text
+    Bool bool    -> MyBool bool
+    Array vector ->
+
+fromString :: String -> MyValue
+fromString str =
+    let valueStr = map toUpper $ bsToStr str
+    in chooseMyValue valueStr str
+
+toString :: MyValue -> String
+toString myValue = case myValue of
+    MyInteger num     -> show num
+    MyString str      -> str
+    MyBool bool       -> show bool
+    MyIntegers intArr -> show intArr
+    MyStrings strArr  -> show strArr
+    MyNextval val     -> val
+    MyDate date       -> date
+    MyEmpty           -> ""
+
+toValue :: MyValue -> Value
+toValue myValue = case myValue of
+    MyInteger num -> scientific num 0
+    MyString str  -> String $ T.pack str
+    MyBool bool   -> Bool bool
+
+scientificToInteger :: Value -> Integer
+scientificToInteger (Number num) =
+    let
+        numStr = show num
+        exponenta = 10 ^ (read . tail . dropWhile (/='e')) numStr
+        division = toInteger $ 10 ^ (length . tail . dropWhile (/='.') . takeWhile (/='e')) numStr
+    in case L.find (=='e') (show num) of
+        Just _  ->
+            case last $ takeWhile (/='e') numStr of
+                '0' -> (read . takeWhile (/='.')) numStr * exponenta
+                _ -> (read . L.delete '.' . takeWhile (/='e')) numStr * exponenta `div` division
+        Nothing -> read $ takeWhile (/='.') numStr

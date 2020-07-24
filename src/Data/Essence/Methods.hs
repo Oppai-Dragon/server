@@ -127,7 +127,7 @@ parseBSValue ::
     -> (String, MyValue)
 parseBSValue field bss =
     case lookup field bss of
-        Just (Just var) -> (field, chooseMyValue var)
+        Just (Just var) -> (field, fromBS var)
         _               -> (field, MyEmpty)
 
 parseFieldValue ::
