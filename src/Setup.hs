@@ -35,8 +35,8 @@ import System.Directory                         (getCurrentDirectory)
 
 setup :: IO ()
 setup = do
-    createTables
     buildConfigJson
+    createTables
 
 buildConfigJson :: IO ()
 buildConfigJson = do

@@ -77,7 +77,7 @@ essenceResponse :: Request -> ReaderT Config IO Response
 essenceResponse req = do
     config <- ask
     essenceList@(EssenceList name action list) <- getEssenseList req
-    relationObj <- evalStateT (updateRelationsFields $ T.pack name) essenceList
+    relationObj <- evalStateT updateRelationsFields essenceList
     if HM.null relationObj
         then pure notFound
         else case requestMethod req of

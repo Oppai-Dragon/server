@@ -11,7 +11,7 @@ import Data.Essence.RelationsTree
 import Data.Essence.Methods
 import Data.Empty
 import Data.MyValue
-import Data.FromValue (toQueryBS, toBS)
+import Data.FromValue
 import DataBase.Get
 
 import Database.HDBC
@@ -28,8 +28,6 @@ import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State.Strict
 import           Control.Monad.Trans.Class          (lift)
 
-import System.IO.Unsafe (unsafePerformIO)
-
 type QueryBS = [(BS.ByteString, Maybe BS.ByteString)]
 type Name   = T.Text
 type Field  = T.Text
@@ -43,8 +41,17 @@ isEssenceRelations essence conf =
         Root r (Branch b (Leaf l : leafs)) -> True
         _                                  -> False
 
-updateRelationsFields :: Name -> StateT (Essence List) (ReaderT Config IO) Object
-updateRelationsFields name = do
+updateRelationsFields :: StateT (Essence List) (ReaderT Config IO) Object
+updateRelationsFields = do
+    (EssenceList name action list) <- get
+    config <- lift ask
+    let essence = T.pack name
+    if isEssenceRelations essence config
+        then relationsHandler essence
+        else return HM.empty
+
+relationsHandler :: Name -> StateT (Essence List) (ReaderT Config IO) Object
+relationsHandler name = do
     api <- lift . lift $ setApi
     essenceList <- get
     let relations = getRelationsTree name api
@@ -54,12 +61,12 @@ updateRelationsFields name = do
     case relations of
         Root rEssence trunk@(Trunk tEssence rlt)            ->
             do
-                obj1 <- updateRelationsFields (beforeUnderscore rEssence)
+                obj1 <- relationsHandler (beforeUnderscore rEssence)
                 (Object obj2) <- lift $ findEssence tEssence (listOfPair rEssence obj1)
                 iterateRelations trunk obj2
         Root rEssence branch@(Branch bEssence leafs)        ->
             do
-                obj1 <- updateRelationsFields (beforeUnderscore rEssence)
+                obj1 <- relationsHandler (beforeUnderscore rEssence)
                 iterateRelations (Trunk rEssence branch) obj1
         Root rEssence (Leaf key)                            ->
             case lookup (T.unpack key) (list essenceList) of
@@ -143,11 +150,7 @@ checkList field listOfPair =
         (Just value) -> [(key, strToValue value)]
         Nothing      -> []
 
-strToValue :: String -> Value
-strToValue = toValue . fromString
 
-valueToStr :: Value -> String
-valueToStr = parseEmpty . fromValue
 
 getNextField :: RelationsTree a -> a
 getNextField relations =
@@ -195,7 +198,7 @@ isRightRelations rootObj branchObj rootEssence branchEssence =
 getIdPairFromObj :: Name -> Object -> [(String,String)]
 getIdPairFromObj name obj =
     case getListOfPairFromObj (name <> "_id") obj of
-        [(field,value)] -> [(field, valueToStr value)]
+        [(field,value)] -> [(field, toStr value)]
         other           -> []
 
 ifExisteAddEssenceId :: StateT (Essence List) (ReaderT Config IO) ()

@@ -1,12 +1,19 @@
 {-# LANGUAGE LambdaCase #-}
 module Data.Required.Methods
     ( getRequiredFields
+    , iterateHM
+    , iterateHMCreate
+    , iterateHMGet
+    , iterateHMEdit
+    , iterateHMDelete
+    , mySequenceA
+    , myApply
     ) where
 
 import Data.Essence
 import Data.Essence.Methods
 import Data.Required
-import Data.FromValue (toTextArr)
+import Data.Value
 
 import           Data.Aeson
 import qualified Data.HashMap.Strict    as HM
@@ -26,19 +33,21 @@ getRequiredFields (EssenceDB name action hashMap) =
 
 iterateHM :: [(String,Description)] -> Action -> [Required Field]
 iterateHM []  _        = []
-iterateHM arr "create" = iterateHMCreate arr
-iterateHM arr "get"    = iterateHMGet arr
-iterateHM arr "edit"   = iterateHMEdit arr
-iterateHM arr "delete" = iterateHMDelete arr
+iterateHM arr action = case action of
+    "create" -> iterateHMCreate arr
+    "get"    -> iterateHMGet arr
+    "edit"   -> iterateHMEdit arr
+    "delete" -> iterateHMDelete arr
 
-iterateHMCreate,iterateHMGet,iterateHMEdit,iterateHMDelete :: [(String,Description)] -> [Required Field]
+iterateHMCreate,iterateHMGet,iterateHMEdit,iterateHMDelete ::
+    [(String,Description)] -> [Required Field]
 iterateHMCreate []                            = []
 iterateHMCreate (("id",_):rest)               = iterateHMCreate rest
 iterateHMCreate (("date_of_creation",_):rest) = iterateHMCreate rest
 iterateHMCreate ((field,description):rest)    =
     case valueOf description of
         Just (NOT NULL) -> AND field : iterateHMCreate rest
-        _               -> OR field : iterateHMCreate rest
+        _               -> iterateHMCreate rest
 iterateHMGet _ = []
 iterateHMEdit []                            = []
 iterateHMEdit (("date_of_creation",_):rest) = iterateHMEdit rest
@@ -55,10 +64,11 @@ iterateHMDelete ((field,description):rest) =
         _            -> iterateHMDelete rest
 
 mySequenceA :: [Required a] -> Required [a]
-mySequenceA []      = NullFields
-mySequenceA [AND x] = AND [x]
-mySequenceA [OR x]  = OR [x]
-mySequenceA (x:xs)  = fmap (:) x `myApply` mySequenceA xs
+mySequenceA arrRequired = case arrRequired of
+    []      -> NullFields
+    [AND x] -> AND [x]
+    [OR x]  -> OR [x]
+    x:xs    -> fmap (:) x `myApply` mySequenceA xs
 
 myApply :: Required (a -> a) -> Required a -> Required a
 myApply required x = case required of

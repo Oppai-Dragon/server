@@ -1,9 +1,5 @@
 module Data.Request.Params.Methods
-    ( isRightParams
-    , queryBSWithoutMaybe
-    , isTypeParamsCorrect
-    , compareValueType
-    ) where
+    where
 
 import Config
 import Data.Base
@@ -24,18 +20,38 @@ import qualified Data.Text.Encoding  as TE
 type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
 type QueryBS = [(BS.ByteString, BS.ByteString)]
 
-isRightParams :: Essence DB -> QueryMBS -> Bool
-isRightParams (EssenceDB name action hashMap) queryMBS =
+isRequiredParams :: Essence DB -> QueryMBS -> Bool
+isRequiredParams essenceDB queryMBS =
     let
         queryBS = queryBSWithoutMaybe queryMBS
-        iterateBS []     = []
-        iterateBS arr@((field,valueBS):rest) =
-            case HM.lookup (BSC8.unpack field) hashMap of
-                Just _ -> iterateBS rest
-                _      -> arr
+        requiredParams = getRequiredFields essenceDB
     in case queryBS of
         [] -> True
-        _  -> null $ iterateBS queryBS
+        _  -> iterateRequiredParams requiredParams queryBS
+
+iterateRequiredParams :: Required [String] -> QueryBS -> Bool
+iterateRequiredParams params queryBS =
+    let toBSArr = map (TE.encodeUtf8 . T.pack)
+    in case params of
+        NullFields                  -> True
+        AND params                  ->
+            and $ iterateParams (toBSArr params) queryBS
+        OR  params                  ->
+            or $ iterateParams (toBSArr params) queryBS
+        Required requiredArr        ->
+            and $
+            map (\x -> iterateRequiredParams x queryBS)
+            requiredArr
+        _                           -> False
+
+iterateParams :: [BS.ByteString] -> QueryBS -> [Bool]
+iterateParams []             _       = []
+iterateParams (param:params) queryBS =
+    let isHere =
+            case lookup param queryBS of
+                Just value -> True
+                _          -> False
+    in isHere : iterateParams params queryBS
 
 queryBSWithoutMaybe :: QueryMBS -> QueryBS
 queryBSWithoutMaybe []                = []

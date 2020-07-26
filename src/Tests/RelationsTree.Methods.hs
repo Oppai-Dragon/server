@@ -19,16 +19,13 @@ import Test.HUnit
 
 essenceRelationsMethodsTests =
     [ TestLabel "isEssenceRelationsTest"    isEssenceRelationsTest
-    --, TestLabel "getRelationsFieldsTest" getRelationsFieldsTest
-    , TestLabel "beforeUnderscoreTest"          beforeUnderscoreTest
-    , TestLabel "parseObjEssenceTest"      parseObjEssenceTest
-    , TestLabel "afterUnderscoreTest"              afterUnderscoreTest
-    --, TestLabel "findEssenceTest"           findEssenceTest
-    , TestLabel "getQueryBSFromObjTest"     getQueryBSFromObjTest
-    , TestLabel "checkQueryBSTest"          checkQueryBSTest
     , TestLabel "unpackLeafsTest"           unpackLeafsTest
+    , TestLabel "beforeUnderscoreTest"      beforeUnderscoreTest
+    , TestLabel "parseObjEssenceTest"       parseObjEssenceTest
+    , TestLabel "afterUnderscoreTest"       afterUnderscoreTest
+    , TestLabel "getListOfPairFromObjTest"  getListOfPairFromObjTest
+    , TestLabel "checkListTest"             checkListTest
     , TestLabel "getNextFieldTest"          getNextFieldTest
-    --, TestLabel "relationsHandlerTest"      relationsHandlerTest
     , TestLabel "isRightRelationsTest"      isRightRelationsTest
     , TestLabel "getIdFromQueryBSTest"      getIdFromQueryBSTest
     ]

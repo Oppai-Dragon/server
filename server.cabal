@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9d61fa10bdf7e6139af55937a98d70a9ba99899179027ad97f4b6535a4182209
+-- hash: 0b9f59414ea7ee204e922d643baf97defc084d9d8f4468d9deca79850abf3cee
 
 name:           server
 version:        0.1.0.0
@@ -36,26 +36,21 @@ library
       Data.Essence.Parse
       Data.Essence.RelationsTree
       Data.Essence.RelationsTree.Methods
-      Data.Essence.RelationsTree.Methods.Test
-      Data.FromValue
       Data.Handler
       Data.MyValue
       Data.Request.Access
       Data.Request.Access.Methods
-      Data.Request.Access.Methods.Test
       Data.Request.Control
-      Data.Request.Control.Test
       Data.Request.Handling
       Data.Request.Method.Methods
-      Data.Request.Method.Methods.Test
       Data.Request.Params.Methods
       Data.Required
       Data.Required.Methods
-      Data.Required.Methods.Test
       Data.SQL
       Data.SQL.Actions
       Data.SQL.Clause
       Data.SQL.ToValue
+      Data.Value
       DataBase.Create
       DataBase.Delete
       DataBase.Edit
@@ -63,6 +58,13 @@ library
       Lib
       Setup
       Setup.Test
+      Tests.Base
+      Tests.Control
+      Tests.MyValue
+      Tests.Required.Methods
+      Tests.SQL
+      Tests.SQL.ToValue
+      Tests.Value
   other-modules:
       Paths_server
   hs-source-dirs:

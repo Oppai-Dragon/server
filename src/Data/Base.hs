@@ -1,6 +1,5 @@
 module Data.Base
     ( ifElseThen
-    , caseFuncList
     , reverseMap
     , map2Var
     , ioStack
@@ -8,9 +7,12 @@ module Data.Base
     , insertPair
     , mapToListOfPair
     , findText
+    , scientificToInteger
     ) where
 
-import qualified Data.Text as T
+import           Data.List       as L
+import           Data.Scientific
+import qualified Data.Text       as T
 
 ifElseThen :: [Bool] -> [a] -> a
 ifElseThen []           [act]      = act
@@ -18,13 +20,6 @@ ifElseThen (bool:bools) (act:acts) =
     if bool
         then ifElseThen bools acts
         else act
-
-caseFuncList :: [a] -> [a] -> b -> b -> b
-caseFuncList []              _                   _      goodRes = goodRes
-caseFuncList (case1 : cases) (pattern1:patterns) badRes goodRes =
-    case case1 of
-        pattern1 -> caseFuncList cases patterns badRes goodRes
-        _        -> badRes
 
 reverseMap :: a -> [(a -> b)] -> [b]
 reverseMap _   []          = []
@@ -66,3 +61,16 @@ findText text (textX:rest) =
     if text == textX
         then Just textX
         else findText text rest
+
+scientificToInteger :: Scientific -> Integer
+scientificToInteger num =
+    let
+        numStr = show num
+        exponenta = 10 ^ (read . tail . dropWhile (/='e')) numStr
+        division = toInteger $ 10 ^ (length . tail . dropWhile (/='.') . takeWhile (/='e')) numStr
+    in case L.find (=='e') (show num) of
+        Just _  ->
+            case last $ takeWhile (/='e') numStr of
+                '0' -> (read . takeWhile (/='.')) numStr * exponenta
+                _ -> (read . L.delete '.' . takeWhile (/='e')) numStr * exponenta `div` division
+        Nothing -> read $ takeWhile (/='.') numStr

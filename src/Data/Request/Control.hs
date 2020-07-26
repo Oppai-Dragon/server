@@ -12,7 +12,7 @@ import           Data.Required.Methods                          (getRequiredFiel
 import           Data.Request.Access
 import           Data.Request.Access.Methods                    (isAccess)
 import           Data.Request.Method.Methods                    (isMethodCorrect)
-import           Data.Request.Params.Methods                    (isRightParams,isTypeParamsCorrect)
+import           Data.Request.Params.Methods
 import qualified Data.SQL                               as SQL
 
 import qualified Data.Text                              as T
@@ -75,38 +75,37 @@ isRequestCorrect req = do
                 (fieldsOf essenceDB')
             else essenceDB'
     let essenceFields = map T.unpack $ getEssenceFields essence config
-    let listOfPairs = parseFieldValue essenceFields queryBS
+    let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryBS
     let paramsMsg =
             byteStringCopy
             $ BS8.pack
             $ show
             $ getRequiredFields essenceDB
-    let accessArr =
-            case lookup "access_key" queryBS of
-                Just (Just accessKeyBS) ->
-                    ([Everyone] <>) <$> accessCollector accessKeyBS config
-                _                       -> pure [Everyone]
-    let accessArr' = unsafePerformIO accessArr
+    accessArr <- lift $
+        case lookup "access_key" queryBS of
+            Just (Just accessKeyBS) ->
+                ([Everyone] <>) <$> accessCollector accessKeyBS
+            _                       -> pure [Everyone]
     let checkingList =
-            [isMethodCorrect method action api
-            ,isPathRequestCorrect req api
-            ,isRightParams essenceDB queryBS
+            [isPathRequestCorrect req api
+            ,isMethodCorrect method action api
+            ,isRequiredParams essenceDB queryBS
             ,and $ isTypeParamsCorrect essenceDB listOfPairs
-            ,isAccess essence action accessArr' api
-            ]
+            ,isAccess essence action accessArr api]
     let elseThenList =
-            [(False, responseBuilder status400 [] "Incorrect request method")
-            ,(False, notFound)
+            [(False, notFound)
+            ,(False, responseBuilder status400 [] "Incorrect request method")
             ,(False, responseBuilder status400 [] paramsMsg)
             ,(False, responseBuilder status400 [] "Incorrect type of params")
             ,(False, notFound)
             ,(True, undefined)]
     pure $ ifElseThen checkingList elseThenList
 
-accessCollector :: BS.ByteString -> Config -> IO [Access]
-accessCollector accessKeyBS conf = do
+accessCollector :: BS.ByteString -> IO [Access]
+accessCollector accessKeyBS = do
+    config <- setConfig
     let accessKeyStr = fromBS accessKeyBS
-    let uriDB = getUriDB conf
+    let uriDB = getUri config
     conn <- PSQL.connectPostgreSQL uriDB
     let userQuery = SQL.get "person" "id,is_admin" ("access_key=" <> parseEmpty accessKeyStr)
     sqlValuesArr <- quickQuery' conn userQuery []

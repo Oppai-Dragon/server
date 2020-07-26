@@ -39,7 +39,7 @@ instance Empty [String] where
     empty = ["\'\'"]
 
     isEmpty ["\'\'"] = True
-    isEmpty _            = False
+    isEmpty _        = False
 
     parseEmpty thing =
         let parsed = "ARRAY" <> (map (\x -> if x == '\"' then '\'' else x) $ show thing)

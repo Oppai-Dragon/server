@@ -24,7 +24,7 @@ import Data.Essence
 import Data.Essence.Parse
 import Data.Empty
 import Data.MyValue
-import Data.FromValue
+import Data.Value
 
 import Data.Maybe (fromJust)
 

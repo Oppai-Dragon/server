@@ -13,6 +13,9 @@ type Values = String
 type SQLRequest = String
 type FieldValue = String
 
+data ActionSQL
+    = CREATE {createTable :: String; create}
+
 create :: Table -> Fields -> Values -> SQLRequest
 create tableName fields values =
     "INSERT INTO " <> tableName

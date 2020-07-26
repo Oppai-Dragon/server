@@ -29,9 +29,10 @@ module Config
     , testApi
     ) where
 
+import           Data.Base
 import           Data.Request.Access
 import           Data.Essence.RelationsTree
-import           Data.FromValue                 (toTextArr,toInt,toBS)
+import           Data.Value
 
 import           Data.Aeson
 import qualified Data.Aeson.Types       as AT
@@ -126,7 +127,7 @@ getAccess :: Essence -> Action -> Api -> Access
 getAccess essence action api =
     case lookup action (getActionsAccess essence api) of
         Just access -> access
-        Nothing     -> maxBound
+        Nothing     -> minBound
 
 getActionsAccess :: Essence -> Api -> [(Action, Access)]
 getActionsAccess essence api =
@@ -207,12 +208,12 @@ getRelationsTree' essence n field api =
 getOffsetLimit :: Int -> Psql -> String
 getOffsetLimit pageCounter psql =
     let
-        limit = show . toInt
+        limit = show . scientificToInteger
         offset var = show $ read (limit var) * (pageCounter - 1)
     in case AT.parseMaybe (.: "page") psql of
         Just value@(Number pageLimit) ->
-            "OFFSET " <> offset value
-            <> " LIMIT " <> limit value
+            "OFFSET " <> offset pageLimit
+            <> " LIMIT " <> limit pageLimit
         Nothing                       -> []
 
 testApi,testConfig,testPsql :: Config
