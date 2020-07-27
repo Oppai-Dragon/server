@@ -6,12 +6,12 @@ import Config
 import Data.Base
 
 import qualified Data.ByteString.Char8 as BSC8
-import Data.ByteString (ByteString)
-import qualified Data.Text as T
+import qualified Data.ByteString       as BS
+import qualified Data.Text             as T
 
 type Action = T.Text
 type Actions = [Action]
-type Method = ByteString
+type Method = BS.ByteString
 
 isMethodCorrect :: Method -> Action -> Api -> Bool
 isMethodCorrect method action api =

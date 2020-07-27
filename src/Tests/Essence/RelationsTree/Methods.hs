@@ -4,8 +4,8 @@ module Data.Essence.Relations.Methods.Test
 
 import Config
 
-import Data.Essence.Relations
-import Data.Essence.Relations.Methods
+import Data.Essence.RelationsTree
+import Data.Essence.RelationsTree.Methods
 
 import Data.Aeson
 import Data.Aeson.Types
@@ -37,13 +37,12 @@ isEssenceRelationsTest =
     True
     $ isEssenceRelations "draft" testConfig
 
---getRelationsFieldsTest =
---    TestCase $
---    assertEqual
---    "for (getRelationsFields \"draft\" testConfig)"
---    ([()])
---    $ unsafePerformIO
---    $ getRelationsFields "draft"
+unpackLeafsTest =
+    TestCase $
+    assertEqual
+    "for (unpackLeafs \"person1\" [Leaf \"person_id\"] testObj)"
+    [("person_id", Number 1)]
+    $ unpackLeafs "person1" [Leaf "person_id"] testObj
 
 beforeUnderscoreTest =
     TestCase $
@@ -53,9 +52,9 @@ beforeUnderscoreTest =
 
 parseObjEssenceTest =
     TestCase $
-    assertEqual "for (parseObjEssence \"user\")"
-    "users1"
-    $ parseObjEssence "user"
+    assertEqual "for (parseObjEssence \"person\")"
+    "person1"
+    $ parseObjEssence "person"
 
 afterUnderscoreTest =
     TestCase $
@@ -63,32 +62,17 @@ afterUnderscoreTest =
     "lox"
     $ afterUnderscore "misha_lox"
 
---findEssenceTest =
---    TestCase $
---    assertEqual "for (findEssence )"
---    ()
---    $ findEssence
-
-getQueryBSFromObjTest =
+getListOfPairFromObjTest =
     TestCase $
-    assertEqual
-    "for (getQueryBSFromObj \"draft_id\" bTestObj)"
-    [("draft_id", Just "1")]
-    $ getQueryBSFromObj "draft_id" bTestObj
+    assertEqual "for (getListOfPairFromObj \"person_id\" testObj)"
+    [("id",Number 1)]
+    $ getListOfPairFromObj "person_id" testObj
 
-checkQueryBSTest =
+checkListTest =
     TestCase $
-    assertEqual
-    "for (checkQueryBS \"draft_id\" [(\"id\", Just \"1\")])"
-    [("id", Just "1")]
-    $ checkQueryBS "draft_id" [("id", Just "1")]
-
-unpackLeafsTest =
-    TestCase $
-    assertEqual
-    "for (unpackLeafs \"users1\" [Leaf \"user_id\"] testObj)"
-    [("user_id", Number 1)]
-    $ unpackLeafs "users1" [Leaf "user_id"] testObj
+    assertEqual "for (checkList \"person_id\" [(\"id\",\"1\")])"
+    [("id",Number 1)]
+    $ checkList "person_id" [("id","1")]
 
 getNextFieldTest =
     TestCase $
@@ -96,12 +80,6 @@ getNextFieldTest =
     "for (getNextField (Trunk \"kuk\" (Branch \"kek\" [])))"
     "kek"
     $ getNextField (Trunk "kuk" (Branch "kek" []))
-
---relationsHandlerTest =
---    TestCase $
---    assertEqual "for (relationsHandler )"
---    ()
---    $ relationsHandler "draft" [()] testConfig
 
 isRightRelationsTest =
     TestCase $
@@ -134,7 +112,7 @@ bTestObj = HM.fromList
     ]
 
 testObj = HM.fromList
-    [("users1",
+    [("person1",
         Object $ HM.fromList
         [("id", Number 1)]
      )

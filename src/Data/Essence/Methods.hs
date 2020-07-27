@@ -2,10 +2,10 @@ module Data.Essence.Methods
     ( addList
     , deletePair
     , getEssenceDB
+    , getEssenceDB'
     , getHashMapDesctiprion
     , iterateHashMapDBList
     , setDescription
-    , getEssenceDB'
     , getMyValue
     , getMaybeDataField
     , parseListOfPairs
@@ -56,6 +56,17 @@ getEssenceDB essence action conf =
         _                             ->
             EssenceDB "" "" HM.empty
 
+getEssenceDB' :: T.Text -> T.Text -> Config -> Essence Database
+getEssenceDB' essence action conf =
+    let unpackObj obj = do
+            (field,value) <- HM.toList obj
+            let resultArr = map parsePsql $ toStrArr value
+            return (T.unpack field, resultArr)
+    in case parseMaybe (.: essence) conf of
+        Just (Object obj) ->
+            EssenceDatabase essence action $ HM.fromList $ unpackObj obj
+        _                 -> EssenceDatabase "" "" HM.empty
+
 getHashMapDesctiprion :: Database -> DB
 getHashMapDesctiprion = HM.fromList . iterateHashMapDBList . HM.toList
 
@@ -73,17 +84,6 @@ setDescription description =
         relations   = getMaybeDataField $ lookup "relations" description
         constraint  = getMaybeDataField $ lookup "constraint" description
     in Description valueExpect value relations constraint
-
-getEssenceDB' :: T.Text -> T.Text -> Config -> Essence Database
-getEssenceDB' essence action conf =
-    let unpackObj obj = do
-            (field,value) <- HM.toList obj
-            let resultArr = map parsePsql $ toStrArr value
-            return (T.unpack field, resultArr)
-    in case parseMaybe (.: essence) conf of
-        Just (Object obj) ->
-            EssenceDatabase essence action $ HM.fromList $ unpackObj obj
-        _                 -> EssenceDatabase "" "" HM.empty
 
 getMaybeDataField :: Read a => Maybe String -> Maybe a
 getMaybeDataField Nothing      = Nothing

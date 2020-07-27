@@ -1,5 +1,20 @@
 module Data.Essence.RelationsTree.Methods
-     where
+    ( isEssenceRelations
+    , updateRelationsFields
+    , relationsHandler
+    , iterateRelations
+    , findEssence
+    , unpackLeafs
+    , beforeUnderscore
+    , parseObjEssence
+    , afterUnderscore
+    , getListOfPairFromObj
+    , checkList
+    , getNextField
+    , isRightRelations
+    , getIdPairFromObj
+    , ifExisteAddEssenceId
+    ) where
 
 import Prelude hiding (null, tail, takeWhile, dropWhile)
 
@@ -11,7 +26,7 @@ import Data.Essence.RelationsTree
 import Data.Essence.Methods
 import Data.Empty
 import Data.MyValue
-import Data.FromValue
+import Data.Value
 import DataBase.Get
 
 import Database.HDBC
@@ -149,8 +164,6 @@ checkList field listOfPair =
     in case lookup key listOfPair of
         (Just value) -> [(key, strToValue value)]
         Nothing      -> []
-
-
 
 getNextField :: RelationsTree a -> a
 getNextField relations =

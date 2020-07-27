@@ -11,6 +11,7 @@ import Data.Aeson
 import qualified Data.Vector         as V
 import qualified Data.HashMap.Strict as HM
 
+import Tests.Essence
 import Test.HUnit
 
 requiredMethodsTests =
@@ -71,15 +72,3 @@ myApplyTest =
     assertEqual "for (myApply (AND (\"id\":)) (AND [\"access_key\"]))"
     (AND ["id","access_key"] :: Required [String])
     $ myApply (AND ("id":)) (AND ["access_key"])
-
-testEssenceDB = EssenceDB "person" "create" $ HM.fromList testEssenceDBFields
-
-testEssenceDBFields =
-    [("id", Description (MyNextval "") (Just $ NOT NULL) Nothing Nothing)
-    ,("first_name", Description (MyString "") (Just $ NOT NULL) Nothing Nothing)
-    ,("last_name", Description (MyString "") (Just $ NOT NULL) Nothing Nothing)
-    ,("date_of_creation", Description (MyString "") (Just $ NOT NULL) Nothing Nothing)
-    ,("avatar", Description (MyString "") (Just NULL) Nothing Nothing)
-    ,("is_admin", Description (MyBool False) (Just NULL) Nothing Nothing)
-    ,("access_key", Description (MyString "") (Just NULL) Nothing Nothing)
-    ]

@@ -1,5 +1,12 @@
 module Data.Request.Control
-    ( isRequestCorrect
+    ( notFound
+    , isPathRequestCorrect
+    , ifEveryoneUpdate
+    , ifGetUpdate
+    , parseRequest
+    , isRequestCorrect
+    , getAccessArr
+    , accessCollector
     ) where
 
 import           Config
@@ -34,6 +41,11 @@ import           Control.Monad.Trans.Class          (lift)
 
 import           System.IO.Unsafe                               (unsafePerformIO)
 
+type Name = T.Text
+type Action = T.Text
+type Method = BS.ByteString
+type QueryMBS = [(BS.ByteString,Maybe BS.ByteString)]
+
 notFound :: Response
 notFound = responseBuilder status404 [] "Not found"
 
@@ -51,45 +63,53 @@ isPathRequestCorrect req api
                 Nothing -> False
             Nothing -> False
 
+ifEveryoneUpdate :: EssenceDB -> Access -> EssenceDB
+ifEveryoneUpdate essenceDB access = if access > Everyone
+    then EssenceDB (nameOf essenceDB) (actionOf essenceDB)
+        $ HM.insert "access_key"
+        (Description (MyString empty) (Just $ NOT NULL) Nothing Nothing)
+        (fieldsOf essenceDB)
+    else essenceDB
+
+ifGetUpdate :: EssenceDB -> EssenceDB
+ifGetUpdate essenceDB = if (actionOf essenceDB) == "get"
+    then EssenceDB (nameOf essenceDB) (actionOf essenceDB)
+        $ HM.insert "page"
+        (Description (MyInteger empty) Nothing Nothing Nothing)
+        (fieldsOf essenceDB)
+    else essenceDB
+
+parseRequest :: Request -> (EssenceName,Action,QueryMBS,Method)
+parseRequest req =
+    let
+        pathReq = pathInfo req
+        essence = head pathReq
+        action = head $ tail pathReq
+        queryMBS = queryString req
+        method = requestMethod req
+    in (essence,action,queryMBS,method)
+
 isRequestCorrect :: Request -> ReaderT Config IO (Bool, Response)
 isRequestCorrect req = do
     config <- ask
     api <- lift setApi
-    let pathReq = pathInfo req
-    let essence = head pathReq
-    let action = head $ tail pathReq
-    let queryBS = queryString req
-    let method = requestMethod req
+    let (essence,action,queryMBS,method) = parseRequest req
     let access = getAccess essence action api
     let essenceDB'' = getEssenceDB essence action config
-    let essenceDB' = if access > Everyone
-            then EssenceDB (nameOf essenceDB'') (actionOf essenceDB'')
-                $ HM.insert "access_key"
-                (Description (MyString empty) (Just $ NOT NULL) Nothing Nothing)
-                (fieldsOf essenceDB'')
-            else essenceDB''
-    let essenceDB = if action == "get"
-            then EssenceDB (nameOf essenceDB') (actionOf essenceDB')
-                $ HM.insert "page"
-                (Description (MyInteger empty) Nothing Nothing Nothing)
-                (fieldsOf essenceDB')
-            else essenceDB'
+    let essenceDB'  = ifEveryoneUpdate essenceDB'' access
+    let essenceDB   = ifGetUpdate essenceDB'
     let essenceFields = map T.unpack $ getEssenceFields essence config
-    let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryBS
+    let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
     let paramsMsg =
             byteStringCopy
-            $ BS8.pack
-            $ show
+            . BS8.pack
+            . show
             $ getRequiredFields essenceDB
-    accessArr <- lift $
-        case lookup "access_key" queryBS of
-            Just (Just accessKeyBS) ->
-                ([Everyone] <>) <$> accessCollector accessKeyBS
-            _                       -> pure [Everyone]
+    accessArr <- lift $ getAccessArr queryMBS
     let checkingList =
             [isPathRequestCorrect req api
             ,isMethodCorrect method action api
-            ,isRequiredParams essenceDB queryBS
+            ,isRequiredParams essenceDB queryMBS
             ,and $ isTypeParamsCorrect essenceDB listOfPairs
             ,isAccess essence action accessArr api]
     let elseThenList =
@@ -98,8 +118,14 @@ isRequestCorrect req = do
             ,(False, responseBuilder status400 [] paramsMsg)
             ,(False, responseBuilder status400 [] "Incorrect type of params")
             ,(False, notFound)
-            ,(True, undefined)]
+            ,(True, notFound)]
     pure $ ifElseThen checkingList elseThenList
+
+getAccessArr :: BS.ByteString -> IO [Access]
+getAccessArr queryMBS = case lookup "access_key" queryMBS of
+    Just (Just accessKeyBS) ->
+        ([Everyone] <>) <$> accessCollector accessKeyBS
+    _                       -> pure [Everyone]
 
 accessCollector :: BS.ByteString -> IO [Access]
 accessCollector accessKeyBS = do
