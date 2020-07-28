@@ -2,10 +2,10 @@ module Config
     ( Config
     , Api
     , Psql
-    , setConfig
-    , setPsql
-    , setApi
     , set
+    , setPsql
+    , setConfig
+    , setApi
     , setPath
     , setConfigPath
     , setPsqlPath
@@ -23,10 +23,11 @@ module Config
     , getMethodActions
     , getApiDBMethod
     , getRelationsTree
+    , getRelationsTree'
     , getOffsetLimit
+    , testApi
     , testConfig
     , testPsql
-    , testApi
     ) where
 
 import           Data.Base
@@ -53,8 +54,7 @@ type Actions        = [Action]
 type Config         = Object
 type Api            = Object
 type Psql           = Object
-type Essence        = T.Text
-type Essences       = [Essence]
+type EssenceName    = T.Text
 type Field          = T.Text
 type Fields         = [Field]
 type Method         = BS.ByteString
@@ -99,37 +99,36 @@ getApiActions api =
         Just (Object obj) -> HM.keys obj
         Nothing           -> []
 
-getEssenceFields :: Essence -> Config -> Fields
+getEssenceFields :: EssenceName -> Config -> Fields
 getEssenceFields essence conf =
     case AT.parseMaybe (.: essence) conf of
         Just (Object obj) -> HM.keys obj
         Nothing           -> []
 
 parseFieldsFunc :: Fields -> Object -> AT.Parser Value
-parseFieldsFunc [field] obj      =
-    obj .: field
-parseFieldsFunc (field:rest) obj =
-    obj .: field >>= parseFieldsFunc rest
+parseFieldsFunc [field] obj      = obj .: field
+parseFieldsFunc (field:rest) obj = obj .: field
+    >>= parseFieldsFunc rest
 
-getEssences :: Config -> [T.Text]
-getEssences conf = case AT.parseMaybe (.: "essences") conf of
+getEssences :: Api -> [T.Text]
+getEssences api = case AT.parseMaybe (.: "essences") api of
     Just arr@(Array vector) -> toTextArr arr
     _                       -> []
 
-getActionsForEssence :: Essence -> Api -> Actions
+getActionsForEssence :: EssenceName -> Api -> Actions
 getActionsForEssence essence api =
     let parseFunc = parseFieldsFunc ["access",essence]
     in case AT.parseMaybe parseFunc api of
         Just (Object obj) -> HM.keys obj
         Nothing           -> []
 
-getAccess :: Essence -> Action -> Api -> Access
+getAccess :: EssenceName -> Action -> Api -> Access
 getAccess essence action api =
     case lookup action (getActionsAccess essence api) of
         Just access -> access
         Nothing     -> minBound
 
-getActionsAccess :: Essence -> Api -> [(Action, Access)]
+getActionsAccess :: EssenceName -> Api -> [(Action, Access)]
 getActionsAccess essence api =
     let
         parseFunc = parseFieldsFunc
@@ -179,10 +178,10 @@ getApiDBMethod action api =
         Just (String text) -> text
         _                  -> ""
 
-getRelationsTree :: Essence -> Api -> RelationsTree Field
+getRelationsTree :: EssenceName -> Api -> RelationsTree Field
 getRelationsTree essence api = getRelationsTree' essence 0 essence api
 
-getRelationsTree' :: Essence -> Int -> Field -> Api -> RelationsTree Field
+getRelationsTree' :: EssenceName -> Int -> Field -> Api -> RelationsTree Field
 getRelationsTree' essence n field api =
     let
         parseFind = parseFieldsFunc

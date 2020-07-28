@@ -1,11 +1,20 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Setup
-    ( getCreateQuery
+    ( setup
+    , buildConfigJson
+    , updateEssenceFields
+    , createTables
+    , collectEssenceJson
+    , getEssenceObjects
+    , getAllQueris
+    , getCreateQuery
+    , parseAllQueries
+    , iterateObj
     ) where
 
 import Config
 import Data.Base (reverseMap,map2Var,ioStack)
-import Data.FromValue (toTextArr)
+import Data.Value
 
 import Data.Aeson
 import Data.Aeson.Types (parseMaybe)
@@ -95,7 +104,7 @@ getEssenceObjects = do
     let createStrList = "extension" : map T.unpack essences
     let createObjList =
             map
-            (\x -> unsafePerformIO $ set $ setPath $ "\\Setup\\" <> x <> ".json")
+            (\x -> unsafePerformIO . set . setPath $ "\\Setup\\" <> x <> ".json")
             createStrList
     return createObjList
 

@@ -1,5 +1,6 @@
 module Data.Essence.Parse
     ( parsePsql
+    , parsePsqlExpr
     , parseType
     , parseValue
     , parseRelations
@@ -11,9 +12,9 @@ module Data.Essence.Parse
     , parseIntArr
     , parseStr
     , parseStrArr
-    , parsePrimaryKey
     , parseNotNull
     , parseDefault
+    , parsePrimaryKey
     , parseUnique
     , parseOnAction
     ) where

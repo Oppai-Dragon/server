@@ -3,6 +3,8 @@ module Tests.Request.Params.Methods
     ) where
 
 import Data.Essence
+import Data.MyValue
+import Data.Required
 import Data.Request.Params.Methods
 
 import Tests.Essence
@@ -29,7 +31,7 @@ iterateRequiredParamsTest =
     TestCase $
     assertEqual
     "for (iterateRequiredParams (Required [AND [\"first_name\",\"last_name\"]]) [(\"first_name\",\"misha\"),(\"last_name\",\"dragon\")])"
-    $ iterateRequiredParams
+    True $ iterateRequiredParams
     (Required [AND ["first_name","last_name"]])
     [("first_name","misha"),("last_name","dragon")]
 

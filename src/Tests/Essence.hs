@@ -5,14 +5,50 @@ import Data.Essence
 
 import qualified Data.HashMap.Strict as HM
 
-testEssenceDB = EssenceDB "person" "create" $ HM.fromList testEssenceDBFields
+testEssenceList = EssenceList "person" "create" testEssenceListFields
+testEssenceListFields =
+    [("first_name","misha")
+    ,("last_name","dragon")
+    ]
 
-testEssenceDBFields =
-    [("id", Description (MyNextval "") (Just $ NOT NULL) Nothing Nothing)
-    ,("first_name", Description (MyString "") (Just $ NOT NULL) Nothing Nothing)
-    ,("last_name", Description (MyString "") (Just $ NOT NULL) Nothing Nothing)
-    ,("date_of_creation", Description (MyString "") (Just $ NOT NULL) Nothing Nothing)
-    ,("avatar", Description (MyString "") (Just NULL) Nothing Nothing)
-    ,("is_admin", Description (MyBool False) (Just NULL) Nothing Nothing)
-    ,("access_key", Description (MyString "") (Just NULL) Nothing Nothing)
+testEssenceDatabase = EssenceDatabase "person" "create"
+    $ HM.fromList testEssenceDatabaseFields
+testEssenceDatabaseFields =
+    zip testEssemceDatabaseFieldsName testEssenceDatabaseDescription
+testEssemceDatabaseFieldsName =
+    [ "id"
+    , "avatar"
+    , "date_of_creation"
+    , "is_admin"
+    , "access_key"
+    , "last_name"
+    , "first_name"
+    ]
+testEssenceDatabaseDescription =
+    [[("type","int"),("constraint","primary key")]
+    ,[("type","string"),("value","null")]
+    ,[("type","date"),("value","not null")]
+    ,[("type","bool"),("value","null")]
+    ,[("type","uuid"),("value","null")]
+    ,[("type","string"),("value","not null")]
+    ,[("type","string"),("value","not null")]
+    ]
+
+testEssenceDB = EssenceDB "person" "create" $ HM.fromList testEssenceDBFields
+testEssenceDBFields = zip testEssemceDBFieldsName testEssenceDBDescription
+testEssemceDBFieldsName =
+    [ "id"
+    , "avatar"
+    , "date_of_creation"
+    , "is_admin"
+    , "last_name"
+    , "first_name"
+    ]
+testEssenceDBDescription =
+    [ Description (MyInteger 0) Nothing             Nothing (Just PRIMARY)
+    , Description (MyString "") (Just NULL)         Nothing Nothing
+    , Description (MyDate "") (Just $ NOT NULL)     Nothing Nothing
+    , Description (MyBool False) (Just NULL)        Nothing Nothing
+    , Description (MyString "") (Just $ NOT NULL)   Nothing Nothing
+    , Description (MyString "") (Just $ NOT NULL)   Nothing Nothing
     ]

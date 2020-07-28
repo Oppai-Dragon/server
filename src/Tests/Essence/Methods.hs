@@ -1,18 +1,30 @@
-module Tests.Essence.Parse
-    ( essenceParseTests ) where
+module Tests.Essence.Methods
+    ( essenceMethodsTests
+    ) where
 
 import Config
 import Data.MyValue         (MyValue (..))
 import Data.Essence
-import Data.Essence.Parse
+import Data.Essence.Methods
+import Data.SQL.Actions
+
+import qualified Data.HashMap.Strict as HM
+import           Control.Monad.Trans.Reader
+
+import Tests.Essence
 
 import Test.HUnit
 
-essenceParseTests =
-    [ TestLabel "getEssenceDBTest"              getEssenceDBTest
-    , TestLabel "getHashMapDesctiprionTest"     getHashMapDesctiprionTest
-    , TestLabel "iterateHashMapDBTest"          iterateHashMapDBTest
+essenceMethodsTests =
+    [ TestLabel "addListTest"                   addListTest
+    , TestLabel "deletePairTest"                deletePairTest
+    , TestLabel "getEssenceDBTest"              getEssenceDBTest
     , TestLabel "getEssenceDB'Test"             getEssenceDB'Test
+    , TestLabel "getHashMapDesctiprionTest"     getHashMapDesctiprionTest
+    , TestLabel "iterateHashMapDBListTest"      iterateHashMapDBListTest
+    , TestLabel "setDescriptionTest"            setDescriptionTest
+    , TestLabel "getMaybeDataFieldTest"         getMaybeDataFieldTest
+    , TestLabel "getMyValueTest"                getMyValueTest
     , TestLabel "parse_edit_ListOfPairsTest"    parse_edit_ListOfPairsTest
     , TestLabel "parse_get_ListOfPairsTest"     parse_get_ListOfPairsTest
     , TestLabel "parse_delete_ListOfPairsTest"  parse_delete_ListOfPairsTest
@@ -26,29 +38,62 @@ essenceParseTests =
     , TestLabel "toEssenceListTest"             toEssenceListTest
     ]
 
+addListTest =
+    TestCase $
+    assertEqual
+    "for (addList [(\"access_key\",\"key\")] testEssenceList)"
+    (EssenceList "person" "create" [("access_key","key"),("first_name","misha"),("last_name","dragon")])
+    $ addList [("access_key","key")] testEssenceList
+
+deletePairTest =
+    TestCase $
+    assertEqual
+    "for (deletePair \"first_name\" testEssenceList)"
+    (EssenceList "person" "create" [("last_name","dragon")])
+    $ deletePair "first_name" testEssenceList
+
 getEssenceDBTest =
     TestCase $
-    assertEqual "for (getEssenceDB )"
-
-    $ getEssenceDB
-
-getHashMapDesctiprionTest =
-    TestCase $
-    assertEqual "for (getHashMapDesctiprion )"
-
-    $ getHashMapDesctiprion
-
-iterateHashMapDBTest =
-    TestCase $
-    assertEqual "for (iterateHashMapDB )"
-
-    $ iterateHashMapDB
+    assertEqual "for (getEssenceDB \"person\" \"create\" testConfig)"
+    testEssenceDB
+    $ getEssenceDB "person" "create" testConfig
 
 getEssenceDB'Test =
     TestCase $
-    assertEqual "for (getEssenceDB' )"
+    assertEqual "for (getEssenceDB' \"person\" \"create\" testConfig)"
+    testEssenceDatabase
+    $ getEssenceDB' "person" "create" testConfig
 
-    $ getEssenceDB' "person" testConfig
+getHashMapDesctiprionTest =
+    TestCase $
+    assertEqual "for (getHashMapDesctiprion (HM.fromList testEssenceDatabaseFields))"
+    (HM.fromList testEssenceDBFields)
+    $ getHashMapDesctiprion (HM.fromList testEssenceDatabaseFields)
+
+iterateHashMapDBListTest =
+    TestCase $
+    assertEqual "for (iterateHashMapDBList testEssenceDatabaseFields)"
+    testEssenceDBFields
+    $ iterateHashMapDBList testEssenceDatabaseFields
+
+setDescriptionTest =
+    TestCase $
+    assertEqual "for (setDescription testEssenceDatabaseDescription)"
+    (Description (MyInteger 0) Nothing Nothing (Just PRIMARY))
+    $ setDescription [("type","int"),("constraint","primary key")]
+
+getMaybeDataFieldTest =
+    TestCase $
+    assertEqual "for (getMaybeDataField (Just \"null\"))"
+    (Just NULL)
+    $ getMaybeDataField (Just "null")
+
+getMyValueTest =
+    TestCase $
+    assertEqual "for (getMyValue \"int\")"
+    (MyInteger 0)
+    $ getMyValue "int"
+
 
 parse_edit_ListOfPairsTest =
     TestCase $
@@ -110,8 +155,12 @@ parseFieldValueTest =
     [("id", MyInteger 1), ("first_name", MyEmpty)]
     $ parseFieldValue ["id","first_name"] [("id", Just "1"), ("first_name", Nothing)]
 
-fromQueryTest =
+toEssenceListTest =
     TestCase $
-    assertEqual "for (fromQuery \"user\" [(\"id\", Just \"1\")] testConfig)"
-    (Essence "category" [("id", "1")])
-    $ fromQuery "category" [("id", Just "1")] testConfig
+    runReaderT (toEssenceList testEssenceDB
+        [("first_name",Just "misha")
+        ,("last_name",Just "dragon")
+        ]) testConfig >>=
+    assertEqual
+    "for (toEssenceList testEssenceDB [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
+    (EssenceList "person" "create" [("first_name","'misha'"),("last_name","'dragon'")])

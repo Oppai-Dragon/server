@@ -45,8 +45,8 @@ instance Read MyValue where
         "array int"     -> [(MyIntegers [],"")]
         "string"        -> [(MyString [],"")]
         "array string"  -> [(MyStrings [],"")]
-        "date"          -> [(MyString [],"")]
-        "bool"          -> [(MyDate [],"")]
+        "date"          -> [(MyDate [],"")]
+        "bool"          -> [(MyBool False,"")]
         "uuid"          -> [(MyString [],"")]
 
 parseStrings :: String -> String

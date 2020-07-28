@@ -1,14 +1,15 @@
-module Data.Request.Control.Test
+module Tests.Request.Control
     ( requestControlTests
     ) where
 
 import Config
-import Data.Access
+import Data.Request.Access
 import Data.Essence
 import Data.MyValue
 import Data.Request.Control
 
 import qualified Data.HashMap.Strict as HM
+import           Control.Monad.Trans.Reader
 
 import Tests.Essence
 import Tests.Request
@@ -50,11 +51,12 @@ parseRequestTest =
 
 isRequestCorrectTest =
     TestCase $
-    runReaderT isRequestCorrect testConfig >>=
-    assertEqual "for (isRequestCorrect testPostReq)" (True,notFound)
+    runReaderT (isRequestCorrect testPostReq) testConfig >>=
+    assertEqual "for (isRequestCorrect testPostReq)" True . fst
 
 getAccessArrTest =
     TestCase $
-    getAccessArrTest [("first_name",Just "misha"),("last_name",Just "dragon")] >>=
-    assertEqual "for (getAccessArr [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
+    getAccessArr [("first_name",Just "misha"),("last_name",Just "dragon")] >>=
+    assertEqual
+    "for (getAccessArr [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
     [Everyone]

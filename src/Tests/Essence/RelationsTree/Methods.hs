@@ -1,5 +1,5 @@
-module Data.Essence.Relations.Methods.Test
-    ( essenceRelationsMethodsTests
+module Tests.Essence.RelationsTree.Methods
+    ( essenceRelationsTreeMethodsTests
     ) where
 
 import Config
@@ -17,7 +17,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 import Test.HUnit
 
-essenceRelationsMethodsTests =
+essenceRelationsTreeMethodsTests =
     [ TestLabel "isEssenceRelationsTest"    isEssenceRelationsTest
     , TestLabel "unpackLeafsTest"           unpackLeafsTest
     , TestLabel "beforeUnderscoreTest"      beforeUnderscoreTest
@@ -27,7 +27,7 @@ essenceRelationsMethodsTests =
     , TestLabel "checkListTest"             checkListTest
     , TestLabel "getNextFieldTest"          getNextFieldTest
     , TestLabel "isRightRelationsTest"      isRightRelationsTest
-    , TestLabel "getIdFromQueryBSTest"      getIdFromQueryBSTest
+    , TestLabel "getIdPairFromObjTest"      getIdPairFromObjTest
     ]
 
 isEssenceRelationsTest =
@@ -41,7 +41,7 @@ unpackLeafsTest =
     TestCase $
     assertEqual
     "for (unpackLeafs \"person1\" [Leaf \"person_id\"] testObj)"
-    [("person_id", Number 1)]
+    [("person_id", "1")]
     $ unpackLeafs "person1" [Leaf "person_id"] testObj
 
 beforeUnderscoreTest =
@@ -88,12 +88,12 @@ isRightRelationsTest =
     False
     $ isRightRelations rTestObj bTestObj "author_id" "draft"
 
-getIdFromQueryBSTest =
+getIdPairFromObjTest =
     TestCase $
     assertEqual
-    "for (getIdFromQueryBS \"draft\" bTestObj)"
-    [("id", Just "1")]
-    $ getIdFromQueryBS "draft" bTestObj
+    "for (getIdPairFromObj \"draft\" bTestObj)"
+    [("id", "1")]
+    $ getIdPairFromObj "draft" bTestObj
 
 rTestObj = HM.fromList
     [("author1",

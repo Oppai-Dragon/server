@@ -1,6 +1,5 @@
 module Data.Request.Control
-    ( notFound
-    , isPathRequestCorrect
+    ( isPathRequestCorrect
     , ifEveryoneUpdate
     , ifGetUpdate
     , parseRequest
@@ -42,8 +41,8 @@ import           Control.Monad.Trans.Class          (lift)
 import           System.IO.Unsafe                               (unsafePerformIO)
 
 type Name = T.Text
+type EssenceName = Name
 type Action = T.Text
-type Method = BS.ByteString
 type QueryMBS = [(BS.ByteString,Maybe BS.ByteString)]
 
 notFound :: Response
@@ -63,7 +62,7 @@ isPathRequestCorrect req api
                 Nothing -> False
             Nothing -> False
 
-ifEveryoneUpdate :: EssenceDB -> Access -> EssenceDB
+ifEveryoneUpdate :: Essence DB -> Access -> Essence DB
 ifEveryoneUpdate essenceDB access = if access > Everyone
     then EssenceDB (nameOf essenceDB) (actionOf essenceDB)
         $ HM.insert "access_key"
@@ -71,7 +70,7 @@ ifEveryoneUpdate essenceDB access = if access > Everyone
         (fieldsOf essenceDB)
     else essenceDB
 
-ifGetUpdate :: EssenceDB -> EssenceDB
+ifGetUpdate :: Essence DB -> Essence DB
 ifGetUpdate essenceDB = if (actionOf essenceDB) == "get"
     then EssenceDB (nameOf essenceDB) (actionOf essenceDB)
         $ HM.insert "page"
@@ -121,7 +120,7 @@ isRequestCorrect req = do
             ,(True, notFound)]
     pure $ ifElseThen checkingList elseThenList
 
-getAccessArr :: BS.ByteString -> IO [Access]
+getAccessArr :: QueryMBS -> IO [Access]
 getAccessArr queryMBS = case lookup "access_key" queryMBS of
     Just (Just accessKeyBS) ->
         ([Everyone] <>) <$> accessCollector accessKeyBS

@@ -20,22 +20,25 @@ import Data.Text (Text,unpack,pack)
 type Field    = String
 type Value    = String
 type List     = [(Field,Value)]
-type Database = HashMap String List
-type DB       = HashMap String Description
+type Database = HashMap Field List
+type DB       = HashMap Field Description
 
 data family Essence a
-data instance Essence [(Field,A.Value)] = EssenceValue String String [(Field,A.Value)]
-data instance Essence Database = EssenceDatabase Text Text Database deriving Show
+data instance Essence [(Field,A.Value)] =
+    EssenceValue Field Field [(Field,A.Value)]
+data instance Essence Database =
+    EssenceDatabase Text Text Database
+    deriving (Show,Eq)
 data instance Essence DB = EssenceDB
     { nameOf          :: Text
     , actionOf        :: Text
     , fieldsOf        :: DB
-    } deriving Show
+    } deriving (Show,Eq)
 data instance Essence List = EssenceList
-    { name          :: String
-    , action        :: String
+    { name          :: Field
+    , action        :: Field
     , list          :: List
-    }
+    } deriving Eq
 
 instance Monoid (Essence List) where
     mempty = EssenceList "" "" []
@@ -51,10 +54,10 @@ data Description = Description
     , valueOf       :: Maybe VALUE
     , relationsOf   :: Maybe Relations
     , constraintOf  :: Maybe Constraint
-    } deriving Show
+    } deriving (Show,Eq)
 
 data VALUE = NULL | NOT VALUE
-    deriving Show
+    deriving (Show,Eq)
 instance Read VALUE where
     readsPrec _ input = case input of
         "null"     -> [(NULL,"")]
@@ -63,7 +66,7 @@ instance Read VALUE where
 data Relations = Relations
     { table :: Text
     , field :: Text
-    } deriving Show
+    } deriving (Show,Eq)
 instance Read Relations where
     readsPrec _ input =
         let
@@ -73,7 +76,7 @@ instance Read Relations where
         in [(Relations table field,"")]
 
 data Constraint = UNIQUE | PRIMARY | OnAction
-    deriving Show
+    deriving (Show,Eq)
 instance Read Constraint where
     readsPrec _ input = case input of
         "primary key"        -> [(PRIMARY,"")]

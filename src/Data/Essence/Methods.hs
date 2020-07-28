@@ -6,8 +6,8 @@ module Data.Essence.Methods
     , getHashMapDesctiprion
     , iterateHashMapDBList
     , setDescription
-    , getMyValue
     , getMaybeDataField
+    , getMyValue
     , parseListOfPairs
     , parseOnlyValues
     , parseOnlyFields
@@ -73,16 +73,16 @@ getHashMapDesctiprion = HM.fromList . iterateHashMapDBList . HM.toList
 iterateHashMapDBList :: [(String,List)] -> [(String,Description)]
 iterateHashMapDBList []                         = []
 iterateHashMapDBList (("access_key",_):rest)    = iterateHashMapDBList rest
-iterateHashMapDBList ((field,description):rest) =
-    (field,setDescription description) : iterateHashMapDBList rest
+iterateHashMapDBList ((field,list):rest)        =
+    (field,setDescription list) : iterateHashMapDBList rest
 
 setDescription :: List -> Description
-setDescription description =
+setDescription list =
     let
-        valueExpect = getMyValue $ fromJust $ lookup "type" description
-        value       = getMaybeDataField $ lookup "value" description
-        relations   = getMaybeDataField $ lookup "relations" description
-        constraint  = getMaybeDataField $ lookup "constraint" description
+        valueExpect = getMyValue $ fromJust $ lookup "type" list
+        value       = getMaybeDataField $ lookup "value" list
+        relations   = getMaybeDataField $ lookup "relations" list
+        constraint  = getMaybeDataField $ lookup "constraint" list
     in Description valueExpect value relations constraint
 
 getMaybeDataField :: Read a => Maybe String -> Maybe a
@@ -109,9 +109,6 @@ parseOnlyFields fieldValue =
     L.intercalate ","
     $ fst
     $ unzip fieldValue
-
---parseFildsValues ::
-parseFildsValues func fieldValue = L.intercalate "," $ func $ unzip fieldValue
 
 withoutEmpty :: [(String, MyValue)] -> [(String, MyValue)]
 withoutEmpty [] = []

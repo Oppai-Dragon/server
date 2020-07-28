@@ -25,8 +25,8 @@ import Data.Essence
 import Data.Essence.RelationsTree
 import Data.Essence.Methods
 import Data.Empty
-import Data.MyValue
-import Data.Value
+import qualified Data.MyValue           as MyValue
+import qualified Data.Value             as Value
 import DataBase.Get
 
 import Database.HDBC
@@ -86,7 +86,7 @@ relationsHandler name = do
         Root rEssence (Leaf key)                            ->
             case lookup (T.unpack key) (list essenceList) of
                 (Just accessKey) -> do
-                    (Object obj) <- lift $ dbGetOne (EssenceValue (T.unpack rEssence) "get" [(T.unpack key, strToValue accessKey)])
+                    (Object obj) <- lift $ dbGetOne (EssenceValue (T.unpack rEssence) "get" [(T.unpack key, Value.fromStr accessKey)])
                     return obj
                 _              -> return HM.empty
         _                                                   -> return HM.empty
@@ -134,7 +134,7 @@ unpackLeafs root (Leaf field :rest) obj =
         key = afterUnderscore field
         parseFunc = parseFieldsFunc [root,key]
     in case parseMaybe parseFunc obj of
-        Just value -> (T.unpack field, valueToStr value) : unpackLeafs root rest obj
+        Just value -> (T.unpack field, Value.toStr value) : unpackLeafs root rest obj
         Nothing    -> unpackLeafs root rest obj
 
 beforeUnderscore :: Name -> Name
@@ -162,7 +162,7 @@ checkList field listOfPair =
         findKey = T.unpack . afterUnderscore
         key = findKey field
     in case lookup key listOfPair of
-        (Just value) -> [(key, strToValue value)]
+        (Just value) -> [(key, Value.fromStr value)]
         Nothing      -> []
 
 getNextField :: RelationsTree a -> a
@@ -211,7 +211,7 @@ isRightRelations rootObj branchObj rootEssence branchEssence =
 getIdPairFromObj :: Name -> Object -> [(String,String)]
 getIdPairFromObj name obj =
     case getListOfPairFromObj (name <> "_id") obj of
-        [(field,value)] -> [(field, toStr value)]
+        [(field,value)] -> [(field, Value.toStr value)]
         other           -> []
 
 ifExisteAddEssenceId :: StateT (Essence List) (ReaderT Config IO) ()
@@ -226,7 +226,7 @@ ifExisteAddEssenceId = do
         Just (Object obj1) ->
             case lookup (getRoot obj1) list of
                 Just value -> do
-                    (Object obj2) <- lift $ dbGetOne (EssenceValue name "get" [(getRoot obj1,strToValue value)])
+                    (Object obj2) <- lift $ dbGetOne (EssenceValue name "get" [(getRoot obj1,Value.fromStr value)])
                     if HM.null obj2
                         then return ()
                         else put $ addList (getIdPairFromObj (T.pack name) obj2) (EssenceList name changeAction list)
