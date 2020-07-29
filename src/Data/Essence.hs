@@ -19,7 +19,7 @@ import Data.Text (Text,unpack,pack)
 
 type Field    = String
 type Value    = String
-type List     = [(Field,Value)]
+type List     = [(Field,MyValue)]
 type Database = HashMap Field List
 type DB       = HashMap Field Description
 
@@ -45,9 +45,9 @@ instance Monoid (Essence List) where
 instance Semigroup (Essence List) where
     EssenceList name1 action listOfPairs1 <> EssenceList name2 _ listOfPairs2 =
         let
-            nameArr = name1 <> "," <> name2
+            name = if null name2 then name1 else name1 <> "," <> name2
             listArr = listOfPairs1 <> listOfPairs2
-        in EssenceList nameArr action listArr
+        in EssenceList name action listArr
 
 data Description = Description
     { valueTypeOf   :: MyValue

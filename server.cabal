@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b0a3d4fe6f23c0847e5657fa15704537bcd9fa412e573b0e81bdab54d5df0f0c
+-- hash: 3f7a38e023c76dccc099ff96f0369769f0b5414ee7b1d36555cd711cfdee7c39
 
 name:           server
 version:        0.1.0.0
@@ -32,6 +32,7 @@ library
       Data.Base
       Data.Empty
       Data.Essence
+      Data.Essence.Clause
       Data.Essence.Methods
       Data.Essence.Parse
       Data.Essence.RelationsTree
@@ -61,6 +62,7 @@ library
       Tests.Base
       Tests.Config
       Tests.Essence
+      Tests.Essence.Clause
       Tests.Essence.Methods
       Tests.Essence.Parse
       Tests.Essence.RelationsTree.Methods

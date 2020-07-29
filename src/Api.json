@@ -103,9 +103,11 @@
     , "search_author_name":["VARCHAR(50)"]
     , "search_category_name":["VARCHAR(25)"]
     , "search_tag_name":["VARCHAR(20)"]
-    , "sort_date_of_creation":["DATE"]
-    , "sort_author_name":["VARCHAR(50)"]
-    , "sort_category_name":["VARCHAR(30)"]
-    , "sort_number_of_photos":["INT"]
+    , "sort":
+        [ "date_of_creation"
+        , "author_name"
+        , "category_name"
+        , "number_of_photos"
+        ]
     }
 }

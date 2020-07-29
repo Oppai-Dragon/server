@@ -3,7 +3,7 @@ module Tests.Required.Methods
     ) where
 
 import Data.Essence
-import Data.MyValue
+import Data.requiredValue
 import Data.Required
 import Data.Required.Methods
 
@@ -21,8 +21,8 @@ requiredMethodsTests =
     , TestLabel "iterateHMGetTest"      iterateHMGetTest
     , TestLabel "iterateHMEditTest"     iterateHMEditTest
     , TestLabel "iterateHMDeleteTest"   iterateHMDeleteTest
-    , TestLabel "mySequenceATest"       mySequenceATest
-    , TestLabel "myApplyTest"           myApplyTest
+    , TestLabel "requiredSequenceATest" requiredSequenceATest
+    , TestLabel "requiredApplyTest"           requiredApplyTest
     ]
 
 getRequiredFieldsTest =
@@ -61,14 +61,14 @@ iterateHMDeleteTest =
     ([AND "id",AND "access_key"] :: [Required String])
     $ iterateHMDelete testEssenceDBFields
 
-mySequenceATest =
+requiredSequenceATest =
     TestCase $
-    assertEqual "for (mySequenceA (Required [AND \"id\",AND \"access_key\"]))"
+    assertEqual "for (requiredSequenceA (Required [AND \"id\",AND \"access_key\"]))"
     (AND ["id","access_key"] :: Required [String])
-    $ mySequenceA [AND "id",AND "access_key"]
+    $ requiredSequenceA [AND "id",AND "access_key"]
 
-myApplyTest =
+requiredApplyTest =
     TestCase $
-    assertEqual "for (myApply (AND (\"id\":)) (AND [\"access_key\"]))"
+    assertEqual "for (requiredApply (AND (\"id\":)) (AND [\"access_key\"]))"
     (AND ["id","access_key"] :: Required [String])
-    $ myApply (AND ("id":)) (AND ["access_key"])
+    $ requiredApply (AND ("id":)) (AND ["access_key"])

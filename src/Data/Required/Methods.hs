@@ -6,8 +6,8 @@ module Data.Required.Methods
     , iterateHMGet
     , iterateHMEdit
     , iterateHMDelete
-    , mySequenceA
-    , myApply
+    , requredSequenceA
+    , requiredApply
     ) where
 
 import Data.Essence
@@ -27,8 +27,8 @@ getRequiredFields :: Essence DB -> Required Fields
 getRequiredFields (EssenceDB name action hashMap) =
     let
         arr = iterateHM (HM.toList hashMap) action
-        andFields = mySequenceA $ filter (\case { AND _ -> True; _ -> False }) arr
-        orFields = mySequenceA $ filter (\case { OR _ -> True; _ -> False }) arr
+        andFields = requredSequenceA $ filter (\case { AND _ -> True; _ -> False }) arr
+        orFields = requredSequenceA $ filter (\case { OR _ -> True; _ -> False }) arr
     in Required [andFields,orFields]
 
 iterateHM :: [(String,Description)] -> Action -> [Required Field]
@@ -63,14 +63,14 @@ iterateHMDelete ((field,description):rest) =
         "access_key" -> AND field : iterateHMDelete rest
         _            -> iterateHMDelete rest
 
-mySequenceA :: [Required a] -> Required [a]
-mySequenceA arrRequired = case arrRequired of
+requredSequenceA :: [Required a] -> Required [a]
+requredSequenceA arrRequired = case arrRequired of
     []      -> NullFields
     [AND x] -> AND [x]
     [OR x]  -> OR [x]
-    x:xs    -> fmap (:) x `myApply` mySequenceA xs
+    x:xs    -> fmap (:) x `requiredApply` requredSequenceA xs
 
-myApply :: Required (a -> a) -> Required a -> Required a
-myApply required x = case required of
+requiredApply :: Required (a -> a) -> Required a -> Required a
+requiredApply required x = case required of
     AND func -> fmap func x
     OR func  -> fmap func x

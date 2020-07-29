@@ -22,6 +22,7 @@ import Config
 
 import Data.Essence
 import Data.Essence.Parse
+import Data.Essence.Clause
 import Data.Empty
 import Data.MyValue
 import Data.Value
@@ -39,6 +40,7 @@ import qualified Data.List             as L
 import           Control.Monad.Trans.Reader
 
 type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
+type Field = String
 
 addList :: List -> Essence List -> Essence List
 addList list1 (EssenceList name action list2) =
@@ -110,27 +112,61 @@ parseOnlyFields fieldValue =
     $ fst
     $ unzip fieldValue
 
-withoutEmpty :: [(String, MyValue)] -> [(String, MyValue)]
+withoutEmpty :: [(Field, MyValue)] -> [(Field, MyValue)]
 withoutEmpty [] = []
 withoutEmpty (x@(l,r):xs) =
     if isEmpty r
         then withoutEmpty xs
         else x : withoutEmpty xs
 
-toList :: [(String, MyValue)] -> [(String, String)]
+toList :: [(Field, MyValue)] -> [(Field, String)]
 toList = map (\(l,r) -> (l,parseEmpty r)) . withoutEmpty
 
+parseClause :: (String,MyValue) ->
+parseClause (clause,myValue) =
+        let
+            name = takeWhile (/='_') clause
+            value = parseEmpty myValue
+            valueStr = toStr myValue
+        in case name of
+            "filter" ->
+                Filter $
+                case field of
+                    "created_id"    -> "date_of_creation=" <> value
+                    "created_after" -> "date_of_creation>" <> value
+                    "created_before"-> "date_of_creation<" <> value
+                    "tag"           -> value <> "=ANY(tag_ids)"
+                    "tags_in"       -> parseTagsIn value
+                    "tags_all"      -> "tag_ids=ARRAY" <> value
+                    "name"          -> "name=" <> parseSubStr valueStr
+                    "content"       -> "content=" <> parseSubStr valueStr
+                    "author_name"   -> parseAuthorName name valueStr
+
+            "sort"   ->
+                OrderBy $
+                case value of
+                    "author_name"      -> parseAuthorName name valueStr
+                    "number_of_photos" -> "ARRAY_LENGTH(draft_optional_photos, 1) DESC, draft_main_photo"
+                    "category_name"    -> "category.name"
+                    _                  -> field
+            "search" ->
+                Where $
+                case field of
+                    "author_name" -> parseAuthorName name value
+                    _             -> field (" ILIKE(" <> parseSearchStr value <> ")")
+            _        ->
+
 parseBSValue ::
-    String -> [(String, Maybe BS.ByteString)]
-    -> (String, MyValue)
+    Field -> [(Field, Maybe BS.ByteString)]
+    -> (Field, MyValue)
 parseBSValue field bss =
     case lookup field bss of
         Just (Just var) -> (field, fromBS var)
         _               -> (field, MyEmpty)
 
 parseFieldValue ::
-    [String] -> [(BS.ByteString, Maybe BS.ByteString)]
-    -> [(String, MyValue)]
+    [Field] -> [(BS.ByteString, Maybe BS.ByteString)]
+    -> [(Field, MyValue)]
 parseFieldValue []             _   = []
 parseFieldValue (field:fields) bss =
     let bss' = map (\(l,r) -> (BSC8.unpack l,r)) bss
