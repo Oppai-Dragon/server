@@ -1,4 +1,4 @@
-module Data.Essence.Clause
+module Data.Essence.Parse.Clause
     ( parseTagsIn
     , parseAuthorName
     , parseAuthorAnyName

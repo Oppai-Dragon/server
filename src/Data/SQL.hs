@@ -1,6 +1,11 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
-module Data.SQL where
+module Data.SQL
+    ( clauseSequenceA
+    , ShowSQL (..)
+    , SqlQuery (..)
+    , Clause (..)
+    ) where
 
 import Data.Empty
 import Data.MyValue
@@ -41,7 +46,7 @@ instance ShowSQL SqlQuery where
     showSql (Insert table fields values) =
         "INSERT INTO " <> table
         <> " (" <> intercalate "," fields
-        <> ") VALUES (" <> (intercalate "," . map parseEmpty) values
+        <> ") VALUES (" <> (intercalate "," . map parseValue) values
         <> ");"
     showSql (Edit table setPart wherePart) =
         "UPDATE " <> table
@@ -74,8 +79,6 @@ instance Eq (Clause String) where
     Set _     == Set _     = True
     Where _   == Where _   = True
     Filter _  == Filter _  = True
-    Where _   == Filter _  = True
-    Filter _  == Where _   = True
     OrderBy _ == OrderBy _ = True
     _         == _         = False
 instance Ord (Clause String) where
@@ -95,8 +98,8 @@ instance Ord (Clause String) where
     compare (OrderBy _) (Filter _) = LT
     compare (OrderBy _) _          = GT
 instance ShowSQL (Clause String) where
-    unpack (Set (field,myValue))     = show $ (field,parseEmpty myValue)
-    unpack (Where (field,myValue))   = show $ (field,parseEmpty myValue)
+    unpack (Set (field,myValue))     = show $ (field,parseValue myValue)
+    unpack (Where (field,myValue))   = show $ (field,parseValue myValue)
     unpack (Filter x)                = show x
     unpack (OrderBy x)               = show x
 instance ShowSQL [Clause String] where
@@ -109,19 +112,19 @@ instance Eq (Clause [String]) where
     OrderByList _ == OrderByList _ = True
     _             == _             = False
 instance Ord (Clause [String]) where
-    compare (SetList _) _ = GT
+    compare (SetList _) _ = LT
 
-    compare (WhereList _) (SetList _) = LT
-    compare (WhereList _) _           = GT
+    compare (WhereList _) (SetList _) = GT
+    compare (WhereList _) _           = LT
 
-    compare (FilterList _) (SetList _)   = LT
-    compare (FilterList _) (WhereList _) = LT
-    compare (FilterList _) _             = GT
+    compare (FilterList _) (SetList _)   = GT
+    compare (FilterList _) (WhereList _) = GT
+    compare (FilterList _) _             = LT
 
-    compare (OrderByList _) (SetList _)    = LT
-    compare (OrderByList _) (WhereList _)  = LT
-    compare (OrderByList _) (FilterList _) = LT
-    compare (OrderByList _) _              = GT
+    compare (OrderByList _) (SetList _)    = GT
+    compare (OrderByList _) (WhereList _)  = GT
+    compare (OrderByList _) (FilterList _) = GT
+    compare (OrderByList _) _              = LT
 
 instance ShowSQL (Clause [String]) where
     showSql = parseList

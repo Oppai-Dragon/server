@@ -22,7 +22,7 @@ import Config
 
 import Data.Essence
 import Data.Essence.Parse
-import Data.Essence.Clause
+import Data.Essence.ParseClause
 import Data.Empty
 import Data.MyValue
 import Data.Value
@@ -120,13 +120,13 @@ withoutEmpty (x@(l,r):xs) =
         else x : withoutEmpty xs
 
 toList :: [(Field, MyValue)] -> [(Field, String)]
-toList = map (\(l,r) -> (l,parseEmpty r)) . withoutEmpty
+toList = map (\(l,r) -> (l,parseValue r)) . withoutEmpty
 
 parseClause :: (String,MyValue) ->
 parseClause (clause,myValue) =
         let
             name = takeWhile (/='_') clause
-            value = parseEmpty myValue
+            value = parseValue myValue
             valueStr = toStr myValue
         in case name of
             "filter" ->

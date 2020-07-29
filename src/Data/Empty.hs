@@ -9,28 +9,28 @@ import Data.MyValue
 class Empty a where
     empty :: a
     isEmpty :: a -> Bool
-    parseEmpty :: a -> String
+    parseValue :: a -> String
 instance Empty Integer where
     empty = 0
 
     isEmpty 0 = True
     isEmpty _ = False
 
-    parseEmpty = show
+    parseValue = show
 instance Empty [Integer] where
     empty = [0]
 
     isEmpty [0] = True
     isEmpty _   = False
 
-    parseEmpty thing = "ARRAY" <> show thing
+    parseValue thing = "ARRAY" <> show thing
 instance Empty String where
     empty = "\'\'"
 
     isEmpty "\'\'" = True
     isEmpty _      = False
 
-    parseEmpty thing =
+    parseValue thing =
         let parsed = "\'" <> thing <> "\'"
         in if isEmpty thing
             then empty
@@ -41,7 +41,7 @@ instance Empty [String] where
     isEmpty ["\'\'"] = True
     isEmpty _        = False
 
-    parseEmpty thing =
+    parseValue thing =
         let parsed = "ARRAY" <> (map (\x -> if x == '\"' then '\'' else x) $ show thing)
         in if isEmpty thing
             then head empty
@@ -51,7 +51,7 @@ instance Empty Bool where
 
     isEmpty _     = False
 
-    parseEmpty = show
+    parseValue = show
 
 instance Empty MyValue where
     isEmpty (MyString value)    = isEmpty value
@@ -63,10 +63,10 @@ instance Empty MyValue where
     isEmpty (MyNextval value)   = isEmpty value
     isEmpty MyEmpty             = True
 
-    parseEmpty (MyString value)     = parseEmpty value
-    parseEmpty (MyStrings value)    = parseEmpty value
-    parseEmpty (MyInteger value)    = parseEmpty value
-    parseEmpty (MyIntegers value)   = parseEmpty value
-    parseEmpty (MyBool value)       = parseEmpty value
-    parseEmpty (MyDate value)       = parseEmpty value
-    parseEmpty (MyNextval value)    = value
+    parseValue (MyString value)     = parseValue value
+    parseValue (MyStrings value)    = parseValue value
+    parseValue (MyInteger value)    = parseValue value
+    parseValue (MyIntegers value)   = parseValue value
+    parseValue (MyBool value)       = parseValue value
+    parseValue (MyDate value)       = parseValue value
+    parseValue (MyNextval value)    = value

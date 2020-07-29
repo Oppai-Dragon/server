@@ -1,8 +1,8 @@
-module Tests.Essence.Clause
+module Tests.Essence.Parse.Clause
     ( essenceClauseTests
     ) where
 
-import Data.Essence.Clause
+import Data.Essence.Parse.Clause
 
 import Test.HUnit
 

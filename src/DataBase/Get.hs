@@ -61,7 +61,7 @@ dbGetOne (EssenceValue table action [(field,value)]) = do
     config <- ask
     let uriDB = getUri config
     let myValue = fromValue value
-    let wherePart = field <> "=" <> (parseEmpty myValue)
+    let wherePart = field <> "=" <> (parseValue myValue)
     let getQuery = SQL.get table "*" wherePart
     conn <- lift $ connectPostgreSQL uriDB
     sqlValuesArr <- lift $ quickQuery' conn getQuery []
