@@ -3,29 +3,28 @@ module Data.SQL.Actions where
 
 import Data.Essence
 import Data.Essence.Methods
+import Data.Essence.Parse.Clause
 import Data.SQL
 
+import Data.List
 import Data.Maybe (fromJust)
 
-instance Show (Essence List) where
-    show (EssenceList name "create" listOfPairs) =
+instance ShowSql (Essence List) where
+    showSql (EssenceList name "create" listOfPairs) =
         let
             fields = parseOnlyFields listOfPairs
             values = parseOnlyValues listOfPairs
-        in create name fields values
-    show (EssenceList name action@("edit") listOfPairs)   =
+        in showSql (Insert name fields values)
+    showSql (EssenceList name action@("edit") listOfPairs)   =
         let
-            oldEssence =
-                "id=" <> (fromJust $ lookup "id" listOfPairs)
-            newEssence = parseListOfPairs action listOfPairs
-        in edit name oldEssence newEssence
-    show (EssenceList name action@("get") listOfPairs)    =
+            wherePart = [Where ("id",fromJust $ lookup "id" listOfPairs)]
+            setPart = map Set listOfPairs
+        in showSql (Edit name setPart wherePart)
+    showSql (EssenceList name action@("get") listOfPairs)    =
         let
-            fieldsAndValue = parseListOfPairs action listOfPairs
-            fields = "*"
-        in get name fields fieldsAndValue
-    show (EssenceList name "delete" listOfPairs) =
-        let
-            essence =
-                "id=" <> (fromJust $ lookup "id" listOfPairs)
-        in delete name essence
+            (EssenceClause nameList listClause) = parseClause listOfPairs
+            getName = intercalate "," nameList
+        in showSql (Get getName listClause)
+    showSql (EssenceList name "delete" listOfPairs) =
+        let wherePart = [Where ("id",fromJust $ lookup "id" listOfPairs)]
+        in showSql (Delete name wherePart)

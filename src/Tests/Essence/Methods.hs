@@ -25,13 +25,10 @@ essenceMethodsTests =
     , TestLabel "setDescriptionTest"            setDescriptionTest
     , TestLabel "getMaybeDataFieldTest"         getMaybeDataFieldTest
     , TestLabel "getMyValueTest"                getMyValueTest
-    , TestLabel "parse_edit_ListOfPairsTest"    parse_edit_ListOfPairsTest
-    , TestLabel "parse_get_ListOfPairsTest"     parse_get_ListOfPairsTest
-    , TestLabel "parse_delete_ListOfPairsTest"  parse_delete_ListOfPairsTest
     , TestLabel "parseOnlyValuesTest"           parseOnlyValuesTest
     , TestLabel "parseOnlyFieldsTest"           parseOnlyFieldsTest
     , TestLabel "withoutEmptyTest"              withoutEmptyTest
-    , TestLabel "toListTest"                    toListTest
+    , TestLabel "parseClauseTest"               parseClauseTest
     , TestLabel "parse_Just_BSValueTest"        parse_Just_BSValueTest
     , TestLabel "parse_Nothing_BSValueTest"     parse_Nothing_BSValueTest
     , TestLabel "parseFieldValueTest"           parseFieldValueTest
@@ -94,36 +91,17 @@ getMyValueTest =
     (MyInteger 0)
     $ getMyValue "int"
 
-
-parse_edit_ListOfPairsTest =
-    TestCase $
-    assertEqual "for (parseListOfPairs \"edit\" [(\"field1\",\"value1\"), (\"field2\",\"value2\")])"
-    "field1=value1,field2=value2"
-    $ parseListOfPairs "edit" [("field1","value1"), ("field2","value2")]
-
-parse_get_ListOfPairsTest =
-    TestCase $
-    assertEqual "for (parseListOfPairs \"get\" [(\"field1\",\"value1\"), (\"field2\",\"value2\")])"
-    "field1=value1 AND field2=value2"
-    $ parseListOfPairs "get" [("field1","value1"), ("field2","value2")]
-
-parse_delete_ListOfPairsTest =
-    TestCase $
-    assertEqual "for (parseListOfPairs \"delete\" [(\"field1\",\"value1\"), (\"field2\",\"value2\")])"
-    "field1=value1 AND field2=value2"
-    $ parseListOfPairs "delete" [("field1","value1"), ("field2","value2")]
-
 parseOnlyValuesTest =
     TestCase $
-    assertEqual "for (parseOnlyValues [(\"field\",\"value\")])"
-    "value"
-    $ parseOnlyValues [("field","value")]
+    assertEqual "for (parseOnlyValues [(\"field\",MyString \"value\")])"
+    [MyString "value"]
+    $ parseOnlyValues [("field",MyString "value")]
 
 parseOnlyFieldsTest =
     TestCase $
-    assertEqual "for (parseOnlyFields [(\"field\",\"values\")])"
-    "field"
-    $ parseOnlyFields [("field","values")]
+    assertEqual "for (parseOnlyFields [(\"field\",MyString \"values\")])"
+    ["field"]
+    $ parseOnlyFields [("field",MyString "values")]
 
 withoutEmptyTest =
     TestCase $
@@ -131,11 +109,18 @@ withoutEmptyTest =
     []
     $ withoutEmpty [("field", MyEmpty)]
 
-toListTest =
+parseClauseTest =
     TestCase $
-    assertEqual "for (toList [\"field\", MyString \"value\"])"
-    [("field", "'value'")]
-    $ toList [("field", MyString "value")]
+    assertEqual "for (parseClause )"
+
+    $ parseClause
+
+addEssenceNameTest =
+    TestCase $
+    assertEqual
+    "for (addEssenceName \"person\" \"date_of_creation\")"
+    "person.date_of_creation"
+    $ addEssenceName "person" "date_of_creation"
 
 parse_Just_BSValueTest =
     TestCase $

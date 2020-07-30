@@ -1,12 +1,14 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
 module Data.SQL
-    ( clauseSequenceA
-    , ShowSQL (..)
+    ( ShowSQL (..)
     , SqlQuery (..)
     , Clause (..)
+    , clauseSequenceA
+    , withoutManyWhere
     ) where
 
+import Data.Base
 import Data.Empty
 import Data.MyValue
 
@@ -50,8 +52,8 @@ instance ShowSQL SqlQuery where
         <> ");"
     showSql (Edit table setPart wherePart) =
         "UPDATE " <> table
-        <> showSql setPart
-        <> showSql wherePart
+        <> " " <> showSql setPart
+        <> " " <> showSql wherePart
         <> ";"
     showSql (Get table clauses) =
         "SELECT * FROM " <> table
@@ -59,7 +61,7 @@ instance ShowSQL SqlQuery where
         <> ";"
     showSql (Delete table wherePart) =
         "DELETE FROM " <> table
-        <> showSql wherePart
+        <> " " <> showSql wherePart
         <> ";"
 
 data family Clause a
@@ -149,7 +151,8 @@ instance ShowSQL (Clause [String]) where
     unpack (FilterList x)  = show x
     unpack (OrderByList x) = show x
 instance ShowSQL [Clause [String]] where
-    showSql = unwords . map showSql . sort
+    showSql = unwords . reverse . withoutManyWhere . reverse .
+        words . unwords . map showSql . sort
 
 -- Apply only to homogeneous list of Clause String
 clauseSequenceA :: [Clause String] -> Clause [String]
@@ -160,3 +163,15 @@ clauseSequenceA clauseList = case clauseList of
         Where x   -> WhereList $ map (read . unpack) arr
         Filter x  -> FilterList $ map (read . unpack) arr
         OrderBy x -> OrderByList $ map (read . unpack) arr
+
+--Replaces redundant "WHERE" with "AND"
+withoutManyWhere :: [String] -> [String]
+withoutManyWhere arr =
+    let
+        helper 0 _    arr = arr
+        helper n func arr = helper (n-1) func $ func arr
+    in case elemIndices "WHERE" arr of
+        []       -> arr
+        [x]      -> arr
+        x1:xs    -> helper (length xs) (replaceBy (=="WHERE") "AND") arr
+        _        -> arr

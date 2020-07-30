@@ -8,6 +8,7 @@ module Data.Base
     , mapToListOfPair
     , findText
     , scientificToInteger
+    , replaceBy
     ) where
 
 import           Data.List       as L
@@ -74,3 +75,9 @@ scientificToInteger num =
                 '0' -> (read . takeWhile (/='.')) numStr * exponenta
                 _ -> (read . L.delete '.' . takeWhile (/='e')) numStr * exponenta `div` division
         Nothing -> read $ takeWhile (/='.') numStr
+
+replaceBy :: (a -> Bool) -> a -> [a] -> [a]
+replaceBy func newX (x:xs) =
+    if func x
+        then newX:xs
+        else x : replaceBy func newX xs

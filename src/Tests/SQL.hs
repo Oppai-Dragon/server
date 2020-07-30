@@ -19,6 +19,7 @@ sqlTests =
     , TestLabel "showSql_orderByList_Test"          showSql_orderByList_Test
     , TestLabel "showSql_arrClauseArrString_Test"   showSql_arrClauseArrString_Test
     , TestLabel "clauseSequenceATest"               clauseSequenceATest
+    , TestLabel "withoutManyWhereTest"              withoutManyWhereTest
     ]
 
 showSql_insert_Test =
@@ -35,7 +36,7 @@ showSql_edit_Test =
     <> "[Set (\"first_name\",MyString \"misha\"),Set (\"last_name\",MyString \"dragon\")]"
     <> "[Where (\"id\",MyInteger 1)]"
     <> ")")
-    "UPDATE person SET first_name='misha',last_name='dragon' WHERE id=1;"
+    "UPDATE person SET last_name='dragon',first_name='misha' WHERE id=1;"
     $ showSql (Edit "person"
     [Set ("first_name",MyString "misha"),Set ("last_name",MyString "dragon")]
     [Where ("id",MyInteger 1)])
@@ -48,7 +49,7 @@ showSql_get_Test =
     <> ",OrderBy \"date_of_creation\""
     <> "]))")
     ("SELECT * FROM person "
-    <> " WHERE first_name='misha' AND last_name ILIKE '%dragon%' ORDER BY (date_of_creation);"
+    <> "WHERE first_name='misha' AND last_name ILIKE '%dragon%' ORDER BY (date_of_creation);"
     )
     $ showSql (Get "person"
         [Where ("first_name",MyString "misha")
@@ -69,7 +70,7 @@ showSql_arrClauseString_Test =
     <> ",Filter \"last_name ILIKE ('%dragon%')\""
     <> ",OrderBy \"date_of_creation\""
     <> "])")
-    " WHERE first_name='misha' AND last_name ILIKE '%dragon%' ORDER BY (date_of_creation)"
+    "WHERE first_name='misha' AND last_name ILIKE '%dragon%' ORDER BY (date_of_creation)"
     $ showSql
     [Where ("first_name",MyString "misha")
     ,Filter "last_name ILIKE '%dragon%'"
@@ -90,7 +91,7 @@ showSql_filterList_Test =
     TestCase $
     assertEqual
     "for(showSql (FilterList [\"last_name ILIKE ('%dragon%')\"]))"
-    "WHERE last_name ILIKE '%dragon%'"
+    " WHERE last_name ILIKE '%dragon%'"
     $ showSql (FilterList ["last_name ILIKE '%dragon%'"])
 showSql_orderByList_Test =
     TestCase $
@@ -106,12 +107,13 @@ showSql_arrClauseArrString_Test =
     <> ",FilterList [\"last_name ILIKE ('%dragon%')\"]"
     <> ",OrderByList [\"date_of_creation\"]"
     <> "])")
-    " WHERE first_name='misha' AND last_name ILIKE '%dragon%' ORDER BY (date_of_creation)"
+    "WHERE first_name='misha' AND last_name ILIKE '%dragon%' ORDER BY (date_of_creation)"
     $ showSql
     [WhereList [("first_name","'misha'")]
     ,FilterList ["last_name ILIKE '%dragon%'"]
     ,OrderByList ["date_of_creation"]
     ]
+
 clauseSequenceATest =
     TestCase $
     assertEqual
@@ -119,3 +121,10 @@ clauseSequenceATest =
     (WhereList [("first_name","'misha'"),("last_name","'dragon'")])
     $ clauseSequenceA
     [Where ("first_name",MyString "misha"),Where ("last_name",MyString "dragon")]
+
+withoutManyWhereTest =
+    TestCase $
+    assertEqual
+    "for (withoutManyWhere [\"WHERE\",\"first_name\",\"WHERE\",\"last_name\"])"
+    ["AND","first_name","WHERE","last_name"]
+    $ withoutManyWhere ["WHERE","first_name","WHERE","last_name"]

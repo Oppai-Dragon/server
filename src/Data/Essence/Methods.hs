@@ -13,6 +13,8 @@ module Data.Essence.Methods
     , parseOnlyFields
     , withoutEmpty
     , toList
+    , parseClause
+    , addEssenceName
     , parseBSValue
     , parseFieldValue
     , toEssenceList
@@ -38,9 +40,11 @@ import qualified Data.ByteString.Char8 as BSC8
 import qualified Data.List             as L
 
 import           Control.Monad.Trans.Reader
+import           Control.Monad.Trans.Writer.CPS
 
-type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
-type Field = String
+type QueryMBS    = [(BS.ByteString, Maybe BS.ByteString)]
+type Field       = String
+type EssenceName = String
 
 addList :: List -> Essence List -> Essence List
 addList list1 (EssenceList name action list2) =
@@ -48,7 +52,8 @@ addList list1 (EssenceList name action list2) =
 
 deletePair :: String -> Essence List -> Essence List
 deletePair field essenceList@(EssenceList name action list) =
-    EssenceList name action $ L.deleteBy (\(l1,_) (l2,_) -> l1==l2) (field,undefined) list
+    EssenceList name action
+        $ L.deleteBy (\(l1,_) (l2,_) -> l1==l2) (field,"") list
 
 getEssenceDB :: T.Text -> T.Text -> Config -> Essence DB
 getEssenceDB essence action conf =
@@ -94,23 +99,11 @@ getMaybeDataField (Just value) = Just $ read value
 getMyValue :: String -> MyValue
 getMyValue = read
 
-parseListOfPairs :: String -> List -> String
-parseListOfPairs "edit" = L.intercalate "," . map (\(l,r) -> l <> "=" <> r)
-parseListOfPairs "get" = L.intercalate " AND " . map (\(l,r) -> l <> "=" <> r)
-parseListOfPairs "delete" = L.intercalate " AND " . map (\(l,r) -> l <> "=" <> r)
---parseListOfPairs "array" = L.intercalate " OR " . map (\(l,r) -> map (\x -> l <> "=" <>) r)
+parseOnlyValues :: List -> [MyValue]
+parseOnlyValues = snd . unzip
 
-parseOnlyValues :: List -> String
-parseOnlyValues fieldValue =
-    L.intercalate ","
-    $ snd
-    $ unzip fieldValue
-
-parseOnlyFields :: List -> String
-parseOnlyFields fieldValue =
-    L.intercalate ","
-    $ fst
-    $ unzip fieldValue
+parseOnlyFields :: List -> [String]
+parseOnlyFields = fst . unzip
 
 withoutEmpty :: [(Field, MyValue)] -> [(Field, MyValue)]
 withoutEmpty [] = []
@@ -119,11 +112,9 @@ withoutEmpty (x@(l,r):xs) =
         then withoutEmpty xs
         else x : withoutEmpty xs
 
-toList :: [(Field, MyValue)] -> [(Field, String)]
-toList = map (\(l,r) -> (l,parseValue r)) . withoutEmpty
-
-parseClause :: (String,MyValue) ->
-parseClause (clause,myValue) =
+parseClause :: [(Field,MyValue)] -> Writer (Essence Clause) ()
+parseClause []                      = return ()
+parseClause ((clause,myValue):rest) = do
         let
             name = takeWhile (/='_') clause
             value = parseValue myValue
@@ -156,6 +147,9 @@ parseClause (clause,myValue) =
                     _             -> field (" ILIKE(" <> parseSearchStr value <> ")")
             _        ->
 
+addEssenceName :: EssenceName -> Field -> Field
+addEssenceName name field = name <> "." <> field
+
 parseBSValue ::
     Field -> [(Field, Maybe BS.ByteString)]
     -> (Field, MyValue)
@@ -176,7 +170,7 @@ toEssenceList :: Essence DB -> QueryMBS -> ReaderT Config IO (Essence List)
 toEssenceList (EssenceDB name action hashMap) queryMBS = do
     config <- ask
     let essenceFields = map T.unpack $ getEssenceFields name config
-    let listOfPairs = toList $ parseFieldValue essenceFields queryMBS
+    let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
     let nameStr = T.unpack name
     let actioStr = T.unpack action
     pure $ EssenceList nameStr actioStr listOfPairs

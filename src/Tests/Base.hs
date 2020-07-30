@@ -15,6 +15,7 @@ baseTests =
     , TestLabel "mapToListOfPairTest"       mapToListOfPairTest
     , TestLabel "findTextTest"              findTextTest
     , TestLabel "scientificToIntegerTest"   scientificToIntegerTest
+    , TestLabel "replaceByTest"             replaceByTest
     ]
 
 ifElseThenTest =
@@ -64,3 +65,10 @@ scientificToIntegerTest =
     assertEqual "for (scientificToInteger 1234567890)"
     1234567890
     $ scientificToInteger 1234567890
+
+replaceByTest =
+    TestCase $
+    assertEqual
+    "for (replaceBy (==\"krut\") \"lox\" [\"misha\", \"krut\", \".\"])"
+    ["misha", "lox", "."]
+    $ replaceBy (=="krut") "lox" ["misha", "krut", "."]
