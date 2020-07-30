@@ -9,6 +9,7 @@ module Data.Base
     , findText
     , scientificToInteger
     , replaceBy
+    , ordToBool
     ) where
 
 import           Data.List       as L
@@ -81,3 +82,7 @@ replaceBy func newX (x:xs) =
     if func x
         then newX:xs
         else x : replaceBy func newX xs
+
+ordToBool :: Ordering -> Bool
+ordToBool EQ = True
+ordToBool _  = False

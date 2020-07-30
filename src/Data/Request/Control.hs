@@ -19,7 +19,8 @@ import           Data.Request.Access
 import           Data.Request.Access.Methods                    (isAccess)
 import           Data.Request.Method.Methods                    (isMethodCorrect)
 import           Data.Request.Params.Methods
-import qualified Data.SQL                               as SQL
+import           Data.SQL
+import           Data.SQL.Actions
 
 import qualified Data.Text                              as T
 import qualified Data.HashMap.Strict                    as HM
@@ -94,7 +95,7 @@ isRequestCorrect req = do
     api <- lift setApi
     let (essence,action,queryMBS,method) = parseRequest req
     let access = getAccess essence action api
-    let essenceDB'' = getEssenceDB essence action config
+    let essenceDB'' = getEssenceDB essence action config api
     let essenceDB'  = ifEveryoneUpdate essenceDB'' access
     let essenceDB   = ifGetUpdate essenceDB'
     let essenceFields = map T.unpack $ getEssenceFields essence config
@@ -129,17 +130,16 @@ getAccessArr queryMBS = case lookup "access_key" queryMBS of
 accessCollector :: BS.ByteString -> IO [Access]
 accessCollector accessKeyBS = do
     config <- setConfig
-    let accessKeyStr = fromBS accessKeyBS
+    let accessKeyStr = parseValue $ fromBS accessKeyBS
     let uriDB = getUri config
     conn <- PSQL.connectPostgreSQL uriDB
-    let userQuery = SQL.get "person" "id,is_admin" ("access_key=" <> parseValue accessKeyStr)
+    let userQuery = "SELECT id,is_admin FROM person WHERE accesss_key=" <> accessKeyStr
     sqlValuesArr <- quickQuery' conn userQuery []
     HDBC.disconnect conn
     let checkIsAdmin bool = if bool then [User,Admin] else [User]
     let authorCollect userId = do
-            let userIdStr = show userId
             conn <- PSQL.connectPostgreSQL uriDB
-            let authorQuery = SQL.get "author" "*" ("user_id=" <> userIdStr)
+            let authorQuery = showSql (EssenceList "author" "get" [("user_id", MyInteger userId)])
             sqlValuesArr <- quickQuery' conn authorQuery []
             HDBC.disconnect conn
             if null sqlValuesArr

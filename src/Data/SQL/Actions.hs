@@ -9,22 +9,28 @@ import Data.SQL
 import Data.List
 import Data.Maybe (fromJust)
 
-instance ShowSql (Essence List) where
+import Control.Monad.Trans.Writer.CPS
+
+instance ShowSQL (Essence List) where
     showSql (EssenceList name "create" listOfPairs) =
         let
             fields = parseOnlyFields listOfPairs
             values = parseOnlyValues listOfPairs
         in showSql (Insert name fields values)
-    showSql (EssenceList name action@("edit") listOfPairs)   =
+    showSql (EssenceList name "edit" listOfPairs)   =
         let
             wherePart = [Where ("id",fromJust $ lookup "id" listOfPairs)]
             setPart = map Set listOfPairs
         in showSql (Edit name setPart wherePart)
-    showSql (EssenceList name action@("get") listOfPairs)    =
+    showSql essenceList@(EssenceList name "get" list)   =
         let
-            (EssenceClause nameList listClause) = parseClause listOfPairs
-            getName = intercalate "," nameList
-        in showSql (Get getName listClause)
+            (EssenceClause nameList clauseList) =
+                execWriter $ tell (EssenceClause [name] [])
+                >> toEssenceClause essenceList
+            uniqueNames = nub nameList
+            getName = intercalate "," uniqueNames
+            matchingClauses = matchEssence uniqueNames
+        in showSql (Get getName (matchingClauses <> clauseList))
     showSql (EssenceList name "delete" listOfPairs) =
         let wherePart = [Where ("id",fromJust $ lookup "id" listOfPairs)]
         in showSql (Delete name wherePart)

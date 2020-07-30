@@ -11,7 +11,7 @@ import Data.Empty
 import Data.Essence
 import Data.Essence.Methods
 import Data.MyValue
-import qualified Data.SQL            as SQL
+import Data.SQL
 import Data.SQL.Actions
 import Data.SQL.ToValue
     ( sqlValuesArrToValue )
@@ -41,8 +41,8 @@ dbGet = do
     config <- lift $ ask
     essenceList@(EssenceList name action list) <- get
     let pageCounter = case lookup "page" list of
-            Just num -> read num
-            Nothing  -> 1
+            Just (MyInteger num) -> fromInteger num
+            Nothing              -> 1
     let getQuery = init (show essenceList) <> " " <> getOffsetLimit pageCounter config
     let uriDB = getUri config
     let essence = T.pack name
@@ -55,14 +55,13 @@ dbGet = do
     value <- lift $ nesteEssences pageObj
     pure value
 
-dbGetOne :: Essence [(String,Value)] -> ReaderT Config IO Value
-dbGetOne (EssenceValue _     _      [(_,    Null )]) = return (Object HM.empty)
-dbGetOne (EssenceValue table action [(field,value)]) = do
+dbGetOne :: Essence List -> ReaderT Config IO Value
+dbGetOne (EssenceList _     _      [(_,    MyEmpty )]) = return (Object HM.empty)
+dbGetOne (EssenceList table action [(field,myValue)]) = do
     config <- ask
     let uriDB = getUri config
-    let myValue = fromValue value
     let wherePart = field <> "=" <> (parseValue myValue)
-    let getQuery = SQL.get table "*" wherePart
+    let getQuery = "SELECT * FROM " <> table <> " " <> wherePart <> ";"
     conn <- lift $ connectPostgreSQL uriDB
     sqlValuesArr <- lift $ quickQuery' conn getQuery []
     let value = sqlValuesArrToValue (EssenceList table action []) sqlValuesArr config
@@ -79,25 +78,26 @@ iterateObj :: [T.Text] -> Object -> ReaderT Config IO [Object]
 iterateObj []             _       = return []
 iterateObj (essence:rest) pageObj = do
     config <- ask
+    api <- lift setApi
     let name = T.pack . takeWhile (not . isDigit) $ T.unpack essence
     let relationsFields =
             map (\(field,descr) -> (field,fromJust $ relationsOf descr)) .
             HM.toList .
             HM.filter (\descr -> case relationsOf descr of {Just _ -> True; _ -> False;}) .
-            fieldsOf $ getEssenceDB name "get" config
+            fieldsOf $ getEssenceDB name "get" config api
     nestedEssence <- case HM.lookup essence pageObj of
         Just (Object fieldsObj) ->
             execStateT (nesteEssence relationsFields) fieldsObj
         _                       -> return HM.empty
     (:) (HM.singleton essence $ Object nestedEssence) <$> iterateObj rest pageObj
 
-dbGetArray :: Essence [(String,Value)] -> ReaderT Config IO Value
-dbGetArray (EssenceValue table action [(field,value)]) = do
+dbGetArray :: Essence [(String,MyValue)] -> ReaderT Config IO Value
+dbGetArray (EssenceList table action [(field,myValue)]) = do
     config <- ask
     let uri = getUri config
     conn <- lift $ connectPostgreSQL uri
-    let wherePart = L.intercalate " OR " $ vectorToStrList (object ["arr" .= value])
-    let getQuery = SQL.get table "*" wherePart
+    let wherePart = L.intercalate " OR " $ vectorToStrList (object ["arr" .= toValue myValue])
+    let getQuery = "SELECT * FROM " <> table <> " " <> wherePart <> ";"
     sqlValuesArr <- lift $ quickQuery' conn getQuery []
     lift $ disconnect conn
     let value = sqlValuesArrToValue (EssenceList table action []) sqlValuesArr config
@@ -117,16 +117,16 @@ nesteEssence []                                           = do
     let objWithoutField = HM.delete "tag_ids" fieldsObj
     case HM.lookup "tag_ids" fieldsObj of
         Just value ->
-            lift (dbGetArray (EssenceValue table "get" [(field,value)]))
+            lift (dbGetArray (EssenceList table "get" [(field, fromValue value)]))
             >>= \value ->
             put (HM.union (HM.singleton "tags" value) objWithoutField)
         Nothing    -> return ()
 nesteEssence ((field,Relations table tableField) : rest) = do
     fieldsObj <- get
     let listOfPair = case HM.lookup (T.pack field) fieldsObj of
-            Just value -> [(T.unpack tableField,value)]
+            Just value -> [(T.unpack tableField, fromValue value)]
             Nothing    -> []
-    (Object essenceObj) <- lift $ dbGetOne (EssenceValue (T.unpack table) "get" listOfPair)
+    (Object essenceObj) <- lift $ dbGetOne (EssenceList (T.unpack table) "get" listOfPair)
     (Object completeObj) <- lift $ nesteEssences essenceObj
     let objWithoutField = HM.delete (T.pack field) fieldsObj
     if HM.null completeObj

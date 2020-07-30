@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 95b3086376c30d0d41aaa59a83f6731de7051169e962f3ed81b8a74ca033d334
+-- hash: 362321273f771d917dfadc8c0a68601e777db6f0bdbde5b1f957143c80bf1177
 
 name:           server
 version:        0.1.0.0
@@ -76,6 +76,7 @@ library
       Tests.Required.Methods
       Tests.Setup
       Tests.SQL
+      Tests.SQL.Actions
       Tests.SQL.ToValue
       Tests.Value
   other-modules:

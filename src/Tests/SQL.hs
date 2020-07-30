@@ -36,7 +36,7 @@ showSql_edit_Test =
     <> "[Set (\"first_name\",MyString \"misha\"),Set (\"last_name\",MyString \"dragon\")]"
     <> "[Where (\"id\",MyInteger 1)]"
     <> ")")
-    "UPDATE person SET last_name='dragon',first_name='misha' WHERE id=1;"
+    "UPDATE person SET first_name='misha',last_name='dragon' WHERE id=1;"
     $ showSql (Edit "person"
     [Set ("first_name",MyString "misha"),Set ("last_name",MyString "dragon")]
     [Where ("id",MyInteger 1)])

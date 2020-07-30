@@ -4,6 +4,7 @@ module Tests.SQL.ToValue
 
 import Config
 import Data.Essence
+import Data.MyValue
 import Data.SQL.ToValue
 
 import Data.Aeson
@@ -37,18 +38,18 @@ sqlValuesToJsonValueTest =
     assertEqual
     "for (sqlValuesToJsonValue (EssenceList \"author\" \"create\" [(\"person_id\",\"1\")]) [SqlInteger 1] testConfig)"
     (object ["person_id" .= Number 1])
-    $ sqlValuesToJsonValue (EssenceList "author" "create" [("person_id","1")]) [SqlInteger 1] testConfig
+    $ sqlValuesToJsonValue (EssenceList "author" "create" [("person_id",MyInteger 1)]) [SqlInteger 1] testConfig
 
 sqlValuesArrToObjTest =
     TestCase $
     assertEqual
     "for (sqlValuesArrToObj 1 (EssenceList \"author\" \"create\" [(\"person_id\",\"1\")]) [[SqlInteger 1]] testConfig)"
     (HM.singleton "author1" (object ["person_id" .= Number 1]))
-    $ sqlValuesArrToObj 1 (EssenceList "author" "create" [("person_id","1")]) [[SqlInteger 1]] testConfig
+    $ sqlValuesArrToObj 1 (EssenceList "author" "create" [("person_id",MyInteger 1)]) [[SqlInteger 1]] testConfig
 
 sqlValuesArrToValueTest =
     TestCase $
     assertEqual
     "for (sqlValuesArrToValue (EssenceList \"author\" \"create\" [(\"person_id\",\"1\")]) [[SqlInteger 1]] testConfig)"
     (object ["author1" .= object ["person_id" .= Number 1]])
-    $ sqlValuesArrToValue (EssenceList "author" "create" [("person_id","1")]) [[SqlInteger 1]] testConfig
+    $ sqlValuesArrToValue (EssenceList "author" "create" [("person_id",MyInteger 1)]) [[SqlInteger 1]] testConfig

@@ -21,16 +21,14 @@ import Data.Text (Text,unpack,pack)
 type Field    = String
 type Value    = String
 type List     = [(Field,MyValue)]
-type Database = HashMap Field List
+type Database = HashMap Field [(Field,Value)]
 type DB       = HashMap Field Description
 
 data family Essence a
-data instance Essence Clause = EssenceClause
+data instance Essence (Clause String) = EssenceClause
     { nameList   :: [Field]
     , clauseList :: [Clause String]
-    }
-data instance Essence [(Field,A.Value)] =
-    EssenceValue Field Field [(Field,A.Value)]
+    } deriving (Show,Eq)
 data instance Essence Database =
     EssenceDatabase Text Text Database
     deriving (Show,Eq)
@@ -43,11 +41,11 @@ data instance Essence List = EssenceList
     { name          :: Field
     , action        :: Field
     , list          :: List
-    } deriving Eq
+    } deriving (Show,Eq)
 
-instance Monoid (Essence Clause) where
+instance Monoid (Essence (Clause String)) where
     mempty = EssenceClause [] []
-instance Semigroup (Essence Clause) where
+instance Semigroup (Essence (Clause String)) where
     EssenceClause name1 listOfPairs1 <> EssenceClause name2 listOfPairs2 =
         let
             name = name1 <> name2

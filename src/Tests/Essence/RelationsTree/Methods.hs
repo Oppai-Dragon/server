@@ -6,6 +6,7 @@ import Config
 
 import Data.Essence.RelationsTree
 import Data.Essence.RelationsTree.Methods
+import Data.MyValue
 
 import Data.Aeson
 import Data.Aeson.Types
@@ -33,15 +34,15 @@ essenceRelationsTreeMethodsTests =
 isEssenceRelationsTest =
     TestCase $
     assertEqual
-    "for (isEssenceRelations \"draft\" testConfig)"
+    "for (isEssenceRelations \"draft\" testApi)"
     True
-    $ isEssenceRelations "draft" testConfig
+    $ isEssenceRelations "draft" testApi
 
 unpackLeafsTest =
     TestCase $
     assertEqual
     "for (unpackLeafs \"person1\" [Leaf \"person_id\"] testObj)"
-    [("person_id", "1")]
+    [("person_id",MyInteger 1)]
     $ unpackLeafs "person1" [Leaf "person_id"] testObj
 
 beforeUnderscoreTest =
@@ -65,14 +66,14 @@ afterUnderscoreTest =
 getListOfPairFromObjTest =
     TestCase $
     assertEqual "for (getListOfPairFromObj \"person_id\" testObj)"
-    [("id",Number 1)]
+    [("id",MyInteger 1)]
     $ getListOfPairFromObj "person_id" testObj
 
 checkListTest =
     TestCase $
     assertEqual "for (checkList \"person_id\" [(\"id\",\"1\")])"
-    [("id",Number 1)]
-    $ checkList "person_id" [("id","1")]
+    [("id",MyInteger 1)]
+    $ checkList "person_id" [("id",MyInteger 1)]
 
 getNextFieldTest =
     TestCase $
@@ -92,7 +93,7 @@ getIdPairFromObjTest =
     TestCase $
     assertEqual
     "for (getIdPairFromObj \"draft\" bTestObj)"
-    [("id", "1")]
+    [("id",MyInteger 1)]
     $ getIdPairFromObj "draft" bTestObj
 
 rTestObj = HM.fromList

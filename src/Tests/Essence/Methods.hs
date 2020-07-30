@@ -20,7 +20,7 @@ essenceMethodsTests =
     , TestLabel "deletePairTest"                deletePairTest
     , TestLabel "getEssenceDBTest"              getEssenceDBTest
     , TestLabel "getEssenceDB'Test"             getEssenceDB'Test
-    , TestLabel "getHashMapDesctiprionTest"     getHashMapDesctiprionTest
+    , TestLabel "getHashMapDescriptionTest"     getHashMapDescriptionTest
     , TestLabel "iterateHashMapDBListTest"      iterateHashMapDBListTest
     , TestLabel "setDescriptionTest"            setDescriptionTest
     , TestLabel "getMaybeDataFieldTest"         getMaybeDataFieldTest
@@ -28,7 +28,6 @@ essenceMethodsTests =
     , TestLabel "parseOnlyValuesTest"           parseOnlyValuesTest
     , TestLabel "parseOnlyFieldsTest"           parseOnlyFieldsTest
     , TestLabel "withoutEmptyTest"              withoutEmptyTest
-    , TestLabel "parseClauseTest"               parseClauseTest
     , TestLabel "parse_Just_BSValueTest"        parse_Just_BSValueTest
     , TestLabel "parse_Nothing_BSValueTest"     parse_Nothing_BSValueTest
     , TestLabel "parseFieldValueTest"           parseFieldValueTest
@@ -39,33 +38,33 @@ addListTest =
     TestCase $
     assertEqual
     "for (addList [(\"access_key\",\"key\")] testEssenceList)"
-    (EssenceList "person" "create" [("access_key","key"),("first_name","misha"),("last_name","dragon")])
-    $ addList [("access_key","key")] testEssenceList
+    (EssenceList "person" "create" [("access_key",MyString "key"),("first_name",MyString "misha"),("last_name",MyString "dragon")])
+    $ addList [("access_key",MyString "key")] testEssenceList
 
 deletePairTest =
     TestCase $
     assertEqual
     "for (deletePair \"first_name\" testEssenceList)"
-    (EssenceList "person" "create" [("last_name","dragon")])
+    (EssenceList "person" "create" [("last_name",MyString "dragon")])
     $ deletePair "first_name" testEssenceList
 
 getEssenceDBTest =
     TestCase $
-    assertEqual "for (getEssenceDB \"person\" \"create\" testConfig)"
+    assertEqual "for (getEssenceDB \"person\" \"create\" testConfig testApi)"
     testEssenceDB
-    $ getEssenceDB "person" "create" testConfig
+    $ getEssenceDB "person" "create" testConfig testApi
 
 getEssenceDB'Test =
     TestCase $
-    assertEqual "for (getEssenceDB' \"person\" \"create\" testConfig)"
+    assertEqual "for (getEssenceDB' \"person\" \"create\" testConfig testApi)"
     testEssenceDatabase
-    $ getEssenceDB' "person" "create" testConfig
+    $ getEssenceDB' "person" "create" testConfig testApi
 
-getHashMapDesctiprionTest =
+getHashMapDescriptionTest =
     TestCase $
-    assertEqual "for (getHashMapDesctiprion (HM.fromList testEssenceDatabaseFields))"
+    assertEqual "for (getHashMapDescription (HM.fromList testEssenceDatabaseFields))"
     (HM.fromList testEssenceDBFields)
-    $ getHashMapDesctiprion (HM.fromList testEssenceDatabaseFields)
+    $ getHashMapDescription (HM.fromList testEssenceDatabaseFields)
 
 iterateHashMapDBListTest =
     TestCase $
@@ -109,19 +108,6 @@ withoutEmptyTest =
     []
     $ withoutEmpty [("field", MyEmpty)]
 
-parseClauseTest =
-    TestCase $
-    assertEqual "for (parseClause )"
-
-    $ parseClause
-
-addEssenceNameTest =
-    TestCase $
-    assertEqual
-    "for (addEssenceName \"person\" \"date_of_creation\")"
-    "person.date_of_creation"
-    $ addEssenceName "person" "date_of_creation"
-
 parse_Just_BSValueTest =
     TestCase $
     assertEqual "for (parseBSValue \"id\" [(\"id\", Just \"1\")])"
@@ -148,4 +134,4 @@ toEssenceListTest =
         ]) testConfig >>=
     assertEqual
     "for (toEssenceList testEssenceDB [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
-    (EssenceList "person" "create" [("first_name","'misha'"),("last_name","'dragon'")])
+    (EssenceList "person" "create" [("first_name",MyString "misha"),("last_name",MyString "dragon")])

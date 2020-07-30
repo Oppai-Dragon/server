@@ -1,121 +1,55 @@
-Date : 2020-07-29 18:33:07
-Directory : e:\REP\server
-Total : 70 files,  4431 codes, 112 comments, 578 blanks, all 5121 lines
+Date : 2020-07-31 01:43:23
+Directory : e:\REP\server\src\Tests
+Total : 21 files,  1751 codes, 8 comments, 235 blanks, all 1994 lines
 
 Languages
 +----------+------------+------------+------------+------------+------------+
 | language | files      | code       | comment    | blank      | total      |
 +----------+------------+------------+------------+------------+------------+
-| Haskell  |         54 |      3,852 |         40 |        550 |      4,442 |
-| JSON     |         10 |        320 |          0 |          1 |        321 |
-| Cabal    |          1 |        176 |          5 |          7 |        188 |
-| YAML     |          3 |         80 |         67 |         17 |        164 |
-| Markdown |          2 |          3 |          0 |          3 |          6 |
+| Haskell  |         21 |      1,751 |          8 |        235 |      1,994 |
 +----------+------------+------------+------------+------------+------------+
 
 Directories
 +----------------------------------------------------------+------------+------------+------------+------------+------------+
 | path                                                     | files      | code       | comment    | blank      | total      |
 +----------------------------------------------------------+------------+------------+------------+------------+------------+
-| .                                                        |         70 |      4,431 |        112 |        578 |      5,121 |
-| app                                                      |          1 |          8 |          0 |          7 |         15 |
-| src                                                      |         61 |      4,159 |         40 |        541 |      4,740 |
-| src\Data                                                 |         22 |      1,593 |         16 |        228 |      1,837 |
-| src\DataBase                                             |          4 |        263 |         10 |         23 |        296 |
-| src\Data\Essence                                         |          5 |        535 |          1 |         73 |        609 |
-| src\Data\Essence\RelationsTree                           |          1 |        207 |          0 |         27 |        234 |
-| src\Data\Request                                         |          6 |        357 |          5 |         52 |        414 |
-| src\Data\Request\Access                                  |          1 |         15 |          0 |          5 |         20 |
-| src\Data\Request\Method                                  |          1 |         19 |          0 |          4 |         23 |
-| src\Data\Request\Params                                  |          1 |         74 |          0 |         10 |         84 |
-| src\Data\Required                                        |          1 |         67 |          1 |          8 |         76 |
-| src\Data\SQL                                             |          2 |         77 |          1 |         14 |         92 |
-| src\Setup                                                |          9 |        261 |          0 |          6 |        267 |
-| src\Tests                                                |         19 |      1,540 |          8 |        224 |      1,772 |
-| src\Tests\Essence                                        |          4 |        427 |          0 |         70 |        497 |
-| src\Tests\Essence\RelationsTree                          |          1 |        101 |          0 |         18 |        119 |
-| src\Tests\Request                                        |          4 |        137 |          0 |         34 |        171 |
-| src\Tests\Request\Access                                 |          1 |         17 |          0 |          7 |         24 |
-| src\Tests\Request\Method                                 |          1 |         14 |          0 |          5 |         19 |
-| src\Tests\Request\Params                                 |          1 |         55 |          0 |         11 |         66 |
-| src\Tests\Required                                       |          1 |         62 |          0 |         12 |         74 |
-| src\Tests\SQL                                            |          1 |         45 |          0 |         10 |         55 |
-| test                                                     |          1 |          3 |          0 |          2 |          5 |
+| .                                                        |         21 |      1,751 |          8 |        235 |      1,994 |
+| ..                                                       |          1 |         41 |          0 |         10 |         51 |
+| Essence                                                  |          4 |        452 |          0 |         70 |        522 |
+| Essence\Parse                                            |          1 |        107 |          0 |         17 |        124 |
+| Essence\RelationsTree                                    |          1 |        102 |          0 |         18 |        120 |
+| Request                                                  |          4 |        137 |          0 |         34 |        171 |
+| Request\Access                                           |          1 |         17 |          0 |          7 |         24 |
+| Request\Method                                           |          1 |         14 |          0 |          5 |         19 |
+| Request\Params                                           |          1 |         55 |          0 |         11 |         66 |
+| Required                                                 |          1 |         61 |          0 |         12 |         73 |
+| SQL                                                      |          2 |         89 |          0 |         15 |        104 |
 +----------------------------------------------------------+------------+------------+------------+------------+------------+
 
 Files
 +----------------------------------------------------------+----------+------------+------------+------------+------------+
 | filename                                                 | language | code       | comment    | blank      | total      |
 +----------------------------------------------------------+----------+------------+------------+------------+------------+
-| e:\REP\server\ChangeLog.md                               | Markdown |          2 |          0 |          2 |          4 |
-| e:\REP\server\README.md                                  | Markdown |          1 |          0 |          1 |          2 |
-| e:\REP\server\Setup.hs                                   | Haskell  |          2 |          0 |          1 |          3 |
-| e:\REP\server\app\Main.hs                                | Haskell  |          8 |          0 |          7 |         15 |
-| e:\REP\server\package.yaml                               | YAML     |         61 |          6 |          9 |         76 |
-| e:\REP\server\server.cabal                               | Cabal    |        176 |          5 |          7 |        188 |
-| e:\REP\server\src\Api.json                               | JSON     |        113 |          0 |          0 |        113 |
-| e:\REP\server\src\App.hs                                 | Haskell  |         13 |          0 |          4 |         17 |
-| e:\REP\server\src\Config.hs                              | Haskell  |        198 |          0 |         23 |        221 |
-| e:\REP\server\src\DataBase\Create.hs                     | Haskell  |         66 |         10 |          6 |         82 |
-| e:\REP\server\src\DataBase\Delete.hs                     | Haskell  |         35 |          0 |          3 |         38 |
-| e:\REP\server\src\DataBase\Edit.hs                       | Haskell  |         37 |          0 |          4 |         41 |
-| e:\REP\server\src\DataBase\Get.hs                        | Haskell  |        125 |          0 |         10 |        135 |
-| e:\REP\server\src\Data\Base.hs                           | Haskell  |         66 |          0 |         10 |         76 |
-| e:\REP\server\src\Data\Empty.hs                          | Haskell  |         56 |          2 |         14 |         72 |
-| e:\REP\server\src\Data\Essence.hs                        | Haskell  |         73 |          2 |          9 |         84 |
-| e:\REP\server\src\Data\Essence\Clause.hs                 | Haskell  |         68 |          0 |          9 |         77 |
-| e:\REP\server\src\Data\Essence\Methods.hs                | Haskell  |        156 |          1 |         27 |        184 |
-| e:\REP\server\src\Data\Essence\Parse.hs                  | Haskell  |         87 |          0 |          8 |         95 |
-| e:\REP\server\src\Data\Essence\RelationsTree.hs          | Haskell  |         17 |          0 |          2 |         19 |
-| e:\REP\server\src\Data\Essence\RelationsTree\Methods.hs  | Haskell  |        207 |          0 |         27 |        234 |
-| e:\REP\server\src\Data\Handler.hs                        | Haskell  |         13 |          0 |          5 |         18 |
-| e:\REP\server\src\Data\MyValue.hs                        | Haskell  |        139 |          0 |         12 |        151 |
-| e:\REP\server\src\Data\Request\Access.hs                 | Haskell  |         24 |          0 |          1 |         25 |
-| e:\REP\server\src\Data\Request\Access\Methods.hs         | Haskell  |         15 |          0 |          5 |         20 |
-| e:\REP\server\src\Data\Request\Control.hs                | Haskell  |        136 |          0 |         16 |        152 |
-| e:\REP\server\src\Data\Request\Handling.hs               | Haskell  |         89 |          5 |         16 |        110 |
-| e:\REP\server\src\Data\Request\Method\Methods.hs         | Haskell  |         19 |          0 |          4 |         23 |
-| e:\REP\server\src\Data\Request\Params\Methods.hs         | Haskell  |         74 |          0 |         10 |         84 |
-| e:\REP\server\src\Data\Required.hs                       | Haskell  |         34 |          1 |          3 |         38 |
-| e:\REP\server\src\Data\Required\Methods.hs               | Haskell  |         67 |          1 |          8 |         76 |
-| e:\REP\server\src\Data\SQL.hs                            | Haskell  |        135 |          3 |         21 |        159 |
-| e:\REP\server\src\Data\SQL\Actions.hs                    | Haskell  |         27 |          1 |          3 |         31 |
-| e:\REP\server\src\Data\SQL\ToValue.hs                    | Haskell  |         50 |          0 |         11 |         61 |
-| e:\REP\server\src\Data\Value.hs                          | Haskell  |         41 |          0 |          7 |         48 |
-| e:\REP\server\src\Lib.hs                                 | Haskell  |          6 |          0 |          3 |          9 |
-| e:\REP\server\src\Psql.json                              | JSON     |          7 |          0 |          1 |          8 |
-| e:\REP\server\src\Setup.hs                               | Haskell  |        128 |          6 |         19 |        153 |
-| e:\REP\server\src\Setup\Test.hs                          | Haskell  |         61 |          0 |          6 |         67 |
-| e:\REP\server\src\Setup\author.json                      | JSON     |         18 |          0 |          0 |         18 |
-| e:\REP\server\src\Setup\category.json                    | JSON     |         19 |          0 |          0 |         19 |
-| e:\REP\server\src\Setup\comment.json                     | JSON     |         29 |          0 |          0 |         29 |
-| e:\REP\server\src\Setup\draft.json                       | JSON     |         38 |          0 |          0 |         38 |
-| e:\REP\server\src\Setup\extension.json                   | JSON     |          4 |          0 |          0 |          4 |
-| e:\REP\server\src\Setup\news.json                        | JSON     |         45 |          0 |          0 |         45 |
-| e:\REP\server\src\Setup\person.json                      | JSON     |         33 |          0 |          0 |         33 |
-| e:\REP\server\src\Setup\tag.json                         | JSON     |         14 |          0 |          0 |         14 |
-| e:\REP\server\src\Tests.hs                               | Haskell  |         37 |          0 |         10 |         47 |
-| e:\REP\server\src\Tests\Base.hs                          | Haskell  |         55 |          0 |         11 |         66 |
+| e:\REP\server\src\Tests.hs                               | Haskell  |         41 |          0 |         10 |         51 |
+| e:\REP\server\src\Tests\Base.hs                          | Haskell  |         67 |          0 |         13 |         80 |
 | e:\REP\server\src\Tests\Config.hs                        | Haskell  |        117 |          0 |         18 |        135 |
-| e:\REP\server\src\Tests\Empty.hs                         | Haskell  |         43 |          0 |         11 |         54 |
-| e:\REP\server\src\Tests\Essence.hs                       | Haskell  |         49 |          0 |          6 |         55 |
-| e:\REP\server\src\Tests\Essence\Clause.hs                | Haskell  |         59 |          0 |         12 |         71 |
-| e:\REP\server\src\Tests\Essence\Methods.hs               | Haskell  |        140 |          0 |         26 |        166 |
+| e:\REP\server\src\Tests\Empty.hs                         | Haskell  |         38 |          0 |          4 |         42 |
+| e:\REP\server\src\Tests\Essence.hs                       | Haskell  |         54 |          0 |          6 |         60 |
+| e:\REP\server\src\Tests\Essence\Methods.hs               | Haskell  |        116 |          0 |         21 |        137 |
 | e:\REP\server\src\Tests\Essence\Parse.hs                 | Haskell  |        127 |          0 |         14 |        141 |
-| e:\REP\server\src\Tests\Essence\RelationsTree\Methods.hs | Haskell  |        101 |          0 |         18 |        119 |
+| e:\REP\server\src\Tests\Essence\Parse\Clause.hs          | Haskell  |        107 |          0 |         17 |        124 |
+| e:\REP\server\src\Tests\Essence\RelationsTree\Methods.hs | Haskell  |        102 |          0 |         18 |        120 |
 | e:\REP\server\src\Tests\MyValue.hs                       | Haskell  |        323 |          8 |         22 |        353 |
 | e:\REP\server\src\Tests\Request.hs                       | Haskell  |         11 |          0 |          2 |         13 |
 | e:\REP\server\src\Tests\Request\Access\Methods.hs        | Haskell  |         17 |          0 |          7 |         24 |
 | e:\REP\server\src\Tests\Request\Control.hs               | Haskell  |         51 |          0 |         11 |         62 |
 | e:\REP\server\src\Tests\Request\Method\Methods.hs        | Haskell  |         14 |          0 |          5 |         19 |
 | e:\REP\server\src\Tests\Request\Params\Methods.hs        | Haskell  |         55 |          0 |         11 |         66 |
-| e:\REP\server\src\Tests\Required\Methods.hs              | Haskell  |         62 |          0 |         12 |         74 |
-| e:\REP\server\src\Tests\SQL.hs                           | Haskell  |          4 |          0 |          1 |          5 |
-| e:\REP\server\src\Tests\SQL\ToValue.hs                   | Haskell  |         45 |          0 |         10 |         55 |
-| e:\REP\server\src\Tests\Setup.hs                         | Haskell  |        118 |          0 |         13 |        131 |
+| e:\REP\server\src\Tests\Required\Methods.hs              | Haskell  |         61 |          0 |         12 |         73 |
+| e:\REP\server\src\Tests\SQL.hs                           | Haskell  |        124 |          0 |          6 |        130 |
+| e:\REP\server\src\Tests\SQL\Actions.hs                   | Haskell  |         43 |          0 |          5 |         48 |
+| e:\REP\server\src\Tests\SQL\ToValue.hs                   | Haskell  |         46 |          0 |         10 |         56 |
+| e:\REP\server\src\Tests\Setup.hs                         | Haskell  |         88 |          0 |          9 |         97 |
 | e:\REP\server\src\Tests\Value.hs                         | Haskell  |        149 |          0 |         14 |        163 |
-| e:\REP\server\stack.yaml                                 | YAML     |          5 |         57 |          6 |         68 |
-| e:\REP\server\stack.yaml.lock                            | YAML     |         14 |          4 |          2 |         20 |
-| e:\REP\server\test\Spec.hs                               | Haskell  |          3 |          0 |          2 |          5 |
-| Total                                                    |          |      4,431 |        112 |        578 |      5,121 |
+| Total                                                    |          |      1,751 |          8 |        235 |      1,994 |
 +----------------------------------------------------------+----------+------------+------------+------------+------------+

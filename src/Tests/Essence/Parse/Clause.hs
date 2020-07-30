@@ -1,13 +1,25 @@
 module Tests.Essence.Parse.Clause
-    ( essenceClauseTests
+    ( essenceParseClauseTests
     ) where
 
+import Data.Essence
 import Data.Essence.Parse.Clause
+import Data.MyValue
+import Data.SQL
+
+import Control.Monad.Trans.Writer.CPS
+
+import Tests.Essence
 
 import Test.HUnit
 
-essenceClauseTests =
-    [ TestLabel "parseTagsInTest"           parseTagsInTest
+essenceParseClauseTests =
+    [ TestLabel "toEssenceClauseTest"       toEssenceClauseTest
+    , TestLabel "pickTableNameTest"         pickTableNameTest
+    , TestLabel "pickClauseTest"            pickClauseTest
+    , TestLabel "matchEssenceTest"          matchEssenceTest
+    , TestLabel "addEssenceNameTest"        addEssenceNameTest
+    , TestLabel "parseTagsInTest"           parseTagsInTest
     , TestLabel "parseAuthorNameTest"       parseAuthorNameTest
     , TestLabel "parseAuthorAnyNameTest"    parseAuthorAnyNameTest
     , TestLabel "parseAuthorFullNameTest"   parseAuthorFullNameTest
@@ -16,6 +28,47 @@ essenceClauseTests =
     , TestLabel "parseStrTest"              parseStrTest
     , TestLabel "parseSubStrTest"           parseSubStrTest
     ]
+
+toEssenceClauseTest =
+    TestCase $
+    assertEqual "for (toEssenceClause )"
+    (EssenceClause ["author","person","category"]
+        [ Where ("news.id",MyInteger 1)
+        , Filter $ "(person.first_name ILIKE 'misha' AND person.last_name ILIKE 'dragon') "
+            <> "OR (person.first_name ILIKE 'dragon' AND person.last_name ILIKE 'misha')"
+        , Filter "category.name ILIKE '%cat%'"
+        , OrderBy "news.date_of_creation"
+        ]
+    ) $ execWriter $ toEssenceClause (EssenceList "news" "create" testGetList)
+
+pickTableNameTest =
+    TestCase $
+    assertEqual "for (pickTableName \"filter_author_name\")"
+    ["author","person"]
+    $ pickTableName ("filter_author_name","misha dragon")
+pickClauseTest =
+    TestCase $
+    assertEqual
+    "for (pickClause (\"filter_author_name\",MyString \"misha dragon\"))"
+    [Filter $ "(person.first_name ILIKE 'misha' AND person.last_name ILIKE 'dragon') "
+    <> "OR (person.first_name ILIKE 'dragon' AND person.last_name ILIKE 'misha')"]
+    $ pickClause "news" ("filter_author_name",MyString "misha dragon")
+matchEssenceTest =
+    TestCase $
+    assertEqual
+    "for (matchEssence [\"news\",\"author\",\"person\",\"category\",\"tag\"])"
+    [Filter "news.author_id=author.id"
+    ,Filter "author.person_id=person.id"
+    ,Filter "news.category_id=category.id"
+    ,Filter "tag.id=ANY(news.tag_ids)"]
+    $ matchEssence ["author","person","category","tag"]
+
+addEssenceNameTest =
+    TestCase $
+    assertEqual
+    "for (addEssenceName \"person\" \"date_of_creation\")"
+    "person.date_of_creation"
+    $ addEssenceName "person" "date_of_creation"
 
 parseTagsInTest =
     TestCase $
@@ -26,23 +79,23 @@ parseTagsInTest =
 parseAuthorNameTest =
     TestCase $
     assertEqual "for (parseAuthorName \"filter\" \"misha dragon\")"
-    ("(first_name ILIKE('misha') AND last_name ILIKE('dragon')"
+    ("(person.first_name ILIKE 'misha' AND person.last_name ILIKE 'dragon'"
     <> ") OR ("
-    <> "first_name ILIKE('dragon') AND last_name ILIKE('misha'))")
+    <> "person.first_name ILIKE 'dragon' AND person.last_name ILIKE 'misha')")
     $ parseAuthorName "filter" "misha dragon"
 
 parseAuthorAnyNameTest =
     TestCase $
     assertEqual "for (parseAuthorAnyName \"search\" \"dragon\")"
-    "first_name ILIKE('%dran%') OR last_name ILIKE('%dran%')"
+    "person.first_name ILIKE '%dran%' OR person.last_name ILIKE '%dran%'"
     $ parseAuthorAnyName "search" "dran"
 
 parseAuthorFullNameTest =
     TestCase $
     assertEqual "for (parseAuthorFullName \"sort\" (\"misha\",\"dragon\"))"
-    ("(first_name ILIKE('misha') AND last_name ILIKE('dragon')"
+    ("(person.first_name ILIKE 'misha' AND person.last_name ILIKE 'dragon'"
     <> ") OR ("
-    <> "first_name ILIKE('dragon') AND last_name ILIKE('misha'))")
+    <> "person.first_name ILIKE 'dragon' AND person.last_name ILIKE 'misha')")
     $ parseAuthorFullName "filter" ("misha","dragon")
 
 parseFullNameTest =
@@ -54,7 +107,7 @@ parseFullNameTest =
 parseSearchStrTest =
     TestCase $
     assertEqual "for (parseSearchStr \"is\")"
-    "'%is%'"
+    "%is%"
     $ parseSearchStr "is"
 
 parseStrTest =
@@ -66,5 +119,5 @@ parseStrTest =
 parseSubStrTest =
     TestCase $
     assertEqual "for (parseSubStr \"mis\")"
-    "'mis%'"
+    "mis%"
     $ parseSubStr "mis"

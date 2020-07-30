@@ -40,14 +40,14 @@ parsePathTest =
 getApiActionsTest =
     TestCase $
     assertEqual "for (getApiActions testApi)"
-    ["create","edit","get","delete","puglish"]
+    ["edit","get","create","delete","publish"]
     $ getApiActions testApi
 
 getEssenceFieldsTest =
     TestCase $
     assertEqual
     "for (getEssenceFields \"category\" testConfig)"
-    ["id","name", "childs_category"]
+    ["name","child_category","id"]
     $ getEssenceFields "category" testConfig
 
 parseFieldsFuncTest =

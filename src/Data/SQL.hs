@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ConstrainedClassMethods #-}
 module Data.SQL
     ( ShowSQL (..)
     , SqlQuery (..)
@@ -21,6 +22,8 @@ type SqlRequest = String
 type FieldValue = String
 
 class ShowSQL a where
+    groupSql :: Ord a => [a] -> [[a]]
+    groupSql = groupBy ((ordToBool .) . compare)
     showSql :: a -> SqlRequest
     parseList :: a -> String
     unpack :: a -> String
@@ -70,22 +73,18 @@ data instance Clause String
     | Where { pairWhere :: (String, MyValue) }
     | Filter { filter :: String }
     | OrderBy { orderBy :: String }
-    deriving Show
+    deriving (Show,Eq)
 data instance Clause [String]
     = SetList { listSet :: [(String, String)] }
     | WhereList { listWhere :: [(String, String)] }
     | FilterList { listFilter :: [String] }
     | OrderByList { listOrderBy :: [String] }
-    deriving Show
-instance Eq (Clause String) where
-    Set _     == Set _     = True
-    Where _   == Where _   = True
-    Filter _  == Filter _  = True
-    OrderBy _ == OrderBy _ = True
-    _         == _         = False
+    deriving (Show,Eq)
 instance Ord (Clause String) where
-    compare (Where _) (Filter _) = EQ
-    compare (Filter _) (Where _) = EQ
+    compare (Set _)     (Set _)     = EQ
+    compare (Where _)   (Where _)   = EQ
+    compare (Filter _)  (Filter _)  = EQ
+    compare (OrderBy _) (OrderBy _) = EQ
 
     compare (Set _) _ = GT
 
@@ -105,15 +104,14 @@ instance ShowSQL (Clause String) where
     unpack (Filter x)                = show x
     unpack (OrderBy x)               = show x
 instance ShowSQL [Clause String] where
-    showSql = showSql . map clauseSequenceA . group . sort
+    showSql = showSql . map clauseSequenceA . groupSql . sort
 
-instance Eq (Clause [String]) where
-    SetList _     == SetList _     = True
-    WhereList _   == WhereList _   = True
-    FilterList _  == FilterList _  = True
-    OrderByList _ == OrderByList _ = True
-    _             == _             = False
 instance Ord (Clause [String]) where
+    compare (SetList _)     (SetList _)     = EQ
+    compare (WhereList _)   (WhereList _)   = EQ
+    compare (FilterList _)  (FilterList _)  = EQ
+    compare (OrderByList _) (OrderByList _) = EQ
+
     compare (SetList _) _ = LT
 
     compare (WhereList _) (SetList _) = GT

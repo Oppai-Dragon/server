@@ -103,11 +103,9 @@
     , "search_author_name":["VARCHAR(50)"]
     , "search_category_name":["VARCHAR(25)"]
     , "search_tag_name":["VARCHAR(20)"]
-    , "sort":
-        [ "date_of_creation"
-        , "author_name"
-        , "category_name"
-        , "number_of_photos"
-        ]
+    , "sort_date_of_creation":["BOOLEAN"]
+    , "sort_author_name":["BOOLEAN"]
+    , "sort_category_name":["BOOLEAN"]
+    , "sort_number_of_photos":["BOOLEAN"]
     }
 }

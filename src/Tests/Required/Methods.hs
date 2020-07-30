@@ -3,7 +3,6 @@ module Tests.Required.Methods
     ) where
 
 import Data.Essence
-import Data.requiredValue
 import Data.Required
 import Data.Required.Methods
 
@@ -34,13 +33,13 @@ getRequiredFieldsTest =
 iterateHMTest =
     TestCase $
     assertEqual "for (iterateHM testEssenceDBFields \"create\")"
-    ([AND "first_name", AND "last_name"] :: [Required String])
+    ([AND "last_name",AND "first_name"] :: [Required String])
     $ iterateHM testEssenceDBFields "create"
 
 iterateHMCreateTest =
     TestCase $
     assertEqual "for (iterateHMCreate testEssenceDBFields)"
-    ([AND "first_name", AND "last_name"] :: [Required String])
+    ([AND "last_name", AND "first_name"] :: [Required String])
     $ iterateHMCreate testEssenceDBFields
 
 iterateHMGetTest =
@@ -52,13 +51,13 @@ iterateHMGetTest =
 iterateHMEditTest =
     TestCase $
     assertEqual "for (iterateHMEdit testEssenceDBFields)"
-    ([AND "id",OR "first_name",OR "last_name",OR "avatar",OR "is_admin",AND "access_key"] :: [Required String])
+    ([AND "id",OR "avatar",OR "is_admin",OR "last_name",OR "first_name"] :: [Required String])
     $ iterateHMEdit testEssenceDBFields
 
 iterateHMDeleteTest =
     TestCase $
     assertEqual "for (iterateHMDelete testEssenceDBFields)"
-    ([AND "id",AND "access_key"] :: [Required String])
+    ([AND "id"] :: [Required String])
     $ iterateHMDelete testEssenceDBFields
 
 requiredSequenceATest =

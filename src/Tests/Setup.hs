@@ -12,81 +12,47 @@ import Control.Monad.Trans.Writer.CPS
 import Test.HUnit
 
 setupTests =
-    [ TestLabel "updateEssenceFieldsTest"   updateEssenceFieldsTest
-    , TestLabel "collectEssenceJsonTest"    collectEssenceJsonTest
-    , TestLabel "getEssenceObjectsTest"     getEssenceObjectsTest
-    , TestLabel "getAllQuerisTest"          getAllQuerisTest
-    , TestLabel "getCreateQueryTest"        getCreateQueryTest
+    [ TestLabel "getCreateQueryTest"        getCreateQueryTest
     , TestLabel "parseAllQueriesTest"       parseAllQueriesTest
     , TestLabel "iterateObjTest"            iterateObjTest
     ]
 
-updateEssenceFieldsTest =
-    TestCase $
-    updateEssenceFields ["person"] testPersonObj >>=
-    assertEqual "for (updateEssenceFields [\"person\"] testPersonObj)"
-    undefined
-
-collectEssenceJsonTest =
-    TestCase $
-    collectEssenceJson >>=
-    assertEqual "for collectEssenceJson"
-    undefined
-
-getEssenceObjectsTest =
-    TestCase $
-    getEssenceObjects >>=
-    assertEqual "for getEssenceObjects"
-    undefined
-
-getAllQuerisTest =
-    TestCase $
-    getAllQueris >>=
-    assertEqual "for getAllQueris"
-    undefined
-
 getCreateQueryTest =
     TestCase $
     assertEqual "for (getCreateQuery testSetup)"
-    ("CREATE EXTENSION IF NOT EXISTS \"pgcrypto\";"
-    <> "CREATE TABLE person "
-    <> "(id BIGSERIAL PRIMARY KEY"
-    <> ",first_name VARCHAR(50) NOT NULL"
-    <> ",last_name VARCHAR(50) NOT NULL "
-    <> ",date_of_creation DATE NOT NULL"
-    <> ",avatar VARCHAR(50) DEFAULT 'https://oppai-dragon.site/images/avatar.jpg'"
-    <> ",is_admin BOOLEAN DEFAULT FALSE"
-    <> ",access_key UUID DEFAULT gen_random_uuid()"
-    <> ");")
+    ("TABLE person "
+    <> "( first_name VARCHAR(50) NOT NULL"
+    <> " ,access_key UUID DEFAULT gen_random_uuid()"
+    <> " ,date_of_creation DATE NOT NULL"
+    <> " ,last_name VARCHAR(50) NOT NULL"
+    <> " ,is_admin BOOLEAN DEFAULT FALSE"
+    <> " ,id BIGSERIAL PRIMARY KEY"
+    <> " ,avatar VARCHAR(50) DEFAULT 'https://oppai-dragon.site/images/avatar.jpg'"
+    <> " );")
     $ getCreateQuery testSetupObj
 
 parseAllQueriesTest =
     TestCase $
     assertEqual "for (parseAllQueries \"TABLE person\")"
-    "CREATE TABLE person ();"
-    $ parseAllQueries "TABLE person"
+    "TABLE person ( id INT );"
+    $ parseAllQueries "TABLE person id INT ,"
 
 iterateObjTest =
     TestCase $
     assertEqual "for (iterateObj testSetup)"
-    ("CREATE EXTENSION IF NOT EXISTS \"pgcrypto\""
-    <> "CREATE TABLE person "
-    <> "id BIGSERIAL PRIMARY KEY"
-    <> ",first_name VARCHAR(50) NOT NULL"
-    <> ",last_name VARCHAR(50) NOT NULL "
-    <> ",date_of_creation DATE NOT NULL"
-    <> ",avatar VARCHAR(50) DEFAULT 'https://oppai-dragon.site/images/avatar.jpg'"
-    <> ",is_admin BOOLEAN DEFAULT FALSE"
-    <> ",access_key UUID DEFAULT gen_random_uuid()"
-    <> "") $ execWriter (iterateObj testSetup)
+    ("TABLE person "
+    <> "first_name VARCHAR(50) NOT NULL"
+    <> " ,access_key UUID DEFAULT gen_random_uuid()"
+    <> " ,date_of_creation DATE NOT NULL"
+    <> " ,last_name VARCHAR(50) NOT NULL"
+    <> " ,is_admin BOOLEAN DEFAULT FALSE"
+    <> " ,id BIGSERIAL PRIMARY KEY"
+    <> " ,avatar VARCHAR(50) DEFAULT 'https://oppai-dragon.site/images/avatar.jpg'"
+    <> " ,") $ execWriter (iterateObj testSetup)
 
 testSetup = Object testSetupObj
 testSetupObj = HM.fromList
-    [("EXTENSION" , object
-        [ "IF NOT EXISTS" .= String "pgcrypto"
-        ]
-     )
-    ,("TABLE" , object
+    [("TABLE" , object
         [ "person" .= Object testPersonObj
         ]
      )

@@ -6,10 +6,15 @@ import Data.Essence
 import qualified Data.HashMap.Strict as HM
 
 testEssenceList = EssenceList "person" "create" testEssenceListFields
-testEssenceListFields =
-    [("first_name","misha")
-    ,("last_name","dragon")
-    ]
+testEssenceListFields = [("first_name",MyString "misha"),("last_name",MyString "dragon")]
+testCreateList = [("id",MyInteger 1),("content",MyString "kek")]
+testEditList = [("id",MyInteger 1),("content",MyString "kek")]
+testGetList =
+    [("id",MyInteger 1)
+    ,("filter_author_name",MyString "misha dragon")
+    ,("search_category_name",MyString "cat")
+    ,("sort",MyString "date_of_creation")]
+testDeleteTest = [("id",MyInteger 1)]
 
 testEssenceDatabase = EssenceDatabase "person" "create"
     $ HM.fromList testEssenceDatabaseFields

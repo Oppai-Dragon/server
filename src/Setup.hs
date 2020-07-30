@@ -2,7 +2,6 @@
 module Setup
     ( setup
     , buildConfigJson
-    , updateEssenceFields
     , createTables
     , collectEssenceJson
     , getEssenceObjects
@@ -52,29 +51,12 @@ buildConfigJson = do
     path <- setConfigPath
     api <- setApi
     psql <- setPsql
-    let pageObj = case HM.lookup "page" psql of
-            Just value -> HM.singleton "page" value
-            Nothing    -> HM.empty
     let uriObj = HM.singleton "uriDB" . String . T.pack $ getUriDB psql
     objEssenceList <- collectEssenceJson
-    let jsonObj' =  HM.unions objEssenceList
+    let jsonObj =  HM.unions objEssenceList
     let essences = getEssences api
-    jsonObj <- updateEssenceFields essences jsonObj'
-    let json = Object $ HM.unions [jsonObj,pageObj,uriObj]
+    let json = Object $ HM.unions [jsonObj,uriObj]
     encodeFile path json
-
-updateEssenceFields :: [T.Text] -> Object -> IO Object
-updateEssenceFields []             jsonObj = return jsonObj
-updateEssenceFields (essence:rest) jsonObj = do
-    api <- setApi
-    case HM.lookup essence api of
-        Just (Object essenceObj) ->
-            case HM.lookup essence jsonObj of
-                Just (Object obj) ->
-                    updateEssenceFields rest $
-                    HM.insert essence (Object $ HM.union essenceObj obj) jsonObj
-                _                 -> updateEssenceFields rest jsonObj
-        _                        -> updateEssenceFields rest jsonObj
 
 createTables :: IO ()
 createTables = do
@@ -125,7 +107,7 @@ parseAllQueries str =
     let
         addingSemicolon = flip (<>) ");" . init
         addingLBracket = map2Var
-            (\x1 x2 -> if x1 == "TABLE" then x2 <> "(" else x2)
+            (\x1 x2 -> if x1 == "TABLE" then x2 <> " (" else x2)
     in addingSemicolon . unwords .
     addingLBracket . words $ str
 

@@ -16,6 +16,7 @@ baseTests =
     , TestLabel "findTextTest"              findTextTest
     , TestLabel "scientificToIntegerTest"   scientificToIntegerTest
     , TestLabel "replaceByTest"             replaceByTest
+    , TestLabel "ordToBoolTest"             ordToBoolTest
     ]
 
 ifElseThenTest =
@@ -72,3 +73,8 @@ replaceByTest =
     "for (replaceBy (==\"krut\") \"lox\" [\"misha\", \"krut\", \".\"])"
     ["misha", "lox", "."]
     $ replaceBy (=="krut") "lox" ["misha", "krut", "."]
+
+ordToBoolTest =
+    TestCase $
+    assertEqual "for (ordToBool GT)"
+    False $ ordToBool GT

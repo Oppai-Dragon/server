@@ -9,6 +9,7 @@ import Tests.Config
 import Tests.Essence.Methods
 import Tests.Essence.RelationsTree.Methods
 import Tests.Essence.Parse
+import Tests.Essence.Parse.Clause
 
 import Tests.MyValue
 
@@ -23,6 +24,7 @@ import Tests.Value
 
 import Tests.Setup
 import Tests.SQL
+import Tests.SQL.Actions
 import Tests.SQL.ToValue
 
 import Test.HUnit
@@ -35,6 +37,7 @@ runTest = runTestTT . TestList
     <> essenceMethodsTests
     <> essenceRelationsTreeMethodsTests
     <> essenceParseTests
+    <> essenceParseClauseTests
     <> myValueTests
     <> requiredMethodsTests
     <> requestControlTests
@@ -44,4 +47,5 @@ runTest = runTestTT . TestList
     <> valueTests
     <> setupTests
     <> sqlTests
+    <> sqlActionsTests
     <> sqlToValueTests
