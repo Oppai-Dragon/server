@@ -1,5 +1,6 @@
 module Data.MyValue
     ( MyValue (..)
+    , parseIntegers
     , parseStrings
     , parseBool
     , myInteger
@@ -49,16 +50,27 @@ instance Read MyValue where
         "bool"          -> [(MyBool False,"")]
         "uuid"          -> [(MyString [],"")]
 
+parseIntegers :: String -> String
+parseIntegers [] = []
+parseIntegers (x:xs) =
+    case x of
+        '['  -> "[" <> parseIntegers xs
+        '{'  -> "[" <> parseIntegers xs
+        ','  -> "," <> parseIntegers xs
+        ']'  -> "]" <> parseIntegers xs
+        '}'  -> "]" <> parseIntegers xs
+        _    -> x : parseIntegers xs
+
 parseStrings :: String -> String
 parseStrings [] = []
 parseStrings (x:xs) =
     case x of
         '\"' -> parseStrings xs
         '['  -> "[\"" <> parseStrings xs
-        '{'  -> "{\"" <> parseStrings xs
+        '{'  -> "[\"" <> parseStrings xs
         ','  -> "\",\"" <> parseStrings xs
         ']'  -> "\"]" <> parseStrings xs
-        '}'  -> "\"}" <> parseStrings xs
+        '}'  -> "\"]" <> parseStrings xs
         _    -> x : parseStrings xs
 
 parseBool :: String -> String
@@ -74,7 +86,7 @@ myInteger = MyInteger . read
 myString = MyString
 myBool = MyBool . read . parseBool
 myDate = MyDate
-myIntegers = MyIntegers . read
+myIntegers = MyIntegers . read . parseIntegers
 myStrings = MyStrings . read . parseStrings
 myNextval = MyNextval
 
@@ -93,8 +105,8 @@ chooseMyValue str = case str of
     date@(x1:x2:x3:x4:'-':x5:x6:'-':x7:x8) -> myDate
     date@(x1:x2:'-':x3:x4:'-':x5:x6:x7:x8) -> myDate
     'N':'E':'X':'T':'V':'A':'L':'(':rest -> myNextval
-    x:xs     ->
-        if C.isDigit x
+    arr      ->
+        if all C.isDigit arr
             then myInteger
             else myString
     _        -> const MyEmpty

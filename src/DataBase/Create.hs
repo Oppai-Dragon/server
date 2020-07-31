@@ -4,15 +4,15 @@ module DataBase.Create
 
 import Config
 import Data.Base
-    ( ifElseThen )
 import Data.Handler
 import Data.Essence
 import Data.Essence.Methods
 import Data.Essence.RelationsTree.Methods
+import Data.Essence.Parse.Clause
+import Data.MyValue
+import Data.SQL
+import Data.SQL.Actions
 import Data.SQL.ToValue
-    ( integerToValue
-    , sqlValuesArrToValue
-    )
 
 import Data.Aeson
 import qualified Data.HashMap.Strict    as HM
@@ -40,17 +40,17 @@ dbCreate :: StateT (Essence List) (ReaderT Config IO) Value
 dbCreate = do
     config <- lift $ ask
     addingDefault
---    addingRelationsFields
+    --addingRelationsFields
     essenceList@(EssenceList name action list) <- get
-    let createQuery = show essenceList
+    let createQuery = showSql essenceList
     let uriDB = getUri config
     let essence = T.pack name
     conn <- lift . lift $ connectPostgreSQL uriDB
     lift . lift $ run conn createQuery []
     lift . lift $ commit conn
     let getQueryId = "SELECT currval('" <> name <> "_id_seq');"
-    [[SqlInteger idEssence]] <- lift . lift $ quickQuery' conn getQueryId []
-    let getQueryEssence = show (EssenceList name "get" [("id",show idEssence)])
+    [[SqlInteger id]] <- lift . lift $ quickQuery' conn getQueryId []
+    let getQueryEssence = showSql . Get name $ pickClause name ("id",MyInteger id)
     sqlValues <- lift . lift $ quickQuery' conn getQueryEssence []
     let value = sqlValuesArrToValue essenceList sqlValues config
     lift . lift $ disconnect conn
@@ -69,8 +69,9 @@ dbCreate = do
 addingDefault :: StateT (Essence List) (ReaderT Config IO) ()
 addingDefault = do
     config <- lift ask
+    api <- lift . lift $ setApi
     essenceList@(EssenceList name action list) <- get
-    let essenceDB = getEssenceDB (T.pack name) (T.pack action) config
+    let essenceDB = getEssenceDB (T.pack name) (T.pack action) config api
     let isDateOfCreation = case HM.lookup "date_of_creation" (fieldsOf essenceDB) of
             Just _  -> True
             Nothing -> False
@@ -78,5 +79,5 @@ addingDefault = do
     date <- lift . lift $ getCurrentTime
     let dateValue = show $ utctDay date
     if isDateOfCreation
-        then put $ addList [("id",idValue),("date_of_creation",dateValue)] essenceList
-        else put $ addList [("id",idValue)] essenceList
+        then put $ addList [("id", MyNextval idValue),("date_of_creation", MyDate dateValue)] essenceList
+        else put $ addList [("id", MyNextval idValue)] essenceList

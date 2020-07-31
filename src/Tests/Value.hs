@@ -14,7 +14,6 @@ valueTests =
     <> toStrArrTests
     <> toTextTests
     <> toStrTests
-    <> fromTests
 
 toTextArrTests =
     [ TestLabel "array_toTextArrTest"   array_toTextArrTest
@@ -151,13 +150,3 @@ others_toStrTest =
     assertEqual "for (toStr Null)"
     ""
     $ toStr Null
-
-fromTests =
-    [ TestLabel "fromStrTest"               fromStrTest
-    ]
-
-fromStrTest =
-    TestCase $
-    assertEqual "for (fromStr \"kek\")"
-    (String "kek")
-    $ fromStr "kek"

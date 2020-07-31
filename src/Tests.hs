@@ -6,6 +6,7 @@ import Tests.Base
 
 import Tests.Config
 
+import Tests.Empty
 import Tests.Essence.Methods
 import Tests.Essence.RelationsTree.Methods
 import Tests.Essence.Parse
@@ -34,6 +35,7 @@ runTest = runTestTT . TestList
     $ []
     <> baseTests
     <> configTests
+    <> emptyTests
     <> essenceMethodsTests
     <> essenceRelationsTreeMethodsTests
     <> essenceParseTests

@@ -1,6 +1,5 @@
 module Main where
 
-
 import App
 
 import           Network.Wai
@@ -11,4 +10,4 @@ import           Network.Wai.Middleware.Autohead
 
 
 main :: IO ()
-main = Warp.run 8000 $ logStdout $ autohead app
+main = Warp.run 8000 (logStdout $ autohead app)

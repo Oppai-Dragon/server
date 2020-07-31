@@ -10,6 +10,7 @@ import Data.Handler
 import Data.Empty
 import Data.Essence
 import Data.Essence.Methods
+import Data.Essence.Parse.Clause
 import Data.MyValue
 import Data.SQL
 import Data.SQL.Actions
@@ -43,7 +44,7 @@ dbGet = do
     let pageCounter = case lookup "page" list of
             Just (MyInteger num) -> fromInteger num
             Nothing              -> 1
-    let getQuery = init (show essenceList) <> " " <> getOffsetLimit pageCounter config
+    let getQuery = init (showSql essenceList) <> " " <> getOffsetLimit pageCounter config
     let uriDB = getUri config
     let essence = T.pack name
     conn <- lift . lift $ connectPostgreSQL uriDB
@@ -57,11 +58,10 @@ dbGet = do
 
 dbGetOne :: Essence List -> ReaderT Config IO Value
 dbGetOne (EssenceList _     _      [(_,    MyEmpty )]) = return (Object HM.empty)
-dbGetOne (EssenceList table action [(field,myValue)]) = do
+dbGetOne (EssenceList table action [pair]) = do
     config <- ask
     let uriDB = getUri config
-    let wherePart = field <> "=" <> (parseValue myValue)
-    let getQuery = "SELECT * FROM " <> table <> " " <> wherePart <> ";"
+    let getQuery = showSql . Get table $ pickClause table pair
     conn <- lift $ connectPostgreSQL uriDB
     sqlValuesArr <- lift $ quickQuery' conn getQuery []
     let value = sqlValuesArrToValue (EssenceList table action []) sqlValuesArr config
@@ -92,22 +92,17 @@ iterateObj (essence:rest) pageObj = do
     (:) (HM.singleton essence $ Object nestedEssence) <$> iterateObj rest pageObj
 
 dbGetArray :: Essence [(String,MyValue)] -> ReaderT Config IO Value
-dbGetArray (EssenceList table action [(field,myValue)]) = do
+dbGetArray (EssenceList table action [(field,MyIntegers arr)]) = do
     config <- ask
     let uri = getUri config
+    let myStrArray = map show arr
     conn <- lift $ connectPostgreSQL uri
-    let wherePart = L.intercalate " OR " $ vectorToStrList (object ["arr" .= toValue myValue])
-    let getQuery = "SELECT * FROM " <> table <> " " <> wherePart <> ";"
+    let wherePart = L.intercalate " OR " $ map (\x -> field <> "=" <> x) myStrArray
+    let getQuery = showSql . Get table $ [Filter wherePart]
     sqlValuesArr <- lift $ quickQuery' conn getQuery []
     lift $ disconnect conn
     let value = sqlValuesArrToValue (EssenceList table action []) sqlValuesArr config
     pure value
-
-vectorToStrList :: Value -> [String]
-vectorToStrList (Object obj) =
-    case parseMaybe (.: "arr") obj of
-        Just arr -> arr
-        _        -> []
 
 nesteEssence :: [(String,Relations)] -> StateT Object (ReaderT Config IO) ()
 nesteEssence []                                           = do

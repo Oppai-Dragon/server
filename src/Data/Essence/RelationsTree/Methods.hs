@@ -63,7 +63,7 @@ updateRelationsFields = do
     let essence = T.pack name
     if isEssenceRelations essence config
         then relationsHandler essence
-        else return HM.empty
+        else return $ HM.singleton "result" (Number 1)
 
 relationsHandler :: Name -> StateT (Essence List) (ReaderT Config IO) Object
 relationsHandler name = do

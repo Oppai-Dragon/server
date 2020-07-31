@@ -37,14 +37,16 @@ sqlValuesToJsonValue :: Essence List -> [SqlValue] -> Config -> Value
 sqlValuesToJsonValue (EssenceList name action list) sqlValues conf =
     let
         nameT = T.pack name
+        essenceFields = getEssenceFields nameT conf
         fields = case [name,action] of
-            ["person","create"] -> getEssenceFields nameT conf
-            ["person",_]        -> L.delete "access_key" $ getEssenceFields nameT conf
-            _                   -> getEssenceFields nameT conf
-        sqlValuesNeeded =
-            case L.elemIndex "access_key" (getEssenceFields nameT conf) of
-                Just index -> flip L.delete sqlValues $ (!!) sqlValues index
-                Nothing    -> sqlValues
+            ["person","get"] -> L.delete "access_key" essenceFields
+            _                -> essenceFields
+        sqlValuesNeeded = case [name,action] of
+            ["person","get"] ->
+                case L.elemIndex "access_key" essenceFields of
+                    Just index -> flip L.delete sqlValues $ (!!) sqlValues index
+                    Nothing    -> sqlValues
+            _                -> sqlValues
     in Object . fromZip fields $ map sqlToValue sqlValuesNeeded
 
 sqlValuesArrToObj :: Int -> Essence List -> [[SqlValue]] -> Config -> Object

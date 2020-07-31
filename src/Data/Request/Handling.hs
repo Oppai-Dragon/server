@@ -8,7 +8,7 @@ import           Data.Handler
 import           Data.MyValue                                   (fromBS)
 import           Data.Request.Control                           (isRequestCorrect)
 import           Data.SQL.Actions
-import           Data.SQL.ToValue                               (sqlValuesArrToValue,integerToValue)
+import           Data.SQL.ToValue
 import qualified Data.Empty                             as E
 import           Data.Essence
 import           Data.Essence.Methods
@@ -69,7 +69,7 @@ getEssenseList req = do
     let actionDB = getApiDBMethod action api
     let essence = if action == "publish" then "news" else essence'
     let queryBS = queryString req
-    let essenceDB = getEssenceDB essence actionDB config
+    let essenceDB = getEssenceDB essence actionDB config api
     essenceList <- toEssenceList essenceDB queryBS
     return essenceList
 

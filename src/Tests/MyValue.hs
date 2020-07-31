@@ -10,9 +10,16 @@ import qualified Data.Vector           as V
 import Test.HUnit
 
 myValueTests =
-    [ TestLabel "parseStringsTest"  parseStringsTest
+    [ TestLabel "parseIntegersTest" parseIntegersTest
+    , TestLabel "parseStringsTest"  parseStringsTest
     , TestLabel "parseBoolTest"     parseBoolTest
     ] <> chooseMyValueTests <> fromTests <> toTests
+
+parseIntegersTest =
+    TestCase $
+    assertEqual "for (parseIntegers \"{1,2}\")"
+    "[1,2]"
+    $ parseIntegers "{1,2}"
 
 parseStringsTest =
     TestCase $

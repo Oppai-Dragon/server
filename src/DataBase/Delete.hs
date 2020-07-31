@@ -7,6 +7,8 @@ import Data.Base
 import Data.Handler
 import Data.Essence
 import Data.Essence.Methods
+import Data.MyValue
+import Data.SQL
 import Data.SQL.ToValue
 import Data.SQL.Actions
 import Data.Aeson
@@ -28,11 +30,11 @@ dbDelete :: StateT (Essence List) (ReaderT Config IO) Value
 dbDelete = do
     essenceList <- get
     config <- lift ask
-    let deleteQuery = show essenceList
+    let deleteQuery = showSql essenceList
     let uriDB = getUri config
     conn <- lift . lift $ connectPostgreSQL uriDB
     result <- lift . lift $ run conn deleteQuery []
     lift . lift $ commit conn
-    let value = object [ "result" .= integerToValue result]
+    let value = object [ "result" .= (toValue . MyInteger) result]
     lift . lift $ disconnect conn
     pure value

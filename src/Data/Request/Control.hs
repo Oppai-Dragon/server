@@ -133,7 +133,7 @@ accessCollector accessKeyBS = do
     let accessKeyStr = parseValue $ fromBS accessKeyBS
     let uriDB = getUri config
     conn <- PSQL.connectPostgreSQL uriDB
-    let userQuery = "SELECT id,is_admin FROM person WHERE accesss_key=" <> accessKeyStr
+    let userQuery = "SELECT id,is_admin FROM person WHERE accesss_key=" <> accessKeyStr <> ";"
     sqlValuesArr <- quickQuery' conn userQuery []
     HDBC.disconnect conn
     let checkIsAdmin bool = if bool then [User,Admin] else [User]

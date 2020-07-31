@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 362321273f771d917dfadc8c0a68601e777db6f0bdbde5b1f957143c80bf1177
+-- hash: 8ae57dcfe24a118cc6f07eece8da1157dbd6ef8e6862625e8a418dc09da025ef
 
 name:           server
 version:        0.1.0.0
@@ -57,7 +57,6 @@ library
       DataBase.Get
       Lib
       Setup
-      Setup.Test
       Tests
       Tests.Base
       Tests.Config

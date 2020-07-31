@@ -19,22 +19,22 @@ parse_string_ValueTest =
     TestCase $
     assertEqual "for (parseValue \"misha\")"
     "'misha'"
-    $ parseValue "misha"
+    $ parseValue ("misha" :: String)
 parse_strings_ValueTest =
     TestCase $
     assertEqual "for (parseValue [\"misha\",\"lox\"])"
     "ARRAY['misha','lox']"
-    $ parseValue ["misha","lox"]
+    $ parseValue (["misha","lox"] :: [String])
 parse_integer_ValueTest =
     TestCase $
     assertEqual "for (parseValue 1)"
     "1"
-    $ parseValue 1
+    $ parseValue (1 :: Integer)
 parse_integers_ValueTest =
     TestCase $
     assertEqual "for (parseValue [1,2,3])"
     "ARRAY[1,2,3]"
-    $ parseValue [1,2,3]
+    $ parseValue ([1,2,3] :: [Integer])
 parse_bool_ValueTest =
     TestCase $
     assertEqual "for (parseValue False)"
