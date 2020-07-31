@@ -61,7 +61,7 @@ dbGetOne (EssenceList _     _      [(_,    MyEmpty )]) = return (Object HM.empty
 dbGetOne (EssenceList table action [pair]) = do
     config <- ask
     let uriDB = getUri config
-    let getQuery = showSql . Get table $ pickClause table pair
+    let getQuery = showSql $ Get table [Where pair]
     conn <- lift $ connectPostgreSQL uriDB
     sqlValuesArr <- lift $ quickQuery' conn getQuery []
     let value = sqlValuesArrToValue (EssenceList table action []) sqlValuesArr config

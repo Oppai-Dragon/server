@@ -31,9 +31,9 @@ isRequiredParams essenceDB queryMBS =
     let
         queryBS = queryBSWithoutMaybe queryMBS
         requiredParams = getRequiredFields essenceDB
-    in case queryBS of
-        [] -> True
-        _  -> iterateRequiredParams requiredParams queryBS
+    in case requiredParams of
+        NullFields -> True
+        _          -> iterateRequiredParams requiredParams queryBS
 
 iterateRequiredParams :: Required [String] -> QueryBS -> Bool
 iterateRequiredParams params queryBS =

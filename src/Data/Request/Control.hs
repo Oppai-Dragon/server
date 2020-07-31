@@ -133,13 +133,13 @@ accessCollector accessKeyBS = do
     let accessKeyStr = parseValue $ fromBS accessKeyBS
     let uriDB = getUri config
     conn <- PSQL.connectPostgreSQL uriDB
-    let userQuery = "SELECT id,is_admin FROM person WHERE accesss_key=" <> accessKeyStr <> ";"
+    let userQuery = "SELECT id,is_admin FROM person WHERE access_key=" <> accessKeyStr <> ";"
     sqlValuesArr <- quickQuery' conn userQuery []
     HDBC.disconnect conn
     let checkIsAdmin bool = if bool then [User,Admin] else [User]
     let authorCollect userId = do
             conn <- PSQL.connectPostgreSQL uriDB
-            let authorQuery = showSql (EssenceList "author" "get" [("user_id", MyInteger userId)])
+            let authorQuery = showSql $ Get "author" [Where ("person_id", MyInteger userId)]
             sqlValuesArr <- quickQuery' conn authorQuery []
             HDBC.disconnect conn
             if null sqlValuesArr

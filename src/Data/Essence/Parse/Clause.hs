@@ -103,9 +103,11 @@ pickClause name (field,myValue) =
 
 matchEssence :: [EssenceName] -> [Clause String]
 matchEssence []           = []
+matchEssence [x]          = []
 matchEssence (table:rest) =
     let parsed = case table of
-            "author"   -> Filter "news.author_id=author.id AND author.person_id=person.id"
+            "author"   -> Filter "news.author_id=author.id"
+            "person"   -> Filter "author.person_id=person.id"
             "category" -> Filter "news.category_id=category.id"
             "tag"      -> Filter "tag.id=ANY(news.tag_ids)"
             _          -> Filter ""
