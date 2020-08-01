@@ -9,16 +9,20 @@ module Data.Essence
     , VALUE (..)
     , Relations (..)
     , Constraint (..)
+    , GetFields (..)
     ) where
 
 import Data.MyValue
+import Data.Required
 import Data.SQL
 
 import qualified Data.Aeson as A
 import Data.HashMap.Strict (HashMap)
 import Data.Text (Text,unpack,pack)
 
+
 type Field    = String
+type Action   = Text
 type Value    = String
 type List     = [(Field,MyValue)]
 type Database = HashMap Field [(Field,Value)]
@@ -85,3 +89,9 @@ instance Read Constraint where
         "primary key"        -> [(PRIMARY,"")]
         "unique"             -> [(UNIQUE,"")]
         "delete with parent" -> [(OnAction,"")]
+
+class GetFields a where
+    getFields :: Essence DB -> a
+    iterateHM :: [(Field,Description)] -> Action -> [a]
+    iterateHMCreate,iterateHMGet,iterateHMEdit,iterateHMDelete ::
+        [(Field,Description)] -> [a]

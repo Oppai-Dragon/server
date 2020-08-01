@@ -10,6 +10,7 @@ import           Config
 import qualified Data.MyValue        as MyValue
 import qualified Data.Value          as Value
 import           Data.Essence
+import           Data.Essence.Methods
 
 import           Data.Aeson
 
@@ -36,8 +37,8 @@ fromZip = (HM.fromList .) . zip
 sqlValuesToJsonValue :: Essence List -> [SqlValue] -> Config -> Value
 sqlValuesToJsonValue (EssenceList name action list) sqlValues conf =
     let
-        nameT = T.pack name
-        essenceFields = getEssenceFields nameT conf
+        essenceDB = getEssenceDB (T.pack name) (T.pack action) conf
+        essenceFields = getEssenceFields essenceDB
         fields = case [name,action] of
             ["person","get"] -> L.delete "access_key" essenceFields
             _                -> essenceFields

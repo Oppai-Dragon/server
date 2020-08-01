@@ -16,7 +16,6 @@ import Test.HUnit
 configTests =
     [ TestLabel "parsePathTest"             parsePathTest
     , TestLabel "getApiActionsTest"         getApiActionsTest
-    , TestLabel "getEssenceFieldsTest"      getEssenceFieldsTest
     , TestLabel "parseFieldsFuncTest"       parseFieldsFuncTest
     , TestLabel "getEssencesTest"           getEssencesTest
     , TestLabel "getActionsForEssenceTest"  getActionsForEssenceTest
@@ -26,6 +25,7 @@ configTests =
     , TestLabel "getUriDBTest"              getUriDBTest
     , TestLabel "getMethodActionsTest"      getMethodActionsTest
     , TestLabel "getApiDBMethodTest"        getApiDBMethodTest
+    , TestLabel "getRelationFieldsTest"     getRelationFieldsTest
     , TestLabel "getRelationsTreeTest"      getRelationsTreeTest
     , TestLabel "getRelationsTree'Test"     getRelationsTree'Test
     , TestLabel "getOffsetLimitTest"        getOffsetLimitTest
@@ -42,13 +42,6 @@ getApiActionsTest =
     assertEqual "for (getApiActions testApi)"
     ["edit","get","create","delete","publish"]
     $ getApiActions testApi
-
-getEssenceFieldsTest =
-    TestCase $
-    assertEqual
-    "for (getEssenceFields \"category\" testConfig)"
-    ["name","child_category","id"]
-    $ getEssenceFields "category" testConfig
 
 parseFieldsFuncTest =
     TestCase $
@@ -110,6 +103,14 @@ getApiDBMethodTest =
     assertEqual "for (getApiDBMethod \"publish\" testApi)"
     "create"
     $ getApiDBMethod "publish" testApi
+
+getRelationFieldsTest =
+    TestCase $
+    assertEqual
+    "for (getRelationFields Root \"person_id\" (Branch \"comment\" [Leaf \"person_id\"]))"
+    ["person_id"]
+    $ getRelationFields
+    $ Root "person_id" (Branch "comment" [Leaf "person_id"])
 
 getRelationsTreeTest =
     TestCase $

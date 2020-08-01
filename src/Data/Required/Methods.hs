@@ -1,17 +1,14 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE InstanceSigs #-}
 module Data.Required.Methods
     ( getRequiredFields
-    , iterateHM
-    , iterateHMCreate
-    , iterateHMGet
-    , iterateHMEdit
-    , iterateHMDelete
+    , GetFields(..)
     , requiredSequenceA
     , requiredApply
     ) where
 
 import Data.Essence
-import Data.Essence.Methods
 import Data.Required
 import Data.Value
 
@@ -21,54 +18,55 @@ import qualified Data.Text              as T
 
 type Action = T.Text
 type Field = String
-type Fields = [String]
 
-getRequiredFields :: Essence DB -> Required Fields
-getRequiredFields (EssenceDB name action hashMap) =
-    let
-        arr = iterateHM (HM.toList hashMap) action
-        andFields = requiredSequenceA $ filter (\case { AND _ -> True; _ -> False }) arr
-        orFields = requiredSequenceA $ filter (\case { OR _ -> True; _ -> False }) arr
-    in Required [andFields,orFields]
+getRequiredFields :: Essence DB -> Required [Field]
+getRequiredFields = getFields
 
-iterateHM :: [(String,Description)] -> Action -> [Required Field]
-iterateHM []  _        = []
-iterateHM arr action = case action of
-    "create" -> iterateHMCreate arr
-    "get"    -> iterateHMGet arr
-    "edit"   -> iterateHMEdit arr
-    "delete" -> iterateHMDelete arr
+instance GetFields (Required [Field]) where
+    getFields :: Essence DB -> Required [Field]
+    getFields (EssenceDB name action hashMap) =
+        let
+            arr = iterateHM (HM.toList hashMap) action
+            andFields = requiredSequenceA $ filter (\case { AND _ -> True; _ -> False }) arr
+            orFields = requiredSequenceA $ filter (\case { OR _ -> True; _ -> False }) arr
+        in Required [andFields,orFields]
+    iterateHM :: [(Field,Description)] -> Action -> [Required [Field]]
+    iterateHM []  _      = []
+    iterateHM arr action = case action of
+        "create" -> iterateHMCreate arr
+        "get"    -> iterateHMGet arr
+        "edit"   -> iterateHMEdit arr
+        "delete" -> iterateHMDelete arr
+    iterateHMCreate,iterateHMGet,iterateHMEdit,iterateHMDelete ::
+        [(Field,Description)] -> [Required [Field]]
+    iterateHMCreate []                            = []
+    iterateHMCreate (("id",_):rest)               = iterateHMCreate rest
+    iterateHMCreate (("date_of_creation",_):rest) = iterateHMCreate rest
+    iterateHMCreate ((field,description):rest)    =
+        case valueOf description of
+            Just (NOT NULL) -> AND [field] : iterateHMCreate rest
+            _               -> iterateHMCreate rest
+    iterateHMGet _ = []
+    iterateHMEdit []                            = []
+    iterateHMEdit ((field,description):rest)    =
+        case field of
+            "id"               -> AND [field] : iterateHMEdit rest
+            "access_key"       -> AND [field] : iterateHMEdit rest
+            "date_of_creation" -> iterateHMEdit rest
+            _                  -> OR [field] : iterateHMEdit rest
+    iterateHMDelete []                         = []
+    iterateHMDelete ((field,description):rest) =
+        case field of
+            "id"         -> AND [field] : iterateHMDelete rest
+            "access_key" -> AND [field] : iterateHMDelete rest
+            _            -> iterateHMDelete rest
 
-iterateHMCreate,iterateHMGet,iterateHMEdit,iterateHMDelete ::
-    [(String,Description)] -> [Required Field]
-iterateHMCreate []                            = []
-iterateHMCreate (("id",_):rest)               = iterateHMCreate rest
-iterateHMCreate (("date_of_creation",_):rest) = iterateHMCreate rest
-iterateHMCreate ((field,description):rest)    =
-    case valueOf description of
-        Just (NOT NULL) -> AND field : iterateHMCreate rest
-        _               -> iterateHMCreate rest
-iterateHMGet _ = []
-iterateHMEdit []                            = []
-iterateHMEdit (("date_of_creation",_):rest) = iterateHMEdit rest
-iterateHMEdit ((field,description):rest)    =
-    case field of
-        "id"         -> AND field : iterateHMEdit rest
-        "access_key" -> AND field : iterateHMEdit rest
-        _            -> OR field : iterateHMEdit rest
-iterateHMDelete []                         = []
-iterateHMDelete ((field,description):rest) =
-    case field of
-        "id"         -> AND field : iterateHMDelete rest
-        "access_key" -> AND field : iterateHMDelete rest
-        _            -> iterateHMDelete rest
-
-requiredSequenceA :: [Required a] -> Required [a]
+requiredSequenceA :: [Required [a]] -> Required [a]
 requiredSequenceA arrRequired = case arrRequired of
     []      -> NullFields
-    [AND x] -> AND [x]
-    [OR x]  -> OR [x]
-    x:xs    -> fmap (:) x `requiredApply` requiredSequenceA xs
+    [AND x] -> AND x
+    [OR x]  -> OR x
+    x:xs    -> fmap (<>) x `requiredApply` requiredSequenceA xs
 
 requiredApply :: Required (a -> a) -> Required a -> Required a
 requiredApply required x = case required of

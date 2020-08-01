@@ -98,7 +98,7 @@ isRequestCorrect req = do
     let essenceDB'' = getEssenceDB essence action config api
     let essenceDB'  = ifEveryoneUpdate essenceDB'' access
     let essenceDB   = ifGetUpdate essenceDB'
-    let essenceFields = map T.unpack $ getEssenceFields essence config
+    let essenceFields = HM.keys $ fieldOf essenceDB''
     let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
     let paramsMsg =
             byteStringCopy
@@ -109,15 +109,15 @@ isRequestCorrect req = do
     let checkingList =
             [isPathRequestCorrect req api
             ,isMethodCorrect method action api
+            ,isAccess essence action accessArr api
             ,isRequiredParams essenceDB queryMBS
-            ,and $ isTypeParamsCorrect essenceDB listOfPairs
-            ,isAccess essence action accessArr api]
+            ,and $ isTypeParamsCorrect essenceDB listOfPairs]
     let elseThenList =
             [(False, notFound)
             ,(False, responseBuilder status400 [] "Incorrect request method")
+            ,(False, notFound)
             ,(False, responseBuilder status400 [] paramsMsg)
             ,(False, responseBuilder status400 [] "Incorrect type of params")
-            ,(False, notFound)
             ,(True, notFound)]
     pure $ ifElseThen checkingList elseThenList
 

@@ -91,7 +91,7 @@ relationsHandler name = do
                 _              -> return HM.empty
         _                                                   -> return HM.empty
 
-iterateRelations :: RelationsTree Field -> Object -> StateT (Essence List) (ReaderT Config IO) Object
+iterateRelations :: RelationsTree -> Object -> StateT (Essence List) (ReaderT Config IO) Object
 iterateRelations (Trunk t (Branch b leafs)) objOld = do
     essenceList@(EssenceList name action list) <- get
     let listOfPair = checkList t list
@@ -127,7 +127,7 @@ findEssence name listOfPair =
         []                    ->
             return . Object . HM.singleton "result" $ Number 0
 
-unpackLeafs :: Name -> [RelationsTree Field] -> Object -> [(String, MyValue.MyValue)]
+unpackLeafs :: Name -> [RelationsTree] -> Object -> [(String, MyValue.MyValue)]
 unpackLeafs _       []            _   = []
 unpackLeafs root (Leaf field :rest) obj =
     let

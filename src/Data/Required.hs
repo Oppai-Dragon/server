@@ -3,8 +3,6 @@ module Data.Required
     ( Required (..)
     ) where
 
-import Data.Essence
-
 import Data.List
 
 data Required a

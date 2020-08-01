@@ -18,8 +18,9 @@ import Test.HUnit
 essenceMethodsTests =
     [ TestLabel "addListTest"                   addListTest
     , TestLabel "deletePairTest"                deletePairTest
+    , TestLabel "getEssenceFieldsTest"          getEssenceFieldsTest
     , TestLabel "getEssenceDBTest"              getEssenceDBTest
-    , TestLabel "getEssenceDB'Test"             getEssenceDB'Test
+    , TestLabel "getEssenceDatabaseTest"        getEssenceDatabaseTest
     , TestLabel "getHashMapDescriptionTest"     getHashMapDescriptionTest
     , TestLabel "iterateHashMapDBListTest"      iterateHashMapDBListTest
     , TestLabel "setDescriptionTest"            setDescriptionTest
@@ -48,17 +49,23 @@ deletePairTest =
     (EssenceList "person" "create" [("last_name",MyString "dragon")])
     $ deletePair "first_name" testEssenceList
 
+getEssenceFieldsTest =
+    TestCase $
+    assertEqual "for (getEssenceFields testEssenceDB)"
+    ["avatar","is_admin","last_name","first_name"]
+    $ getEssenceFields testEssenceDB
+
 getEssenceDBTest =
     TestCase $
     assertEqual "for (getEssenceDB \"person\" \"create\" testConfig testApi)"
     testEssenceDB
     $ getEssenceDB "person" "create" testConfig testApi
 
-getEssenceDB'Test =
+getEssenceDatabaseTest =
     TestCase $
-    assertEqual "for (getEssenceDB' \"person\" \"create\" testConfig testApi)"
+    assertEqual "for (getEssenceDatabase \"person\" \"create\" testConfig testApi)"
     testEssenceDatabase
-    $ getEssenceDB' "person" "create" testConfig testApi
+    $ getEssenceDatabase "person" "create" testConfig testApi
 
 getHashMapDescriptionTest =
     TestCase $

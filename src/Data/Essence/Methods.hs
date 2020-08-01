@@ -1,8 +1,12 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs #-}
 module Data.Essence.Methods
     ( addList
     , deletePair
+    , getEssenceFields
+    , GetFields(..)
     , getEssenceDB
-    , getEssenceDB'
+    , getEssenceDatabase
     , getHashMapDescription
     , iterateHashMapDBList
     , setDescription
@@ -38,6 +42,7 @@ import           Control.Monad.Trans.Reader
 
 type QueryMBS    = [(BS.ByteString, Maybe BS.ByteString)]
 type Field       = String
+type Action      = T.Text
 type EssenceName = String
 
 addList :: List -> Essence List -> Essence List
@@ -49,16 +54,58 @@ deletePair field essenceList@(EssenceList name action list) =
     EssenceList name action
         $ L.deleteBy (\(l1,_) (l2,_) -> l1==l2) (field,MyEmpty) list
 
+getEssenceFields :: Essence DB -> Api -> [Field]
+getEssenceFields essenceDB api =
+    let
+        relationsTree = getRelationsTree (nameOf essenceDB) api
+        relationFields = getRelationFields relationsTree
+    in getFields essenceDB L.\\ relationFields
+
+instance GetFields [Field] where
+    getFields :: Essence DB -> [Field]
+    getFields (EssenceDB name action hashMap) =
+        let arr = iterateHM (HM.toList hashMap) action
+        in concat arr
+
+    iterateHM :: [(Field,Description)] -> Action -> [[Field]]
+    iterateHM []  _      = []
+    iterateHM arr action = case action of
+        "create" -> iterateHMCreate arr
+        "get"    -> iterateHMGet arr
+        "edit"   -> iterateHMEdit arr
+        "delete" -> iterateHMDelete arr
+    iterateHMCreate,iterateHMGet,iterateHMEdit,iterateHMDelete ::
+        [(Field,Description)] -> [[Field]]
+    iterateHMCreate []                            = []
+    iterateHMCreate ((field,description):rest)    =
+        case field of
+            "id"               -> iterateHMCreate rest
+            "date_of_creation" -> iterateHMCreate rest
+            "access_key"       -> iterateHMCreate rest
+            _                  -> [field] : iterateHMCreate rest
+    iterateHMGet = flip (:) [] . fst . unzip
+    iterateHMEdit []                            = []
+    iterateHMEdit ((field,description):rest)    =
+        case field of
+            "access_key"       -> iterateHMEdit rest
+            "date_of_creation" -> iterateHMEdit rest
+            _                  -> [field] : iterateHMEdit rest
+    iterateHMDelete []                         = []
+    iterateHMDelete ((field,description):rest) =
+        case field of
+            "id"         -> [field] : iterateHMDelete rest
+            _            -> iterateHMDelete rest
+
 getEssenceDB :: T.Text -> T.Text -> Config -> Api -> Essence DB
 getEssenceDB essence action conf api =
-    case getEssenceDB' essence action conf api of
+    case getEssenceDatabase essence action conf api of
         EssenceDatabase name action hashMapDB ->
             EssenceDB name action $ getHashMapDescription hashMapDB
         _                             ->
             EssenceDB "" "" HM.empty
 
-getEssenceDB' :: T.Text -> T.Text -> Config -> Api -> Essence Database
-getEssenceDB' essence action conf api =
+getEssenceDatabase :: T.Text -> T.Text -> Config -> Api -> Essence Database
+getEssenceDatabase essence action conf api =
     let unpackObj obj = do
             (field,value) <- HM.toList obj
             let resultArr = map parsePsql $ toStrArr value
@@ -130,9 +177,8 @@ parseFieldValue (field:fields) bss =
 toEssenceList :: Essence DB -> QueryMBS -> ReaderT Config IO (Essence List)
 toEssenceList (EssenceDB name action hashMap) queryMBS = do
     config <- ask
-    let essenceFields = map T.unpack $ getEssenceFields name config
+    let essenceFields = HM.keys hashMap
     let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
     let nameStr = T.unpack name
     let actioStr = T.unpack action
     pure $ EssenceList nameStr actioStr listOfPairs
-

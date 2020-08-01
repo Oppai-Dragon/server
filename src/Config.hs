@@ -12,7 +12,6 @@ module Config
     , setApiPath
     , parsePath
     , getApiActions
-    , getEssenceFields
     , parseFieldsFunc
     , getEssences
     , getActionsForEssence
@@ -22,6 +21,7 @@ module Config
     , getUriDB
     , getMethodActions
     , getApiDBMethod
+    , getRelationFields
     , getRelationsTree
     , getRelationsTree'
     , getOffsetLimit
@@ -99,12 +99,6 @@ getApiActions api =
         Just (Object obj) -> HM.keys obj
         Nothing           -> []
 
-getEssenceFields :: EssenceName -> Config -> Fields
-getEssenceFields essence conf =
-    case AT.parseMaybe (.: essence) conf of
-        Just (Object obj) -> HM.keys obj
-        Nothing           -> []
-
 parseFieldsFunc :: Fields -> Object -> AT.Parser Value
 parseFieldsFunc [field] obj      = obj .: field
 parseFieldsFunc (field:rest) obj = obj .: field
@@ -178,10 +172,19 @@ getApiDBMethod action api =
         Just (String text) -> text
         _                  -> ""
 
-getRelationsTree :: EssenceName -> Api -> RelationsTree Field
+getRelationFields :: RelationsTree -> [String]
+getRelationFields relationsTree = case relationsTree of
+    Root r (Trunk t tree)    -> getRelationFields tree
+    Root r (Branch b leafs)  -> concat $ map getRelationFields leafs
+    Trunk t tree             -> getRelationFields tree
+    Branch b leafs           -> concat $ map getRelationFields leafs
+    Leaf key                 -> [key]
+    _                        -> []
+
+getRelationsTree :: EssenceName -> Api -> RelationsTree
 getRelationsTree essence api = getRelationsTree' essence 0 essence api
 
-getRelationsTree' :: EssenceName -> Int -> Field -> Api -> RelationsTree Field
+getRelationsTree' :: EssenceName -> Int -> Field -> Api -> RelationsTree
 getRelationsTree' essence n field api =
     let
         parseFind = parseFieldsFunc
@@ -191,17 +194,16 @@ getRelationsTree' essence n field api =
         getRootName =  T.takeWhile (/='_') . getRoot
         getRoot = head . HM.keys
         getLeafs name = case AT.parseMaybe (parseFill name) api of
-            Just arr@(Array vector) -> map (\x -> Leaf x) $ toTextArr arr
+            Just arr@(Array vector) -> map (Leaf . T.unpack) $ toTextArr arr
             _                   -> []
     in case AT.parseMaybe parseFind api of
         Just (Object obj) ->
             getRelationsTree' (getRootName obj) 1 (getRoot obj) api
             <> if n == 0
-                then Branch essence (getLeafs $ getRoot obj)
-                else Branch field (getLeafs $ getRoot obj)
+                then Branch (T.unpack essence) (getLeafs $ getRoot obj)
+                else Branch (T.unpack field) (getLeafs $ getRoot obj)
         Just (String key) ->
-            Root field
-            $ Leaf key
+            Root (T.unpack field) . Leaf $ T.unpack key
         _                 -> Ground
 
 getOffsetLimit :: Int -> Psql -> String

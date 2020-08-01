@@ -47,6 +47,11 @@
             , "optional_photos"
             ]
         }
+    , "comment":
+        { "person_id":
+            [ "person_id"
+            ]
+        }
     }
 , "access":
     { "person":
