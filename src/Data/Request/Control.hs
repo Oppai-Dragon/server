@@ -98,7 +98,7 @@ isRequestCorrect req = do
     let essenceDB'' = getEssenceDB essence action config api
     let essenceDB'  = ifEveryoneUpdate essenceDB'' access
     let essenceDB   = ifGetUpdate essenceDB'
-    let essenceFields = HM.keys $ fieldOf essenceDB''
+    let essenceFields = getEssenceFields essenceDB api
     let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
     let paramsMsg =
             byteStringCopy

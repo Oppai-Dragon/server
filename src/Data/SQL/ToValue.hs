@@ -13,6 +13,7 @@ import           Data.Essence
 import           Data.Essence.Methods
 
 import           Data.Aeson
+import           Data.Aeson.Types (parseMaybe)
 
 import qualified Data.ByteString     as BS
 import qualified Data.Char           as C
@@ -38,7 +39,9 @@ sqlValuesToJsonValue :: Essence List -> [SqlValue] -> Config -> Value
 sqlValuesToJsonValue (EssenceList name action list) sqlValues conf =
     let
         essenceDB = getEssenceDB (T.pack name) (T.pack action) conf
-        essenceFields = getEssenceFields essenceDB
+        essenceFields = case parseMaybe (.: T.pack name) conf of
+            Just (Object fieldsObj) -> HM.keys fieldsObj
+            _                       -> []
         fields = case [name,action] of
             ["person","get"] -> L.delete "access_key" essenceFields
             _                -> essenceFields

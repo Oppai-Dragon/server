@@ -33,41 +33,41 @@ getRequiredFieldsTest =
 iterateHMTest =
     TestCase $
     assertEqual "for (iterateHM testEssenceDBFields \"create\")"
-    ([AND "last_name",AND "first_name"] :: [Required String])
+    ([AND ["last_name"],AND ["first_name"]] :: [Required [String]])
     $ iterateHM testEssenceDBFields "create"
 
 iterateHMCreateTest =
     TestCase $
     assertEqual "for (iterateHMCreate testEssenceDBFields)"
-    ([AND "last_name", AND "first_name"] :: [Required String])
+    ([AND ["last_name"], AND ["first_name"]] :: [Required [String]])
     $ iterateHMCreate testEssenceDBFields
 
 iterateHMGetTest =
     TestCase $
     assertEqual "for (iterateHMGet testEssenceDBFields)"
-    []
+    ([] :: [Required [String]])
     $ iterateHMGet testEssenceDBFields
 
 iterateHMEditTest =
     TestCase $
     assertEqual "for (iterateHMEdit testEssenceDBFields)"
-    ([AND "id",OR "avatar",OR "is_admin",OR "last_name",OR "first_name"] :: [Required String])
+    ([AND ["id"],OR ["avatar"],OR ["is_admin"],OR ["last_name"],OR ["first_name"]] :: [Required [String]])
     $ iterateHMEdit testEssenceDBFields
 
 iterateHMDeleteTest =
     TestCase $
     assertEqual "for (iterateHMDelete testEssenceDBFields)"
-    ([AND "id"] :: [Required String])
+    ([AND ["id"]] :: [Required [String]])
     $ iterateHMDelete testEssenceDBFields
 
 requiredSequenceATest =
     TestCase $
     assertEqual "for (requiredSequenceA (Required [AND \"id\",AND \"access_key\"]))"
     (AND ["id","access_key"] :: Required [String])
-    $ requiredSequenceA [AND "id",AND "access_key"]
+    $ requiredSequenceA [AND ["id"],AND ["access_key"]]
 
 requiredApplyTest =
     TestCase $
     assertEqual "for (requiredApply (AND (\"id\":)) (AND [\"access_key\"]))"
     (AND ["id","access_key"] :: Required [String])
-    $ requiredApply (AND ("id":)) (AND ["access_key"])
+    $ requiredApply (AND (["id"]<>)) (AND ["access_key"])

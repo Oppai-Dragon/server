@@ -59,8 +59,8 @@ pathHandler req = do
         then essenceResponse req
         else pure response
 
-getEssenseList :: Request -> ReaderT Config IO (Essence List)
-getEssenseList req = do
+getEssenceList :: Request -> ReaderT Config IO (Essence List)
+getEssenceList req = do
     config <- ask
     let pathReq = pathInfo req
     let essence' = head pathReq
@@ -76,7 +76,7 @@ getEssenseList req = do
 essenceResponse :: Request -> ReaderT Config IO Response
 essenceResponse req = do
     config <- ask
-    essenceList@(EssenceList name action list) <- getEssenseList req
+    essenceList@(EssenceList name action list) <- getEssenceList req
     relationObj <- evalStateT updateRelationsFields essenceList
     if HM.null relationObj
         then pure notFound
@@ -94,13 +94,13 @@ jsonResponse = responseBuilder
 ---------------------------------Set via POST------------------------------------------
 postEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Response
 postEssenceResponse = do
-    essenceList <- get
-    config <- lift ask
     let wrapResponse = pure . jsonResponse
-    ifExisteAddEssenceId
     (EssenceList name action list) <- get
+    isExiste <- isNewsExiste
     case action of
-        "create" -> dbCreate >>= wrapResponse
+        "create" -> if isExiste
+            then dbEdit >>= wrapResponse
+            else dbCreate >>= wrapResponse
         "edit"   -> dbEdit >>= wrapResponse
         "delete" -> dbDelete >>= wrapResponse
         _        -> pure notFound

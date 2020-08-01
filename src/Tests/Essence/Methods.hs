@@ -51,9 +51,9 @@ deletePairTest =
 
 getEssenceFieldsTest =
     TestCase $
-    assertEqual "for (getEssenceFields testEssenceDB)"
+    assertEqual "for (getEssenceFields testEssenceDB testApi)"
     ["avatar","is_admin","last_name","first_name"]
-    $ getEssenceFields testEssenceDB
+    $ getEssenceFields testEssenceDB testApi
 
 getEssenceDBTest =
     TestCase $

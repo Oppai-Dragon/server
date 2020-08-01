@@ -39,6 +39,7 @@ import qualified Data.ByteString.Char8 as BSC8
 import qualified Data.List             as L
 
 import           Control.Monad.Trans.Reader
+import           Control.Monad.Trans.Class (lift)
 
 type QueryMBS    = [(BS.ByteString, Maybe BS.ByteString)]
 type Field       = String
@@ -93,7 +94,7 @@ instance GetFields [Field] where
     iterateHMDelete []                         = []
     iterateHMDelete ((field,description):rest) =
         case field of
-            "id"         -> [field] : iterateHMDelete rest
+            "id"         -> [[field]]
             _            -> iterateHMDelete rest
 
 getEssenceDB :: T.Text -> T.Text -> Config -> Api -> Essence DB
@@ -175,9 +176,10 @@ parseFieldValue (field:fields) bss =
     in parseBSValue field bss' : parseFieldValue fields bss
 
 toEssenceList :: Essence DB -> QueryMBS -> ReaderT Config IO (Essence List)
-toEssenceList (EssenceDB name action hashMap) queryMBS = do
+toEssenceList essenceDB@(EssenceDB name action hashMap) queryMBS = do
     config <- ask
-    let essenceFields = HM.keys hashMap
+    api <- lift setApi
+    let essenceFields = getEssenceFields essenceDB api
     let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
     let nameStr = T.unpack name
     let actioStr = T.unpack action
