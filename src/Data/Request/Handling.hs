@@ -6,7 +6,7 @@ import           Config
 import           Data.Base                                      (ifElseThen)
 import           Data.Handler
 import           Data.MyValue                                   (fromBS)
-import           Data.Request.Control                           (isRequestCorrect)
+import           Data.Request.Control
 import           Data.SQL.Actions
 import           Data.SQL.ToValue
 import qualified Data.Empty                             as E
@@ -56,33 +56,46 @@ pathHandler req = do
     config <- ask
     (isValidRequest, response) <- isRequestCorrect req
     if isValidRequest
-        then essenceResponse req
+        then evalStateT (essenceResponse req) (EssenceList "" "" [])
         else pure response
 
 getEssenceList :: Request -> ReaderT Config IO (Essence List)
 getEssenceList req = do
     config <- ask
+    api <- lift setApi
     let pathReq = pathInfo req
     let essence' = head pathReq
     let action = head $ tail pathReq
-    api <- lift setApi
-    let actionDB = getApiDBMethod action api
     let essence = if action == "publish" then "news" else essence'
-    let queryBS = queryString req
-    let essenceDB = getEssenceDB essence actionDB config api
-    essenceList <- toEssenceList essenceDB queryBS
+    let access = getAccess essence action api
+    let actionDB = getApiDBMethod action api
+    let queryMBS = queryString req
+    let essenceDB'' = getEssenceDB essence actionDB config api
+    let essenceDB'  = ifEveryoneUpdate essenceDB'' access
+    let essenceDB   = ifGetUpdate essenceDB'
+    essenceList <- toEssenceList essenceDB queryMBS
     return essenceList
 
-essenceResponse :: Request -> ReaderT Config IO Response
+setEssenceList :: Request -> StateT (Essence List) (ReaderT Config IO) ()
+setEssenceList req = do
+    essenceList <- lift $ getEssenceList req
+    put essenceList
+
+deleteAccessKey :: StateT (Essence List) (ReaderT Config IO) ()
+deleteAccessKey = do
+    essenceList <- get
+    put $ deletePair "access_key" essenceList
+
+essenceResponse :: Request -> StateT (Essence List) (ReaderT Config IO) Response
 essenceResponse req = do
-    config <- ask
-    essenceList@(EssenceList name action list) <- getEssenceList req
-    relationObj <- evalStateT updateRelationsFields essenceList
-    if HM.null relationObj
-        then pure notFound
+    setEssenceList req
+    relationsObj <- addRelationsFields
+    deleteAccessKey
+    if HM.null relationsObj
+        then pure $ responseBuilder status404 [] "Bad Relations"
         else case requestMethod req of
-            "POST"  -> evalStateT postEssenceResponse essenceList
-            "GET"   -> evalStateT getEssenceResponse essenceList
+            "POST"  -> postEssenceResponse
+            "GET"   -> getEssenceResponse
             _       -> pure notFound
 
 -- | Build a successful JSON response

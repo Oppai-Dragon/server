@@ -8,6 +8,8 @@ module Data.Required.Methods
     , requiredApply
     ) where
 
+import Config
+
 import Data.Essence
 import Data.Required
 import Data.Value
@@ -15,12 +17,17 @@ import Data.Value
 import           Data.Aeson
 import qualified Data.HashMap.Strict    as HM
 import qualified Data.Text              as T
+import qualified Data.List              as L
 
 type Action = T.Text
 type Field = String
 
-getRequiredFields :: Essence DB -> Required [Field]
-getRequiredFields = getFields
+getRequiredFields :: Essence DB -> Api -> Required [Field]
+getRequiredFields essenceDB api =
+    let
+        relationsTree = getRelationsTree (nameOf essenceDB) api
+        relationFields = getRelationFields relationsTree
+    in fmap (flip (L.\\) relationFields) $ getFields essenceDB
 
 instance GetFields (Required [Field]) where
     getFields :: Essence DB -> Required [Field]

@@ -2,6 +2,7 @@ module Tests.Request.Params.Methods
     ( requestParamsMethodsTests
     ) where
 
+import Config
 import Data.Essence
 import Data.MyValue
 import Data.Required
@@ -25,7 +26,7 @@ isRequiredParamsTest =
     assertEqual
     "for (isRequiredParams testEssenceDB [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
     True
-    $ isRequiredParams testEssenceDB [("first_name",Just "misha"),("last_name",Just "dragon")]
+    $ isRequiredParams testEssenceDB [("first_name",Just "misha"),("last_name",Just "dragon")] testApi
 
 iterateRequiredParamsTest =
     TestCase $

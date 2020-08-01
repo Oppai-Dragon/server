@@ -82,7 +82,6 @@ instance GetFields [Field] where
         case field of
             "id"               -> iterateHMCreate rest
             "date_of_creation" -> iterateHMCreate rest
-            "access_key"       -> iterateHMCreate rest
             _                  -> [field] : iterateHMCreate rest
     iterateHMGet = flip (:) [] . fst . unzip
     iterateHMEdit []                            = []

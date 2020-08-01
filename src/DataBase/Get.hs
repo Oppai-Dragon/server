@@ -92,6 +92,7 @@ iterateObj (essence:rest) pageObj = do
     (:) (HM.singleton essence $ Object nestedEssence) <$> iterateObj rest pageObj
 
 dbGetArray :: Essence [(String,MyValue)] -> ReaderT Config IO Value
+dbGetArray (EssenceList _     _      [(_    ,MyEmpty)])        = return Null
 dbGetArray (EssenceList table action [(field,MyIntegers arr)]) = do
     config <- ask
     let uri = getUri config

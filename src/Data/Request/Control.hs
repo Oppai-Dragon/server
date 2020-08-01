@@ -104,13 +104,13 @@ isRequestCorrect req = do
             byteStringCopy
             . BS8.pack
             . show
-            $ getRequiredFields essenceDB
+            $ getRequiredFields essenceDB api
     accessArr <- lift $ getAccessArr queryMBS
     let checkingList =
             [isPathRequestCorrect req api
             ,isMethodCorrect method action api
             ,isAccess essence action accessArr api
-            ,isRequiredParams essenceDB queryMBS
+            ,isRequiredParams essenceDB queryMBS api
             ,and $ isTypeParamsCorrect essenceDB listOfPairs]
     let elseThenList =
             [(False, notFound)
@@ -136,7 +136,7 @@ accessCollector accessKeyBS = do
     let userQuery = "SELECT id,is_admin FROM person WHERE access_key=" <> accessKeyStr <> ";"
     sqlValuesArr <- quickQuery' conn userQuery []
     HDBC.disconnect conn
-    let checkIsAdmin bool = if bool then [User,Admin] else [User]
+    let checkIsAdmin bool = if bool then [Person,Admin] else [Person]
     let authorCollect userId = do
             conn <- PSQL.connectPostgreSQL uriDB
             let authorQuery = showSql $ Get "author" [Where ("person_id", MyInteger userId)]

@@ -1,6 +1,6 @@
 module Data.Essence.RelationsTree.Methods
     ( isEssenceRelations
-    , updateRelationsFields
+    , addRelationsFields
     , relationsHandler
     , iterateRelations
     , findEssence
@@ -57,11 +57,12 @@ isEssenceRelations essence api =
         Root r (Branch b (Leaf l : leafs)) -> True
         _                                  -> False
 
-updateRelationsFields :: StateT (Essence List) (ReaderT Config IO) Object
-updateRelationsFields = do
+addRelationsFields :: StateT (Essence List) (ReaderT Config IO) Object
+addRelationsFields = do
     (EssenceList name action list) <- get
     config <- lift ask
-    if isEssenceRelations name config
+    api <- lift . lift $ setApi
+    if isEssenceRelations name api
         then relationsHandler name
         else return $ HM.singleton "result" (Number 1)
 
@@ -70,14 +71,11 @@ relationsHandler name = do
     api <- lift . lift $ setApi
     essenceList <- get
     let relations = getRelationsTree (T.pack name) api
-    let listOfPair field obj = case HM.lookup (T.pack field) obj of
-            Just value -> [(field, MyValue.fromValue value)]
-            Nothing    -> []
     case relations of
         Root rEssence trunk@(Trunk tEssence rlt)            ->
             do
                 obj1 <- relationsHandler (beforeUnderscore rEssence)
-                (Object obj2) <- lift $ findEssence tEssence (listOfPair rEssence obj1)
+                (Object obj2) <- lift . findEssence tEssence $ getListOfPairFromObj rEssence obj1
                 iterateRelations trunk obj2
         Root rEssence branch@(Branch bEssence leafs)        ->
             do
@@ -96,25 +94,24 @@ iterateRelations (Trunk t (Branch b leafs)) objOld = do
     essenceList@(EssenceList name action list) <- get
     let listOfPair = checkList t list
     case listOfPair of
-        [(field, value)] ->
-            case b of
-                "news" -> do
-                    (Object objNew) <- lift $ dbGetOne (EssenceList (beforeUnderscore t) "get" listOfPair)
-                    if isRightRelations objOld objNew t b
-                        then put (addList
-                            (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objNew)
-                            essenceList) >> return objNew
-                        else return HM.empty
-                _      -> do
-                    (Object objNew) <- lift $ dbGetOne (EssenceList b "get" [(field, value)])
-                    if isRightRelations objOld objNew t b
-                        then put (addList
-                            (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld)
-                            essenceList) >> return objNew
-                        else return HM.empty
+        [(field, value)] -> case b of
+            "news" -> do
+                (Object objNew) <- lift $ dbGetOne (EssenceList (beforeUnderscore t) "get" listOfPair)
+                if isRightRelations objOld objNew t b
+                    then put (addList
+                        (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objNew)
+                        essenceList) >> return objNew
+                    else return HM.empty
+            _      -> do
+                (Object objNew) <- lift $ dbGetOne (EssenceList b "get" listOfPair)
+                if isRightRelations objOld objNew t b
+                    then put (addList
+                        (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld)
+                        essenceList) >> return objNew
+                    else return HM.empty
         []                   ->
             put (addList (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld) essenceList)
-            >> return HM.empty
+            >> return objOld
 iterateRelations (Trunk t1 trunk@(Trunk t2 rlt)) objOld = do
     (Object objNew) <- lift $ findEssence t2 (getListOfPairFromObj t1 objOld)
     iterateRelations trunk objNew
@@ -128,8 +125,13 @@ findEssence name listOfPair =
             return . Object . HM.singleton "result" $ Number 0
 
 unpackLeafs :: Name -> [RelationsTree] -> Object -> [(String, MyValue.MyValue)]
-unpackLeafs _       []            _   = []
-unpackLeafs root (Leaf field :rest) obj =
+unpackLeafs _        []                 _   = []
+unpackLeafs "draft1" (Leaf field :rest) obj =
+    let parseFunc = parseFieldsFunc $ map T.pack ["draft1",field]
+    in case parseMaybe parseFunc obj of
+        Just value -> (field, MyValue.fromValue value) : unpackLeafs "draft1" rest obj
+        Nothing    -> unpackLeafs "draft1" rest obj
+unpackLeafs root     (Leaf field :rest) obj =
     let
         key = afterUnderscore field
         parseFunc = parseFieldsFunc $ map T.pack [root,key]
@@ -153,14 +155,12 @@ getListOfPairFromObj field obj =
         key2 = afterUnderscore field
         parseFunc = parseFieldsFunc $ map T.pack [key1,key2]
     in case parseMaybe parseFunc obj of
-        Just value -> [(key2, MyValue.fromValue value)]
+        Just value -> [(field, MyValue.fromValue value)]
         Nothing    -> []
 
 checkList :: Field -> [(String,MyValue.MyValue)] -> [(String,MyValue.MyValue)]
 checkList field listOfPair =
-    let
-        findKey = afterUnderscore
-        key = findKey field
+    let key = afterUnderscore field
     in case lookup key listOfPair of
         (Just value) -> [(key, value)]
         Nothing      -> []
@@ -190,7 +190,6 @@ isRightRelations rootObj branchObj rootEssence "news"        =
         rootArrValue = iterateObjs rootObj
         (branchValue:rest) = iterateObjs branchObj
     in or $ Prelude.map (branchValue==) rootArrValue
-
 isRightRelations rootObj branchObj rootEssence branchEssence =
     let
         rKey1 = parseObjEssence $ beforeUnderscore rootEssence
@@ -220,21 +219,14 @@ isNewsExiste :: StateT (Essence List) (ReaderT Config IO) Bool
 isNewsExiste = do
     essenceList@(EssenceList name action list) <- get
     let isNews = name == "news"
+    let isExiste = case lookup "id" list of
+            Just value -> do
+                (Object obj) <- lift $ dbGetOne (EssenceList name "get" [("id", value)])
+                let isGet = not $ HM.null obj
+                if isGet
+                    then put (EssenceList name "edit" list) >> return True
+                    else return False
+            _          -> return False
     if isNews
-        then
+        then isExiste
         else return False
-    api <- lift . lift $ setApi
-    let essence = T.pack name
-    let parseFunc = parseFieldsFunc ["relations",essence]
-    let getRoot = T.unpack . head . HM.keys
-    let changeAction = if action == "create" then "edit" else action
-    case parseMaybe parseFunc api of
-        Just (Object obj1) ->
-            case lookup (getRoot obj1) list of
-                Just value -> do
-                    (Object obj2) <- lift $ dbGetOne (EssenceList name "get" [(getRoot obj1, value)])
-                    if HM.null obj2
-                        then return ()
-                        else put $ addList (getIdPairFromObj name obj2) (EssenceList name changeAction list)
-                _          -> return ()
-        _                  -> return ()

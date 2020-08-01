@@ -2,6 +2,7 @@ module Tests.Required.Methods
     ( requiredMethodsTests
     ) where
 
+import Config
 import Data.Essence
 import Data.Required
 import Data.Required.Methods
@@ -28,7 +29,7 @@ getRequiredFieldsTest =
     TestCase $
     assertEqual "for (getRequiredFields testEssenceDB)"
     (Required [AND ["last_name", "first_name"]] :: Required [String])
-    $ getRequiredFields testEssenceDB
+    $ getRequiredFields testEssenceDB testApi
 
 iterateHMTest =
     TestCase $
