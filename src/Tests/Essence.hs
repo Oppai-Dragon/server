@@ -3,19 +3,64 @@ module Tests.Essence where
 import Data.MyValue
 import Data.Essence
 
+import Data.Aeson
 import qualified Data.HashMap.Strict as HM
 
-testEssenceList = EssenceList "person" "create" testEssenceListFields
-testEssenceListFields = [("first_name",MyString "misha"),("last_name",MyString "dragon")]
-testCreateList = [("id",MyInteger 1),("content",MyString "kek")]
-testEditList = [("id",MyInteger 1),("content",MyString "kek")]
-testGetList =
+--------------------------------------------------------------------------------------------
+-----------------------------------Essence List
+createEssenceList =
+    [testPersonListCreate
+    ,testAuthorListCreate
+    ,testCategoryListCreate
+    ,testTagListCreate
+    ,testDraftListCreate
+    ,testNewsListCreate
+    ,testCommentListCreate
+    ]
+--------------------------------------------------------------------------------------------
+essences = ["person","author","category","tag","draft","news","comment"]
+accessKeyStr = "12345678-1234-1234-1234-123456789abc"
+-- | Person
+testPersonListCreate = EssenceList "person" "create" testPersonListCreateFields
+testPersonListCreateFields =
+    [("first_name",MyString "testFirstName")
+    ,("last_name",MyString "testLastName")
+    ,("avatar",MyString "uri")
+    ,("access_key",MyString accessKeyStr)
+    ,("is_admin",MyBool True)]
+-- | Author
+testAuthorListCreate = EssenceList "author" "create" testAuthorListCreateFields
+testAuthorListCreateFields = []
+-- | Category
+testCategoryListCreate = EssenceList "category" "create" testCategoryListCreateFields
+testCategoryListCreateFields = []
+-- | Tag
+testTagListCreate = EssenceList "tag" "create" testTagListCreateFields
+testTagListCreateFields = []
+-- | Draft
+testDraftListCreate = EssenceList "draft" "create" testDraftListCreateFields
+testDraftListCreateFields =
+    [("name",MyString "testDraft")
+    ,("content",MyString "testContent")]
+-- | News
+testNewsListCreate = EssenceList "news" "create" testNewsListCreateFields
+testNewsListCreateFields = []
+-- For functions without access to database
+testNewsCreateFields = [("id",MyInteger 1),("content",MyString "kek")]
+testNewsEditFields = [("id",MyInteger 1),("content",MyString "kek")]
+testNewsGetFields =
     [("id",MyInteger 1)
     ,("filter_author_name",MyString "misha dragon")
     ,("search_category_name",MyString "cat")
     ,("sort",MyString "date_of_creation")]
-testDeleteTest = [("id",MyInteger 1)]
-
+testNewsDeleteFields = [("id",MyInteger 1)]
+-- | Comment
+testCommentListCreate = EssenceList "comment" "create" testCommentListCreateFields
+testCommentListCreateFields = [("content",MyString "privet")]
+--------------------------------------------------------------------------------------------
+-----------------------------------Essence Database
+--------------------------------------------------------------------------------------------
+-- | Person
 testEssenceDatabase = EssenceDatabase "person" "create"
     $ HM.fromList testEssenceDatabaseFields
 testEssenceDatabaseFields =
@@ -38,7 +83,10 @@ testEssenceDatabaseDescription =
     ,[("type","string"),("value","not null")]
     ,[("type","string"),("value","not null")]
     ]
-
+--------------------------------------------------------------------------------------------
+-----------------------------------Essence DB
+--------------------------------------------------------------------------------------------
+-- | Person
 testEssenceDB = EssenceDB "person" "create" $ HM.fromList testEssenceDBFields
 testEssenceDBFields = zip testEssemceDBFieldsName testEssenceDBDescription
 testEssemceDBFieldsName =

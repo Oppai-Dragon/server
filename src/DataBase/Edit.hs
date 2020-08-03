@@ -1,4 +1,4 @@
-module DataBase.Edit
+module Database.Edit
     ( dbEdit
     ) where
 

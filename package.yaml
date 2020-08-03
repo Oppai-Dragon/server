@@ -48,6 +48,7 @@ dependencies:
 - HUnit
 - directory
 - parsec
+- random
 
 library:
   source-dirs: src

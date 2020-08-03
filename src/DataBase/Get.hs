@@ -1,6 +1,10 @@
-module DataBase.Get
+module Database.Get
     ( dbGet
     , dbGetOne
+    , dbGetArray
+    , nesteEssences
+    , iterateObj
+    , nesteEssence
     ) where
 
 import Config
@@ -68,6 +72,20 @@ dbGetOne (EssenceList table action [pair]) = do
     lift $ disconnect conn
     pure value
 
+dbGetArray :: Essence [(String,MyValue)] -> ReaderT Config IO Value
+dbGetArray (EssenceList _     _      [(_    ,MyEmpty)])        = return Null
+dbGetArray (EssenceList table action [(field,MyIntegers arr)]) = do
+    config <- ask
+    let uri = getUri config
+    let myStrArray = map show arr
+    conn <- lift $ connectPostgreSQL uri
+    let wherePart = L.intercalate " OR " $ map (\x -> field <> "=" <> x) myStrArray
+    let getQuery = showSql . Get table $ [Filter wherePart]
+    sqlValuesArr <- lift $ quickQuery' conn getQuery []
+    lift $ disconnect conn
+    let value = sqlValuesArrToValue (EssenceList table action []) sqlValuesArr config
+    pure value
+
 nesteEssences :: Object -> ReaderT Config IO Value
 nesteEssences pageObj = do
     let essences = HM.keys pageObj
@@ -84,26 +102,12 @@ iterateObj (essence:rest) pageObj = do
             map (\(field,descr) -> (field,fromJust $ relationsOf descr)) .
             HM.toList .
             HM.filter (\descr -> case relationsOf descr of {Just _ -> True; _ -> False;}) .
-            fieldsOf $ getEssenceDB name "get" config api
+            hashMapOf $ getEssenceDB name "get" config api
     nestedEssence <- case HM.lookup essence pageObj of
         Just (Object fieldsObj) ->
             execStateT (nesteEssence relationsFields) fieldsObj
         _                       -> return HM.empty
     (:) (HM.singleton essence $ Object nestedEssence) <$> iterateObj rest pageObj
-
-dbGetArray :: Essence [(String,MyValue)] -> ReaderT Config IO Value
-dbGetArray (EssenceList _     _      [(_    ,MyEmpty)])        = return Null
-dbGetArray (EssenceList table action [(field,MyIntegers arr)]) = do
-    config <- ask
-    let uri = getUri config
-    let myStrArray = map show arr
-    conn <- lift $ connectPostgreSQL uri
-    let wherePart = L.intercalate " OR " $ map (\x -> field <> "=" <> x) myStrArray
-    let getQuery = showSql . Get table $ [Filter wherePart]
-    sqlValuesArr <- lift $ quickQuery' conn getQuery []
-    lift $ disconnect conn
-    let value = sqlValuesArrToValue (EssenceList table action []) sqlValuesArr config
-    pure value
 
 nesteEssence :: [(String,Relations)] -> StateT Object (ReaderT Config IO) ()
 nesteEssence []                                           = do

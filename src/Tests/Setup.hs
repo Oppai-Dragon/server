@@ -23,7 +23,7 @@ getCreateQueryTest =
     ("TABLE person "
     <> "( first_name VARCHAR(50) NOT NULL"
     <> " ,access_key UUID DEFAULT gen_random_uuid()"
-    <> " ,date_of_creation DATE NOT NULL"
+    <> " ,date_of_creation DATE DEFAULT CURRENT_DATE"
     <> " ,last_name VARCHAR(50) NOT NULL"
     <> " ,is_admin BOOLEAN DEFAULT FALSE"
     <> " ,id BIGSERIAL PRIMARY KEY"
@@ -43,7 +43,7 @@ iterateObjTest =
     ("TABLE person "
     <> "first_name VARCHAR(50) NOT NULL"
     <> " ,access_key UUID DEFAULT gen_random_uuid()"
-    <> " ,date_of_creation DATE NOT NULL"
+    <> " ,date_of_creation DATE DEFAULT CURRENT_DATE"
     <> " ,last_name VARCHAR(50) NOT NULL"
     <> " ,is_admin BOOLEAN DEFAULT FALSE"
     <> " ,id BIGSERIAL PRIMARY KEY"
@@ -76,7 +76,7 @@ testPersonObj = HM.fromList
      )
     ,("date_of_creation", (Array . V.fromList )
         [ String "DATE"
-        , String "NOT NULL"
+        , String "DEFAULT CURRENT_DATE"
         ]
      )
     ,("avatar", (Array . V.fromList )

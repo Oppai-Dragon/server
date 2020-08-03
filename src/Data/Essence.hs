@@ -39,7 +39,7 @@ data instance Essence Database =
 data instance Essence DB = EssenceDB
     { nameOf          :: Text
     , actionOf        :: Text
-    , fieldsOf        :: DB
+    , hashMapOf       :: DB
     } deriving (Show,Eq)
 data instance Essence List = EssenceList
     { name          :: Field

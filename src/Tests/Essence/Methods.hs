@@ -38,16 +38,19 @@ essenceMethodsTests =
 addListTest =
     TestCase $
     assertEqual
-    "for (addList [(\"access_key\",\"key\")] testEssenceList)"
-    (EssenceList "person" "create" [("access_key",MyString "key"),("first_name",MyString "misha"),("last_name",MyString "dragon")])
-    $ addList [("access_key",MyString "key")] testEssenceList
+    "for (addList [(\"access_key\",\"key\")] testPersonListCreate)"
+    (EssenceList "person" "create"
+        [("first_name",MyString "misha")
+        ,("last_name",MyString "dragon")
+        ,("access_key",MyString "key")]
+    ) $ addList [("access_key",MyString "key")] testPersonListCreate
 
 deletePairTest =
     TestCase $
     assertEqual
-    "for (deletePair \"first_name\" testEssenceList)"
+    "for (deletePair \"first_name\" testPersonListCreate)"
     (EssenceList "person" "create" [("last_name",MyString "dragon")])
-    $ deletePair "first_name" testEssenceList
+    $ deletePair "first_name" testPersonListCreate
 
 getEssenceFieldsTest =
     TestCase $
@@ -141,4 +144,4 @@ toEssenceListTest =
         ]) testConfig >>=
     assertEqual
     "for (toEssenceList testEssenceDB [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
-    (EssenceList "person" "create" [("first_name",MyString "misha"),("last_name",MyString "dragon")])
+    (EssenceList "person" "create" [("last_name",MyString "dragon"),("first_name",MyString "misha")])

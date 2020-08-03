@@ -27,7 +27,7 @@ import Data.Essence.Methods
 import Data.Empty
 import qualified Data.MyValue           as MyValue
 import qualified Data.Value             as Value
-import DataBase.Get
+import Database.Get
 
 import Database.HDBC
 import Database.HDBC.PostgreSQL
@@ -212,7 +212,7 @@ isRightRelations rootObj branchObj rootEssence branchEssence =
 getIdPairFromObj :: Name -> Object -> [(String,MyValue.MyValue)]
 getIdPairFromObj name obj =
     case getListOfPairFromObj (name <> "_id") obj of
-        [(field,value)] -> [(field, value)]
+        [(field,value)] -> [("id", value)]
         _               -> []
 
 isNewsExiste :: StateT (Essence List) (ReaderT Config IO) Bool

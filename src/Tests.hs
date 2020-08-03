@@ -2,9 +2,14 @@ module Tests
     ( runTest
     ) where
 
+import Config
+
 import Tests.Base
 
 import Tests.Config
+
+import Tests.Database
+import Tests.Database.Create
 
 import Tests.Empty
 import Tests.Essence.Methods
@@ -28,11 +33,11 @@ import Tests.SQL
 import Tests.SQL.Actions
 import Tests.SQL.ToValue
 
+import qualified Data.HashMap.Strict as HM
+
 import Test.HUnit
 
-runTest :: IO Counts
-runTest = runTestTT . TestList
-    $ []
+testList = TestList $ []
     <> baseTests
     <> configTests
     <> emptyTests
@@ -47,7 +52,16 @@ runTest = runTestTT . TestList
     <> requestMethodMethodsTests
     <> requestParamsMethodsTests
     <> valueTests
-    <> setupTests
     <> sqlTests
     <> sqlActionsTests
     <> sqlToValueTests
+    <> databaseTests
+    <> databaseCreateTests
+
+runTest :: IO ()
+runTest =
+    if HM.null testConfig
+        then runTestTT (TestList setupTests)
+            >> print "Can't find Config.json" --- Need different look
+        else runTestTT (TestList [TestList setupTests,testList])
+            >> return ()

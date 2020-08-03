@@ -66,7 +66,7 @@ afterUnderscoreTest =
 getListOfPairFromObjTest =
     TestCase $
     assertEqual "for (getListOfPairFromObj \"person_id\" testObj)"
-    [("id",MyInteger 1)]
+    [("person_id",MyInteger 1)]
     $ getListOfPairFromObj "person_id" testObj
 
 checkListTest =

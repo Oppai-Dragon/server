@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8ae57dcfe24a118cc6f07eece8da1157dbd6ef8e6862625e8a418dc09da025ef
+-- hash: 7bf88f0e1e69011e4aa9a23695fd7c54bd395dae6d2422c0c99b09d8fbc2e772
 
 name:           server
 version:        0.1.0.0
@@ -51,15 +51,17 @@ library
       Data.SQL.Actions
       Data.SQL.ToValue
       Data.Value
-      DataBase.Create
-      DataBase.Delete
-      DataBase.Edit
-      DataBase.Get
+      Database.Create
+      Database.Delete
+      Database.Edit
+      Database.Get
       Lib
       Setup
       Tests
       Tests.Base
       Tests.Config
+      Tests.Database
+      Tests.Database.Create
       Tests.Empty
       Tests.Essence
       Tests.Essence.Methods
@@ -97,6 +99,7 @@ library
     , http-types
     , network
     , parsec
+    , random
     , scientific
     , stm
     , text
@@ -133,6 +136,7 @@ executable server-exe
     , http-types
     , network
     , parsec
+    , random
     , scientific
     , server
     , stm
@@ -171,6 +175,7 @@ test-suite server-test
     , http-types
     , network
     , parsec
+    , random
     , scientific
     , server
     , stm

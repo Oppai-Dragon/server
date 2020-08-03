@@ -54,6 +54,8 @@ instance Empty Bool where
     parseValue = show
 
 instance Empty MyValue where
+    empty = MyEmpty
+
     isEmpty (MyString value)    = isEmpty value
     isEmpty (MyStrings value)   = isEmpty value
     isEmpty (MyInteger value)   = isEmpty value
@@ -70,3 +72,4 @@ instance Empty MyValue where
     parseValue (MyBool value)       = parseValue value
     parseValue (MyDate value)       = parseValue value
     parseValue (MyNextval value)    = value
+    parseValue MyEmpty              = "null"

@@ -29,7 +29,7 @@ instance ShowSQL (Essence List) where
                 >> toEssenceClause essenceList
             uniqueNames = nub nameList
             getName = intercalate "," uniqueNames
-            matchingClauses = matchEssence uniqueNames
+            matchingClauses = if length uniqueNames == 1 then [] else matchEssence uniqueNames
         in showSql (Get getName (matchingClauses <> clauseList))
     showSql (EssenceList name "delete" listOfPairs) =
         let wherePart = [Where ("id",fromJust $ lookup "id" listOfPairs)]

@@ -1,4 +1,4 @@
-module DataBase.Delete
+module Database.Delete
     ( dbDelete
     ) where
 

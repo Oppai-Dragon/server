@@ -27,9 +27,9 @@ requestControlTests =
 
 isPathRequestCorrectTest =
     TestCase $
-    assertEqual "for (isPathRequestCorrect testPostReq testApi)"
+    assertEqual "for (isPathRequestCorrect testPersonCreateReq testApi)"
     True
-    $ isPathRequestCorrect testPostReq testApi
+    $ isPathRequestCorrect testPersonCreateReq testApi
 
 ifEveryoneUpdateTest =
     TestCase $
@@ -45,14 +45,14 @@ ifGetUpdateTest =
 
 parseRequestTest =
     TestCase $
-    assertEqual "for (parseRequest testPostReq)"
+    assertEqual "for (parseRequest testPersonCreateReq)"
     ("person","create",[("first_name",Just "misha"),("last_name",Just "dragon")],"POST")
-    $ parseRequest testPostReq
+    $ parseRequest testPersonCreateReq
 
 isRequestCorrectTest =
     TestCase $
-    runReaderT (isRequestCorrect testPostReq) testConfig >>=
-    assertEqual "for (isRequestCorrect testPostReq)" True . fst
+    runReaderT (isRequestCorrect testPersonCreateReq) testConfig >>=
+    assertEqual "for (isRequestCorrect testPersonCreateReq)" True . fst
 
 getAccessArrTest =
     TestCase $

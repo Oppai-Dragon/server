@@ -68,7 +68,7 @@ ifEveryoneUpdate essenceDB access = if access > Everyone
     then EssenceDB (nameOf essenceDB) (actionOf essenceDB)
         $ HM.insert "access_key"
         (Description (MyString empty) (Just $ NOT NULL) Nothing Nothing)
-        (fieldsOf essenceDB)
+        (hashMapOf essenceDB)
     else essenceDB
 
 ifGetUpdate :: Essence DB -> Essence DB
@@ -76,7 +76,7 @@ ifGetUpdate essenceDB = if (actionOf essenceDB) == "get"
     then EssenceDB (nameOf essenceDB) (actionOf essenceDB)
         $ HM.insert "page"
         (Description (MyInteger empty) Nothing Nothing Nothing)
-        (fieldsOf essenceDB)
+        (hashMapOf essenceDB)
     else essenceDB
 
 parseRequest :: Request -> (EssenceName,Action,QueryMBS,Method)

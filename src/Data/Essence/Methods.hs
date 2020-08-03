@@ -48,7 +48,7 @@ type EssenceName = String
 
 addList :: List -> Essence List -> Essence List
 addList list1 (EssenceList name action list2) =
-    EssenceList name action $ list1 <> list2
+    EssenceList name action $ list2 <> list1
 
 deletePair :: String -> Essence List -> Essence List
 deletePair field essenceList@(EssenceList name action list) =

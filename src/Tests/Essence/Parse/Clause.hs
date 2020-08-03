@@ -39,7 +39,7 @@ toEssenceClauseTest =
         , Filter "category.name ILIKE '%cat%'"
         , OrderBy "news.date_of_creation"
         ]
-    ) $ execWriter $ toEssenceClause (EssenceList "news" "create" testGetList)
+    ) $ execWriter $ toEssenceClause (EssenceList "news" "create" testNewsGetFields)
 
 pickTableNameTest =
     TestCase $

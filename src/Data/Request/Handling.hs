@@ -13,10 +13,10 @@ import qualified Data.Empty                             as E
 import           Data.Essence
 import           Data.Essence.Methods
 import           Data.Essence.RelationsTree.Methods
-import           DataBase.Get
-import           DataBase.Edit
-import           DataBase.Create
-import           DataBase.Delete
+import           Database.Get
+import           Database.Edit
+import           Database.Create
+import           Database.Delete
 
 import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State.Strict

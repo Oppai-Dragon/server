@@ -105,11 +105,11 @@ chooseMyValue str = case str of
     date@(x1:x2:x3:x4:'-':x5:x6:'-':x7:x8) -> myDate
     date@(x1:x2:'-':x3:x4:'-':x5:x6:x7:x8) -> myDate
     'N':'E':'X':'T':'V':'A':'L':'(':rest -> myNextval
+    []       -> const MyEmpty
     arr      ->
         if all C.isDigit arr
             then myInteger
             else myString
-    _        -> const MyEmpty
 
 fromBS :: BS.ByteString -> MyValue
 fromBS valueBS =

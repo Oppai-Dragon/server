@@ -10,7 +10,7 @@
             ]
         , "date_of_creation":
             [ "DATE"
-            , "NOT NULL"
+            , "DEFAULT CURRENT_DATE"
             ]
         , "author_id":
             [ "INT"
