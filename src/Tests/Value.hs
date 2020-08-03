@@ -10,10 +10,18 @@ import qualified Data.Vector         as V
 import Test.HUnit
 
 valueTests =
-    toTextArrTests
+    isValueTests
+    <> toTextArrTests
     <> toStrArrTests
     <> toTextTests
     <> toStrTests
+
+isValueTests =
+    [ TestLabel "isNullTest"            isNullTest
+    ]
+
+isNullTest =
+    TestCase $ assertEqual "for (isNull Null)" True (isNull Null)
 
 toTextArrTests =
     [ TestLabel "array_toTextArrTest"   array_toTextArrTest

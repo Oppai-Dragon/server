@@ -3,6 +3,7 @@ module Data.Value
     , toStrArr
     , toText
     , toStr
+    , isNull
     ) where
 
 import           Data.Base
@@ -42,3 +43,6 @@ toStr value = case value of
     Number num  -> show $ scientificToInteger num
     Bool bool   -> show bool
     _           -> ""
+
+isNull :: Value -> Bool
+isNull result = case result of {Null -> True; _ -> False}

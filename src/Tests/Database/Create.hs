@@ -27,8 +27,11 @@ addingDefaultTest = TestCase $ do
     result <- runReaderT (execStateT addingDefault testPersonListCreate) testConfig
     assertEqual "runReaderT (execStateT addingDefault testPersonListCreate) testConfig"
         (EssenceList "person" "create"
-            [("first_name",MyString "misha")
-            ,("last_name",MyString "dragon")
+            [("first_name",MyString "testFirstName")
+            ,("last_name",MyString "testLastName")
+            ,("avatar",MyString "uri")
+            ,("access_key",MyString accessKeyStr)
+            ,("is_admin",MyBool True)
             ,("id",MyNextval "nextval('person_id_seq')")
             ]
         ) result
@@ -38,8 +41,11 @@ addIdTest =
     runReaderT (execStateT addId testPersonListCreate) testConfig >>=
     assertEqual "runReaderT (execStateT addId testPersonListCreate) testConfig"
     (EssenceList "person" "create"
-        [("first_name",MyString "misha")
-        ,("last_name",MyString "dragon")
+        [("first_name",MyString "testFirstName")
+        ,("last_name",MyString "testLastName")
+        ,("avatar",MyString "uri")
+        ,("access_key",MyString accessKeyStr)
+        ,("is_admin",MyBool True)
         ,("id",MyNextval "nextval('person_id_seq')")
         ]
     )

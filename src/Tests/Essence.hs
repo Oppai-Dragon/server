@@ -77,7 +77,7 @@ testEssemceDatabaseFieldsName =
 testEssenceDatabaseDescription =
     [[("type","int"),("constraint","primary key")]
     ,[("type","string"),("value","null")]
-    ,[("type","date"),("value","not null")]
+    ,[("type","date"),("value","null")]
     ,[("type","bool"),("value","null")]
     ,[("type","uuid"),("value","null")]
     ,[("type","string"),("value","not null")]
@@ -100,7 +100,7 @@ testEssemceDBFieldsName =
 testEssenceDBDescription =
     [ Description (MyInteger 0) Nothing             Nothing (Just PRIMARY)
     , Description (MyString "") (Just NULL)         Nothing Nothing
-    , Description (MyDate "") (Just $ NOT NULL)     Nothing Nothing
+    , Description (MyDate "") (Just $ NULL)     Nothing Nothing
     , Description (MyBool False) (Just NULL)        Nothing Nothing
     , Description (MyString "") (Just $ NOT NULL)   Nothing Nothing
     , Description (MyString "") (Just $ NOT NULL)   Nothing Nothing

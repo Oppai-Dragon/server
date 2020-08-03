@@ -10,6 +10,7 @@ import Tests.Config
 
 import Tests.Database
 import Tests.Database.Create
+import Tests.Database.Test
 
 import Tests.Empty
 import Tests.Essence.Methods
@@ -55,6 +56,7 @@ testList = TestList $ []
     <> sqlTests
     <> sqlActionsTests
     <> sqlToValueTests
+    <> databaseTestTests
     <> databaseTests
     <> databaseCreateTests
 

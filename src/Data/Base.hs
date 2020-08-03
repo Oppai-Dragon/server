@@ -10,11 +10,20 @@ module Data.Base
     , scientificToInteger
     , replaceBy
     , ordToBool
+    , fromStateT
+    , getRandom
     ) where
 
+import           Data.Aeson
 import           Data.List       as L
 import           Data.Scientific
 import qualified Data.Text       as T
+
+import           Control.Monad.Trans.Reader
+import           Control.Monad.Trans.State.Strict
+import           Control.Monad.Trans.Class          (lift)
+
+import           System.Random ( getStdRandom, randomR )
 
 ifElseThen :: [Bool] -> [a] -> a
 ifElseThen []           [act]      = act
@@ -86,3 +95,9 @@ replaceBy func newX (x:xs) =
 ordToBool :: Ordering -> Bool
 ordToBool EQ = True
 ordToBool _  = False
+
+fromStateT :: (Monad m) => m a -> StateT s (ReaderT Object m) a
+fromStateT = lift . lift
+
+getRandom :: IO Integer
+getRandom = getStdRandom (randomR (1,100000000000))

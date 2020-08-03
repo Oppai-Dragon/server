@@ -40,8 +40,11 @@ addListTest =
     assertEqual
     "for (addList [(\"access_key\",\"key\")] testPersonListCreate)"
     (EssenceList "person" "create"
-        [("first_name",MyString "misha")
-        ,("last_name",MyString "dragon")
+        [("first_name",MyString "testFirstName")
+        ,("last_name",MyString "testLastName")
+        ,("avatar",MyString "uri")
+        ,("access_key",MyString accessKeyStr)
+        ,("is_admin",MyBool True)
         ,("access_key",MyString "key")]
     ) $ addList [("access_key",MyString "key")] testPersonListCreate
 
@@ -49,7 +52,12 @@ deletePairTest =
     TestCase $
     assertEqual
     "for (deletePair \"first_name\" testPersonListCreate)"
-    (EssenceList "person" "create" [("last_name",MyString "dragon")])
+    (EssenceList "person" "create"
+        [("last_name",MyString "testLastName")
+        ,("avatar",MyString "uri")
+        ,("access_key",MyString accessKeyStr)
+        ,("is_admin",MyBool True)]
+    )
     $ deletePair "first_name" testPersonListCreate
 
 getEssenceFieldsTest =
