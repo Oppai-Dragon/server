@@ -14,9 +14,7 @@ module Config
     , getApiActions
     , parseFieldsFunc
     , getEssences
-    , getActionsForEssence
     , getAccess
-    , getActionsAccess
     , getUri
     , getUriDB
     , getMethodActions
@@ -109,30 +107,12 @@ getEssences api = case AT.parseMaybe (.: "essences") api of
     Just arr@(Array vector) -> toTextArr arr
     _                       -> []
 
-getActionsForEssence :: EssenceName -> Api -> Actions
-getActionsForEssence essence api =
-    let parseFunc = parseFieldsFunc ["access",essence]
-    in case AT.parseMaybe parseFunc api of
-        Just (Object obj) -> HM.keys obj
-        Nothing           -> []
-
 getAccess :: EssenceName -> Action -> Api -> Access
 getAccess essence action api =
-    case lookup action (getActionsAccess essence api) of
-        Just access -> access
-        Nothing     -> minBound
-
-getActionsAccess :: EssenceName -> Api -> [(Action, Access)]
-getActionsAccess essence api =
-    let
-        parseFunc = parseFieldsFunc
-            ["access",essence]
-        essenceActions = getActionsForEssence essence api
+    let parseFunc = parseFieldsFunc ["access",essence,action]
     in case AT.parseMaybe parseFunc api of
-        Just (Object obj) ->
-            map (\(l, String text) -> (l, read $ T.unpack text))
-            $ HM.toList obj
-        Nothing           -> []
+        Just (String access) -> read $ T.unpack access
+        _                    -> maxBound
 
 getUri :: Config -> String
 getUri conf =

@@ -56,7 +56,8 @@ deletePair field essenceList@(EssenceList name action list) =
         $ L.deleteBy (\(l1,_) (l2,_) -> l1==l2) (field,MyEmpty) list
 
 getEssenceFields :: Essence DB -> Api -> [Field]
-getEssenceFields essenceDB api =
+getEssenceFields (EssenceDB "news" "create" _) _ = ["id"]
+getEssenceFields essenceDB api                   =
     let
         relationsTree = getRelationsTree (nameOf essenceDB) api
         relationFields = getRelationFields relationsTree

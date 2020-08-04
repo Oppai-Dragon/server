@@ -3,6 +3,7 @@ module Data.Essence.RelationsTree.Methods
     , addRelationsFields
     , relationsHandler
     , iterateRelations
+    , ifFieldsFill
     , findEssence
     , unpackLeafs
     , beforeUnderscore
@@ -19,7 +20,7 @@ module Data.Essence.RelationsTree.Methods
 import Prelude hiding (null, tail, takeWhile, dropWhile)
 
 import Config
-import Data.Base
+import Data.Base    hiding (deletePair)
 import Data.SQL.Actions
 import Data.Essence
 import Data.Essence.RelationsTree
@@ -28,6 +29,8 @@ import Data.Empty
 import qualified Data.MyValue           as MyValue
 import qualified Data.Value             as Value
 import Database.Get
+import Data.Required
+import Data.Required.Methods
 
 import Database.HDBC
 import Database.HDBC.PostgreSQL
@@ -97,24 +100,38 @@ iterateRelations (Trunk t (Branch b leafs)) objOld = do
         [(field, value)] -> case b of
             "news" -> do
                 (Object objNew) <- lift $ dbGetOne (EssenceList (beforeUnderscore t) "get" listOfPair)
-                if isRightRelations objOld objNew t b
-                    then put (addList
-                        (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objNew)
-                        essenceList) >> return objNew
+                -- Draft have only one "not null" field for creating - "name"
+                -- But news, which copies draft values, need more then just "name"
+                config <- lift ask
+                api <- fromStateT setApi
+                let essenceDB = getEssenceDB (T.pack b) (T.pack action) config api
+                let addedFields = unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objNew
+                let requiredFields = toFields $ getRequiredFields essenceDB api
+                let bool = ifFieldsFill requiredFields addedFields
+                if and [isRightRelations objOld objNew t b, bool]
+                    then put (addList addedFields $ deletePair "id" essenceList)
+                        >> return (HM.singleton "result" (Number 1))
                     else return HM.empty
             _      -> do
                 (Object objNew) <- lift $ dbGetOne (EssenceList b "get" listOfPair)
+                let addedFields = unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld
                 if isRightRelations objOld objNew t b
-                    then put (addList
-                        (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld)
-                        essenceList) >> return objNew
+                    then put (addList addedFields essenceList)
+                        >> return (HM.singleton "result" (Number 1))
                     else return HM.empty
         []                   ->
             put (addList (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld) essenceList)
-            >> return objOld
+            >> return (HM.singleton "result" (Number 1))
 iterateRelations (Trunk t1 trunk@(Trunk t2 rlt)) objOld = do
     (Object objNew) <- lift $ findEssence t2 (getListOfPairFromObj t1 objOld)
     iterateRelations trunk objNew
+
+ifFieldsFill :: [Field] -> [(Field,MyValue.MyValue)] -> Bool
+ifFieldsFill []           _   = True
+ifFieldsFill (field:rest) arr = case lookup field arr of
+    Just MyValue.MyEmpty -> False
+    Just _               -> ifFieldsFill rest arr
+    Nothing              -> ifFieldsFill rest arr
 
 findEssence :: Name -> [(String,MyValue.MyValue)] -> ReaderT Config IO Value
 findEssence name listOfPair =
@@ -126,10 +143,12 @@ findEssence name listOfPair =
 
 unpackLeafs :: Name -> [RelationsTree] -> Object -> [(String, MyValue.MyValue)]
 unpackLeafs _        []                 _   = []
-unpackLeafs "draft1" (Leaf field :rest) obj =
-    let parseFunc = parseFieldsFunc $ map T.pack ["draft1",field]
+unpackLeafs "draft1" (Leaf field' :rest) obj =
+    let
+        field = if field' == "draft_id" then "id" else field'
+        parseFunc = parseFieldsFunc $ map T.pack ["draft1",field]
     in case parseMaybe parseFunc obj of
-        Just value -> (field, MyValue.fromValue value) : unpackLeafs "draft1" rest obj
+        Just value -> (field', MyValue.fromValue value) : unpackLeafs "draft1" rest obj
         Nothing    -> unpackLeafs "draft1" rest obj
 unpackLeafs root     (Leaf field :rest) obj =
     let
@@ -187,8 +206,13 @@ isRightRelations rootObj branchObj rootEssence "news"        =
                 Just value -> value : iterateObjs' obj (n+1)
                 Nothing    -> []
 
+        --List of drafts for specific author
         rootArrValue = iterateObjs rootObj
-        (branchValue:rest) = iterateObjs branchObj
+        --Specific draft, getting by id from queryString
+        branchValue = case iterateObjs branchObj of
+            [x]      -> x
+            (x:rest) -> x
+            _        -> Null
     in or $ Prelude.map (branchValue==) rootArrValue
 isRightRelations rootObj branchObj rootEssence branchEssence =
     let
@@ -219,14 +243,14 @@ isNewsExiste :: StateT (Essence List) (ReaderT Config IO) Bool
 isNewsExiste = do
     essenceList@(EssenceList name action list) <- get
     let isNews = name == "news"
-    let isExiste = case lookup "id" list of
-            Just value -> do
-                (Object obj) <- lift $ dbGetOne (EssenceList name "get" [("id", value)])
+    let isExiste = case lookup "draft_id" list of
+            Just myValue -> do
+                (Object obj) <- lift $ dbGetOne (EssenceList name "get" [("draft_id",myValue)])
                 let isGet = not $ HM.null obj
                 if isGet
                     then put (EssenceList name "edit" list) >> return True
                     else return False
-            _          -> return False
+            _            -> return False
     if isNews
         then isExiste
         else return False

@@ -85,7 +85,11 @@
         , "publish": "Author"
         }
     , "news":
-        { "get": "Everyone"
+        { "create": "Author"
+        , "edit": "Author"
+        , "delete": "Author"
+        , "publish": "Author"
+        , "get": "Everyone"
         }
     , "comment":
         { "create": "Person"

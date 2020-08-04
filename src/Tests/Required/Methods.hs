@@ -15,7 +15,8 @@ import Tests.Essence
 import Test.HUnit
 
 requiredMethodsTests =
-    [ TestLabel "getRequiredFieldsTest" getRequiredFieldsTest
+    [ TestLabel "toFieldsTest"          toFieldsTest
+    , TestLabel "getRequiredFieldsTest" getRequiredFieldsTest
     , TestLabel "iterateHMTest"         iterateHMTest
     , TestLabel "iterateHMCreateTest"   iterateHMCreateTest
     , TestLabel "iterateHMGetTest"      iterateHMGetTest
@@ -24,6 +25,12 @@ requiredMethodsTests =
     , TestLabel "requiredSequenceATest" requiredSequenceATest
     , TestLabel "requiredApplyTest"           requiredApplyTest
     ]
+
+toFieldsTest =
+    TestCase $ assertEqual
+    "for (toFields (Required [AND [\"first_name\",\"last_name\"],OR [\"avatar\"]]))"
+    (["first_name","last_name","avatar"] :: [String])
+    $ toFields (Required [AND ["first_name","last_name"],OR ["avatar"]])
 
 getRequiredFieldsTest =
     TestCase $

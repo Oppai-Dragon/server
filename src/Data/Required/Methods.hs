@@ -2,7 +2,8 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE InstanceSigs #-}
 module Data.Required.Methods
-    ( getRequiredFields
+    ( toFields
+    , getRequiredFields
     , GetFields(..)
     , requiredSequenceA
     , requiredApply
@@ -22,7 +23,15 @@ import qualified Data.List              as L
 type Action = T.Text
 type Field = String
 
+toFields :: Required [Field] -> [Field]
+toFields required = case required of
+    AND fields   -> fields
+    OR fields    -> fields
+    Required arr -> concat $ map toFields arr
+    NullFields   -> []
+
 getRequiredFields :: Essence DB -> Api -> Required [Field]
+getRequiredFields newsDB@(EssenceDB "news" "create" _) _ = getFields newsDB
 getRequiredFields essenceDB api =
     let
         relationsTree = getRelationsTree (nameOf essenceDB) api

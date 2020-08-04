@@ -27,7 +27,11 @@ type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
 type QueryBS = [(BS.ByteString, BS.ByteString)]
 
 isRequiredParams :: Essence DB -> QueryMBS -> Api -> Bool
-isRequiredParams essenceDB queryMBS api =
+isRequiredParams (EssenceDB "news" "create" _) queryMBS _   =
+    case lookup "id" queryMBS of
+        Just (Just x) -> True
+        _             -> False
+isRequiredParams essenceDB                     queryMBS api =
     let
         queryBS = queryBSWithoutMaybe queryMBS
         requiredParams = getRequiredFields essenceDB api

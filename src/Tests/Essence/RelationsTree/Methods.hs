@@ -20,6 +20,7 @@ import Test.HUnit
 
 essenceRelationsTreeMethodsTests =
     [ TestLabel "isEssenceRelationsTest"    isEssenceRelationsTest
+    , TestLabel "ifFieldsFillTest"          ifFieldsFillTest
     , TestLabel "unpackLeafsTest"           unpackLeafsTest
     , TestLabel "beforeUnderscoreTest"      beforeUnderscoreTest
     , TestLabel "parseObjEssenceTest"       parseObjEssenceTest
@@ -37,6 +38,14 @@ isEssenceRelationsTest =
     "for (isEssenceRelations \"draft\" testApi)"
     True
     $ isEssenceRelations "draft" testApi
+
+ifFieldsFillTest =
+    TestCase $
+    assertEqual
+    "for (ifFieldsFill [\"name\",\"category_id\"] [(\"name\",MyString \"\"),(\"category\",MyInteger 0)])"
+    True
+    $ ifFieldsFill ["name","category_id"]
+        [("name",MyString ""),("category",MyInteger 0)]
 
 unpackLeafsTest =
     TestCase $

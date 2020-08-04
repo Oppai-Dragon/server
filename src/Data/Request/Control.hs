@@ -93,8 +93,8 @@ isRequestCorrect :: Request -> ReaderT Config IO (Bool, Response)
 isRequestCorrect req = do
     config <- ask
     api <- lift setApi
-    let (essence,action,queryMBS,method) = parseRequest req
-    let access = getAccess essence action api
+    let (essence',action,queryMBS,method) = parseRequest req
+    let essence = if action == "publish" then "news" else essence'
     let essenceDB = getEssenceDB essence action config api
     let essenceFields = getEssenceFields essenceDB api
     let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS

@@ -19,7 +19,9 @@ instance ShowSQL (Essence List) where
         in showSql (Insert name fields values)
     showSql (EssenceList name "edit" listOfPairs)   =
         let
-            wherePart = [Where ("id",fromJust $ lookup "id" listOfPairs)]
+            wherePart = case name of
+                "news" -> [Where ("draft_id",fromJust $ lookup "draft_id" listOfPairs)]
+                _      -> [Where ("id",fromJust $ lookup "id" listOfPairs)]
             setPart = map Set listOfPairs
         in showSql (Edit name setPart wherePart)
     showSql essenceList@(EssenceList name "get" list)   =

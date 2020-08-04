@@ -18,9 +18,7 @@ configTests =
     , TestLabel "getApiActionsTest"         getApiActionsTest
     , TestLabel "parseFieldsFuncTest"       parseFieldsFuncTest
     , TestLabel "getEssencesTest"           getEssencesTest
-    , TestLabel "getActionsForEssenceTest"  getActionsForEssenceTest
     , TestLabel "getAccessTest"             getAccessTest
-    , TestLabel "getActionsAccessTest"      getActionsAccessTest
     , TestLabel "getUriTest"                getUriTest
     , TestLabel "getUriDBTest"              getUriDBTest
     , TestLabel "getMethodActionsTest"      getMethodActionsTest
@@ -57,28 +55,11 @@ getEssencesTest =
     ["person","author","category","tag","draft","news","comment"]
     $ getEssences testApi
 
-getActionsForEssenceTest =
-    TestCase $
-    assertEqual
-    "for (getActionsForEssence \"category\" testApi)"
-    ["edit","get","create","delete"]
-    $ getActionsForEssence "category" testApi
-
 getAccessTest =
     TestCase $
     assertEqual "for (getAccess \"draft\" \"publish\" testApi)"
     Author
     $ getAccess "draft" "publish" testApi
-
-getActionsAccessTest =
-    TestCase $
-    assertEqual
-    "for (getActionsAccessTest \"category\" testApi)"
-    [("edit", Admin)
-    ,("get", Everyone)
-    ,("create", Admin)
-    ,("delete", Admin)]
-    $ getActionsAccess "category" testApi
 
 getUriTest =
     TestCase $
