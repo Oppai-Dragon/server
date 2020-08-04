@@ -24,9 +24,9 @@ requestParamsMethodsTests =
 isRequiredParamsTest =
     TestCase $
     assertEqual
-    "for (isRequiredParams testEssenceDB [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
+    "for (isRequiredParams testPersonCreateDB [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
     True
-    $ isRequiredParams testEssenceDB [("first_name",Just "misha"),("last_name",Just "dragon")] testApi
+    $ isRequiredParams testPersonCreateDB [("first_name",Just "misha"),("last_name",Just "dragon")] testApi
 
 iterateRequiredParamsTest =
     TestCase $
@@ -54,9 +54,9 @@ queryBSWithoutMaybeTest =
 isTypeParamsCorrectTest =
     TestCase $
     assertEqual
-    "for (isTypeParamsCorrect testEssenceDB [(\"first_name\",MyString \"misha\"),(\"last_name\",MyString \"dragon\")])"
+    "for (isTypeParamsCorrect testPersonCreateDB [(\"first_name\",MyString \"misha\"),(\"last_name\",MyString \"dragon\")])"
     [True,True]
-    $ isTypeParamsCorrect testEssenceDB
+    $ isTypeParamsCorrect testPersonCreateDB
     [("first_name",MyString "misha"),("last_name",MyString "dragon")]
 
 compareValueTypeTest =

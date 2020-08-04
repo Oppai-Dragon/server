@@ -10,6 +10,7 @@ import Tests.Config
 
 import Tests.Database
 import Tests.Database.Create
+import Tests.Database.Get
 import Tests.Database.Test
 
 import Tests.Empty
@@ -24,6 +25,7 @@ import Tests.Required.Methods
 
 import Tests.Request.Control
 import Tests.Request.Access.Methods
+import Tests.Request.Handling
 import Tests.Request.Method.Methods
 import Tests.Request.Params.Methods
 
@@ -50,12 +52,14 @@ testList = TestList $ []
     <> requiredMethodsTests
     <> requestControlTests
     <> requestAccessMethodsTests
+    <> requestHandlingTests
     <> requestMethodMethodsTests
     <> requestParamsMethodsTests
     <> valueTests
     <> sqlTests
     <> sqlActionsTests
     <> sqlToValueTests
+    <> databaseGetTests
     <> databaseTestTests
     <> databaseTests
     <> databaseCreateTests

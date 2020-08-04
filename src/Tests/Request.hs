@@ -7,6 +7,7 @@ import Network.Wai.Internal
 ---------------------------Test Request
 ------------------------------------------------------------------
 testPersonCreateReq = testPostReq { pathInfo = personCreate, queryString = personCreateQueryString}
+testAuthorCreateReq = testPostReq { pathInfo = authorCreate, queryString = authorCreateQueryString}
 ------------------------------------------------------------------
 ---------------------------Essence Query String
 ------------------------------------------------------------------

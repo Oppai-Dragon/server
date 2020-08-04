@@ -46,6 +46,11 @@ data instance Essence List = EssenceList
     , action        :: Field
     , list          :: List
     } deriving (Show,Eq)
+instance Monoid (Essence List) where
+    mempty = EssenceList "" "" []
+instance Semigroup (Essence List) where
+    EssenceList name action list1 <> EssenceList _ _ list2 =
+        EssenceList name action $ list1 <> list2
 
 instance Monoid (Essence (Clause String)) where
     mempty = EssenceClause [] []

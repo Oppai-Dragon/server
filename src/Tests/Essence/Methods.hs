@@ -62,14 +62,14 @@ deletePairTest =
 
 getEssenceFieldsTest =
     TestCase $
-    assertEqual "for (getEssenceFields testEssenceDB testApi)"
+    assertEqual "for (getEssenceFields testPersonCreateDB testApi)"
     ["avatar","is_admin","last_name","first_name"]
-    $ getEssenceFields testEssenceDB testApi
+    $ getEssenceFields testPersonCreateDB testApi
 
 getEssenceDBTest =
     TestCase $
     assertEqual "for (getEssenceDB \"person\" \"create\" testConfig testApi)"
-    testEssenceDB
+    testPersonCreateDB
     $ getEssenceDB "person" "create" testConfig testApi
 
 getEssenceDatabaseTest =
@@ -81,13 +81,13 @@ getEssenceDatabaseTest =
 getHashMapDescriptionTest =
     TestCase $
     assertEqual "for (getHashMapDescription (HM.fromList testEssenceDatabaseFields))"
-    (HM.fromList testEssenceDBFields)
+    (HM.fromList testPersonCreateDBFields)
     $ getHashMapDescription (HM.fromList testEssenceDatabaseFields)
 
 iterateHashMapDBListTest =
     TestCase $
     assertEqual "for (iterateHashMapDBList testEssenceDatabaseFields)"
-    testEssenceDBFields
+    testPersonCreateDBFields
     $ iterateHashMapDBList testEssenceDatabaseFields
 
 setDescriptionTest =
@@ -146,10 +146,10 @@ parseFieldValueTest =
 
 toEssenceListTest =
     TestCase $
-    runReaderT (toEssenceList testEssenceDB
+    runReaderT (toEssenceList testPersonCreateDB
         [("first_name",Just "misha")
         ,("last_name",Just "dragon")
         ]) testConfig >>=
     assertEqual
-    "for (toEssenceList testEssenceDB [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
+    "for (toEssenceList testPersonCreateDB [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
     (EssenceList "person" "create" [("last_name",MyString "dragon"),("first_name",MyString "misha")])

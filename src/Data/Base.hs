@@ -12,6 +12,7 @@ module Data.Base
     , ordToBool
     , fromStateT
     , getRandom
+    , lookup2
     ) where
 
 import           Data.Aeson
@@ -101,3 +102,8 @@ fromStateT = lift . lift
 
 getRandom :: IO Integer
 getRandom = getStdRandom (randomR (1,100000000000))
+
+lookup2 :: (Eq a,Eq b) => a -> b -> [(a,[(b,c)])] -> Maybe c
+lookup2 field1 field2 arr1 = case lookup field1 arr1 of
+    Just arr2 -> lookup field2 arr2
+    Nothing   -> Nothing

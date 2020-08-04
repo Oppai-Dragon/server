@@ -4,6 +4,7 @@ module Tests.Request.Control
 
 import Config
 import Data.Request.Access
+import Data.Empty
 import Data.Essence
 import Data.MyValue
 import Data.Request.Control
@@ -33,15 +34,23 @@ isPathRequestCorrectTest =
 
 ifEveryoneUpdateTest =
     TestCase $
-    assertEqual "for (ifEveryoneUpdate testEssenceDB Everyone)"
-    testEssenceDB
-    $ ifEveryoneUpdate testEssenceDB Everyone
+    assertEqual "for (ifEveryoneUpdate testAuthorGetDB Author)"
+    (EssenceDB "author" "get" $ HM.fromList
+    [("id",Description (MyInteger 0) Nothing Nothing (Just PRIMARY))
+    ,("person_id",Description (MyInteger 0) (Just $ NOT NULL) (Just $ Relations "person" "id") (Just UNIQUE))
+    ,("description",Description (MyString "") Nothing Nothing Nothing)
+    ,("access_key",Description (MyString empty) (Just $ NOT NULL) Nothing Nothing)
+    ]) $ ifEveryoneUpdate testAuthorGetDB Author
 
 ifGetUpdateTest =
     TestCase $
-    assertEqual "for (ifGetUpdate testEssenceDB)"
-    testEssenceDB
-    $ ifGetUpdate testEssenceDB
+    assertEqual "for (ifGetUpdate testAuthorGetDB)"
+    (EssenceDB "author" "get" $ HM.fromList
+    [("id",Description (MyInteger 0) Nothing Nothing (Just PRIMARY))
+    ,("page",Description (MyInteger empty) Nothing Nothing Nothing)
+    ,("person_id",Description (MyInteger 0) (Just $ NOT NULL) (Just $ Relations "person" "id") (Just UNIQUE))
+    ,("description",Description (MyString "") Nothing Nothing Nothing)
+    ]) $ ifGetUpdate testAuthorGetDB
 
 parseRequestTest =
     TestCase $

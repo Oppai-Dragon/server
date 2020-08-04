@@ -73,36 +73,46 @@ data instance Clause String
     | Where { pairWhere :: (String, MyValue) }
     | Filter { filter :: String }
     | OrderBy { orderBy :: String }
+    | OffsetLimit { offsetLimit :: String}
     deriving (Show,Eq)
 data instance Clause [String]
     = SetList { listSet :: [(String, String)] }
     | WhereList { listWhere :: [(String, String)] }
     | FilterList { listFilter :: [String] }
     | OrderByList { listOrderBy :: [String] }
+    | OffsetLimitList {listOffsetLimit :: [String]}
     deriving (Show,Eq)
 instance Ord (Clause String) where
     compare (Set _)     (Set _)     = EQ
     compare (Where _)   (Where _)   = EQ
     compare (Filter _)  (Filter _)  = EQ
     compare (OrderBy _) (OrderBy _) = EQ
+    compare (OffsetLimit _) (OffsetLimit _) = EQ
 
-    compare (Set _) _ = GT
+    compare (Set _) _ = LT
 
-    compare (Where _) (Set _) = LT
-    compare (Where _) _       = GT
+    compare (Where _) (Set _) = GT
+    compare (Where _) _       = LT
 
-    compare (Filter _) (Set _) = LT
-    compare (Filter _) _       = GT
+    compare (Filter _) (Set _) = GT
+    compare (Filter _) _       = LT
 
-    compare (OrderBy _) (Set _)    = LT
-    compare (OrderBy _) (Where _)  = LT
-    compare (OrderBy _) (Filter _) = LT
-    compare (OrderBy _) _          = GT
+    compare (OrderBy _) (Set _)         = GT
+    compare (OrderBy _) (Where _)       = GT
+    compare (OrderBy _) (Filter _)      = GT
+    compare (OrderBy _) _               = LT
+
+    compare (OffsetLimit _) (Set _)     = GT
+    compare (OffsetLimit _) (Where _)   = GT
+    compare (OffsetLimit _) (Filter _)  = GT
+    compare (OffsetLimit _) (OrderBy _) = GT
+    compare (OffsetLimit _) _           = LT
 instance ShowSQL (Clause String) where
     unpack (Set (field,myValue))     = show $ (field,parseValue myValue)
     unpack (Where (field,myValue))   = show $ (field,parseValue myValue)
     unpack (Filter x)                = show x
     unpack (OrderBy x)               = show x
+    unpack (OffsetLimit x)           = show x
 instance ShowSQL [Clause String] where
     showSql = showSql . map clauseSequenceA . groupSql . sort
 
@@ -126,6 +136,11 @@ instance Ord (Clause [String]) where
     compare (OrderByList _) (FilterList _) = GT
     compare (OrderByList _) _              = LT
 
+    compare (OffsetLimitList _) (SetList _)     = GT
+    compare (OffsetLimitList _) (WhereList _)   = GT
+    compare (OffsetLimitList _) (FilterList _)  = GT
+    compare (OffsetLimitList _) (OrderByList _) = GT
+    compare (OffsetLimitList _) _               = LT
 instance ShowSQL (Clause [String]) where
     showSql = parseList
 
@@ -144,10 +159,14 @@ instance ShowSQL (Clause [String]) where
     parseList (OrderByList list) =
         flip (<>) ")" . (<>) " ORDER BY (" . intercalate "," $ list
 
-    unpack (SetList x)     = show x
-    unpack (WhereList x)   = show x
-    unpack (FilterList x)  = show x
-    unpack (OrderByList x) = show x
+    parseList (OffsetLimitList [] ) = []
+    parseList (OffsetLimitList [x]) = x
+
+    unpack (SetList x)         = show x
+    unpack (WhereList x)       = show x
+    unpack (FilterList x)      = show x
+    unpack (OrderByList x)     = show x
+    unpack (OffsetLimitList x) = show x
 instance ShowSQL [Clause [String]] where
     showSql = unwords . reverse . withoutManyWhere . reverse .
         words . unwords . map showSql . sort
@@ -157,10 +176,11 @@ clauseSequenceA :: [Clause String] -> Clause [String]
 clauseSequenceA clauseList = case clauseList of
     []         -> WhereList []
     arr@(x:xs)       -> case x of
-        Set x     -> SetList $ map (read . unpack) arr
-        Where x   -> WhereList $ map (read . unpack) arr
-        Filter x  -> FilterList $ map (read . unpack) arr
-        OrderBy x -> OrderByList $ map (read . unpack) arr
+        Set _         -> SetList $ map (read . unpack) arr
+        Where _       -> WhereList $ map (read . unpack) arr
+        Filter _      -> FilterList $ map (read . unpack) arr
+        OrderBy _     -> OrderByList $ map (read . unpack) arr
+        OffsetLimit _ -> OffsetLimitList $ map (read . unpack) arr
 
 --Replaces redundant "WHERE" with "AND"
 withoutManyWhere :: [String] -> [String]

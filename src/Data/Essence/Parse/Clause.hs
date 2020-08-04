@@ -27,7 +27,7 @@ type EssenceName = String
 type Field       = String
 
 toEssenceClause :: Essence List -> Writer (Essence (Clause String)) ()
-toEssenceClause (EssenceList name    _ [])                  = return ()
+toEssenceClause (EssenceList name _ [])                     = return ()
 toEssenceClause (EssenceList name _ ((field,myValue):rest)) =
         let
             clause = takeWhile (/='_') field
@@ -68,6 +68,7 @@ pickClause name (field,myValue) =
         specificField = tail $ dropWhile (/='_') field
         value = parseValue myValue
         valueStr = toStr myValue
+        offsetLimit = case myValue of { MyString x -> x; _ -> "" }
     in case clause of
         "filter" -> flip (:) [] $
             case specificField of
@@ -99,6 +100,7 @@ pickClause name (field,myValue) =
                 "category_name"    -> [OrderBy "category.name"]
                 "date_of_creation" -> [OrderBy $ name +. "date_of_creation"]
                 _                  -> []
+        "page"   -> [OffsetLimit offsetLimit]
         _        -> [Where (name +. field,myValue)]
 
 matchEssence :: [EssenceName] -> [Clause String]

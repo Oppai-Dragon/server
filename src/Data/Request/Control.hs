@@ -95,9 +95,7 @@ isRequestCorrect req = do
     api <- lift setApi
     let (essence,action,queryMBS,method) = parseRequest req
     let access = getAccess essence action api
-    let essenceDB'' = getEssenceDB essence action config api
-    let essenceDB'  = ifEveryoneUpdate essenceDB'' access
-    let essenceDB   = ifGetUpdate essenceDB'
+    let essenceDB = getEssenceDB essence action config api
     let essenceFields = getEssenceFields essenceDB api
     let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
     let paramsMsg =

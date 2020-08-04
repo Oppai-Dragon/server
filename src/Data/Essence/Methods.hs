@@ -72,7 +72,7 @@ instance GetFields [Field] where
     iterateHM []  _      = []
     iterateHM arr action = case action of
         "create" -> iterateHMCreate arr
-        "get"    -> iterateHMGet arr
+        "get"    -> ["page"] : iterateHMGet arr
         "edit"   -> iterateHMEdit arr
         "delete" -> iterateHMDelete arr
     iterateHMCreate,iterateHMGet,iterateHMEdit,iterateHMDelete ::
@@ -97,10 +97,11 @@ instance GetFields [Field] where
             _            -> iterateHMDelete rest
 
 getEssenceDB :: T.Text -> T.Text -> Config -> Api -> Essence DB
-getEssenceDB essence action conf api =
-    case getEssenceDatabase essence action conf api of
-        EssenceDatabase name action hashMapDB ->
-            EssenceDB name action $ getHashMapDescription hashMapDB
+getEssenceDB essence apiAction conf api =
+    let dbAction = getApiDBMethod apiAction api
+    in case getEssenceDatabase essence dbAction conf api of
+        EssenceDatabase name dbAction hashMapDB ->
+            EssenceDB name dbAction $ getHashMapDescription hashMapDB
         _                             ->
             EssenceDB "" "" HM.empty
 

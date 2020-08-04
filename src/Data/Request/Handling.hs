@@ -1,12 +1,20 @@
 module Data.Request.Handling
     ( pathHandler
+    , getEssenceList
+    , addAccessKey
+    , setEssenceList
+    , deleteAccessKey
+    , essenceResponse
+    , postEssenceResponse
+    , getEssenceResponse
     ) where
 
 import           Config
-import           Data.Base                                      (ifElseThen)
+import           Data.Base              hiding (deletePair)
 import           Data.Handler
 import           Data.MyValue                                   (fromBS)
 import           Data.Request.Control
+import           Data.Request.Access
 import           Data.SQL.Actions
 import           Data.SQL.ToValue
 import qualified Data.Empty                             as E
@@ -56,7 +64,7 @@ pathHandler req = do
     config <- ask
     (isValidRequest, response) <- isRequestCorrect req
     if isValidRequest
-        then evalStateT (essenceResponse req) (EssenceList "" "" [])
+        then evalStateT (essenceResponse req) mempty
         else pure response
 
 getEssenceList :: Request -> ReaderT Config IO (Essence List)
@@ -67,14 +75,25 @@ getEssenceList req = do
     let essence' = head pathReq
     let action = head $ tail pathReq
     let essence = if action == "publish" then "news" else essence'
-    let access = getAccess essence action api
-    let actionDB = getApiDBMethod action api
     let queryMBS = queryString req
-    let essenceDB'' = getEssenceDB essence actionDB config api
-    let essenceDB'  = ifEveryoneUpdate essenceDB'' access
-    let essenceDB   = ifGetUpdate essenceDB'
+    let essenceDB = getEssenceDB essence action config api
     essenceList <- toEssenceList essenceDB queryMBS
     return essenceList
+
+addAccessKey :: Request -> StateT (Essence List) (ReaderT Config IO) ()
+addAccessKey req = do
+    api <- fromStateT setApi
+    (EssenceList name action list) <- get
+    let queryMBS = queryString req
+    let access = getAccess (T.pack name) (T.pack action) api
+    let isNeed = access > Everyone
+    let accessKeyList = case lookup "access_key" queryMBS of
+            Just (Just accessKey) -> [("access_key",fromBS accessKey)]
+            _                     -> []
+    let essenceList = list <> accessKeyList
+    if isNeed
+        then put (EssenceList name action essenceList)
+        else return ()
 
 setEssenceList :: Request -> StateT (Essence List) (ReaderT Config IO) ()
 setEssenceList req = do
@@ -89,6 +108,7 @@ deleteAccessKey = do
 essenceResponse :: Request -> StateT (Essence List) (ReaderT Config IO) Response
 essenceResponse req = do
     setEssenceList req
+    addAccessKey req
     relationsObj <- addRelationsFields
     deleteAccessKey
     if HM.null relationsObj

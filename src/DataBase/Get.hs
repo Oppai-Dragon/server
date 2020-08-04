@@ -2,14 +2,14 @@ module Database.Get
     ( dbGet
     , dbGetOne
     , dbGetArray
+    , addOffsetLimit
     , nesteEssences
     , iterateObj
     , nesteEssence
     ) where
 
 import Config
-import Data.Base
-    ( ifElseThen )
+import Data.Base hiding (deletePair)
 import Data.Handler
 import Data.Empty
 import Data.Essence
@@ -44,13 +44,10 @@ import           Control.Monad.Trans.Class          (lift)
 dbGet :: StateT (Essence List) (ReaderT Config IO) Value
 dbGet = do
     config <- lift $ ask
-    essenceList@(EssenceList name action list) <- get
-    let pageCounter = case lookup "page" list of
-            Just (MyInteger num) -> fromInteger num
-            Nothing              -> 1
-    let getQuery = init (showSql essenceList) <> " " <> getOffsetLimit pageCounter config
+    addOffsetLimit
+    essenceList <- get
+    let getQuery = showSql essenceList
     let uriDB = getUri config
-    let essence = T.pack name
     conn <- lift . lift $ connectPostgreSQL uriDB
     sqlValues <- lift . lift $ quickQuery' conn getQuery []
     let pageObj = case sqlValuesArrToValue essenceList sqlValues config of
@@ -73,7 +70,6 @@ dbGetOne (EssenceList table action [pair]) = do
     pure value
 
 dbGetArray :: Essence [(String,MyValue)] -> ReaderT Config IO Value
-dbGetArray (EssenceList _     _      [(_    ,MyEmpty)])        = return Null
 dbGetArray (EssenceList table action [(field,MyIntegers arr)]) = do
     config <- ask
     let uri = getUri config
@@ -85,6 +81,17 @@ dbGetArray (EssenceList table action [(field,MyIntegers arr)]) = do
     lift $ disconnect conn
     let value = sqlValuesArrToValue (EssenceList table action []) sqlValuesArr config
     pure value
+dbGetArray _                                                 = return (Object HM.empty)
+
+addOffsetLimit :: StateT (Essence List) (ReaderT Config IO) ()
+addOffsetLimit = do
+    psql <- fromStateT setPsql
+    essenceList <- get
+    let pageCounter = case lookup "page" (list essenceList) of
+            Just (MyInteger num) -> fromInteger num
+            Nothing              -> 1
+    let offsetLimit = getOffsetLimit pageCounter psql
+    put . addList [("page",MyString offsetLimit)] $ deletePair "page" essenceList
 
 nesteEssences :: Object -> ReaderT Config IO Value
 nesteEssences pageObj = do

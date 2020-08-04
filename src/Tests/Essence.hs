@@ -86,10 +86,17 @@ testEssenceDatabaseDescription =
 --------------------------------------------------------------------------------------------
 -----------------------------------Essence DB
 --------------------------------------------------------------------------------------------
+-- | Author
+testAuthorGetDB = EssenceDB "author" "get" $ HM.fromList
+    [("id",Description (MyInteger 0) Nothing Nothing (Just PRIMARY))
+    ,("person_id",Description (MyInteger 0) (Just $ NOT NULL) (Just $ Relations "person" "id") (Just UNIQUE))
+    ,("description",Description (MyString "") Nothing Nothing Nothing)
+    ]
+
 -- | Person
-testEssenceDB = EssenceDB "person" "create" $ HM.fromList testEssenceDBFields
-testEssenceDBFields = zip testEssemceDBFieldsName testEssenceDBDescription
-testEssemceDBFieldsName =
+testPersonCreateDB = EssenceDB "person" "create" $ HM.fromList testPersonCreateDBFields
+testPersonCreateDBFields = zip testPersonCreateDBFieldsName testPersonCreateDBDescription
+testPersonCreateDBFieldsName =
     [ "id"
     , "avatar"
     , "date_of_creation"
@@ -97,7 +104,7 @@ testEssemceDBFieldsName =
     , "last_name"
     , "first_name"
     ]
-testEssenceDBDescription =
+testPersonCreateDBDescription =
     [ Description (MyInteger 0) Nothing             Nothing (Just PRIMARY)
     , Description (MyString "") (Just NULL)         Nothing Nothing
     , Description (MyDate "") (Just $ NULL)     Nothing Nothing

@@ -17,6 +17,7 @@ baseTests =
     , TestLabel "scientificToIntegerTest"   scientificToIntegerTest
     , TestLabel "replaceByTest"             replaceByTest
     , TestLabel "ordToBoolTest"             ordToBoolTest
+    , TestLabel "lookup2Test"               lookup2Test
     ]
 
 ifElseThenTest =
@@ -78,3 +79,8 @@ ordToBoolTest =
     TestCase $
     assertEqual "for (ordToBool GT)"
     False $ ordToBool GT
+
+lookup2Test =
+    TestCase $
+    assertEqual "for (lookup2 \"person\" \"id\" [(\"person\",[(\"id\",1)])])"
+    (Just 1) $ lookup2 "person" "id" [("person",[("id",1)])]
