@@ -1,6 +1,6 @@
 .stack-work/
 .vscode
-.VSCodeCounter
+.VSCodeCounter/
 .history
 Config.json
 *~
