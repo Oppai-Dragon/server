@@ -13,6 +13,7 @@ module Data.Base
     , fromStateT
     , getRandom
     , lookup2
+    , tailCase
     ) where
 
 import           Data.Aeson
@@ -78,8 +79,8 @@ scientificToInteger :: Scientific -> Integer
 scientificToInteger num =
     let
         numStr = show num
-        exponenta = 10 ^ (read . tail . dropWhile (/='e')) numStr
-        division = toInteger $ 10 ^ (length . tail . dropWhile (/='.') . takeWhile (/='e')) numStr
+        exponenta = 10 ^ (read . tailCase . dropWhile (/='e')) numStr
+        division = toInteger $ 10 ^ (length . tailCase . dropWhile (/='.') . takeWhile (/='e')) numStr
     in case L.find (=='e') (show num) of
         Just _  ->
             case last $ takeWhile (/='e') numStr of
@@ -107,3 +108,8 @@ lookup2 :: (Eq a,Eq b) => a -> b -> [(a,[(b,c)])] -> Maybe c
 lookup2 field1 field2 arr1 = case lookup field1 arr1 of
     Just arr2 -> lookup field2 arr2
     Nothing   -> Nothing
+
+tailCase :: [a] -> [a]
+tailCase arr = case arr of
+    [] -> []
+    _  -> tail arr

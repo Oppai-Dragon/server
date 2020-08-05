@@ -12,7 +12,7 @@ module Setup
     ) where
 
 import Config
-import Data.Base (reverseMap,map2Var,ioStack)
+import Data.Base
 import Data.Value
 
 import Data.Aeson
@@ -94,7 +94,7 @@ getAllQueris :: IO [String]
 getAllQueris = do
     createObjList <- getEssenceObjects
     let result =
-            (\x -> L.delete ')' (head x) : tail x)
+            (\x -> L.delete ')' (head x) : tailCase x)
             [ "CREATE " <> getCreateQuery obj | obj <- createObjList]
     return result
 

@@ -14,6 +14,7 @@ module Data.Essence.Parse.Clause
     , parseSubStr
     ) where
 
+import Data.Base
 import Data.Empty
 import Data.Essence
 import Data.MyValue
@@ -42,7 +43,7 @@ pickTableName :: (Field,Field) -> [EssenceName]
 pickTableName (field,valueStr) =
     let
         clause = takeWhile (/='_') field
-        specificField = tail $ dropWhile (/='_') field
+        specificField = tailCase $ dropWhile (/='_') field
     in case clause of
         "filter" ->
             case specificField of
@@ -55,7 +56,7 @@ pickTableName (field,valueStr) =
                 "tag_name"      -> ["tag"]
                 _               -> []
         "sort"   ->
-            case valueStr of
+            case specificField of
                 "author_name"      -> ["author","person"]
                 "category_name"    -> ["category"]
                 _                  -> []
@@ -65,21 +66,22 @@ pickClause :: EssenceName -> (Field,MyValue) -> [Clause String]
 pickClause name (field,myValue) =
     let
         clause = takeWhile (/='_') field
-        specificField = tail $ dropWhile (/='_') field
+        specificField = tailCase $ dropWhile (/='_') field
         value = parseValue myValue
         valueStr = toStr myValue
         offsetLimit = case myValue of { MyString x -> x; _ -> "" }
     in case clause of
         "filter" -> flip (:) [] $
             case specificField of
-                "created_id"    -> Where (name +. "date_of_creation",myValue)
+                "created_in"    -> Where (name +. "date_of_creation",myValue)
                 "created_after" -> Filter $ name +. "date_of_creation>" <> value
                 "created_before"-> Filter $ name +. "date_of_creation<" <> value
-                "tag"           -> Filter $ value <> "=ANY(" <> name +. "tag_ids)"
+                "category_id"   -> Where (name +. "category_id",myValue)
+                "tag_id"        -> Filter $ value <> "=ANY(" <> name +. "tag_ids)"
                 "tags_in"       -> Filter $ parseTagsIn valueStr
-                "tags_all"      -> Where ("tag_ids", myValue)
-                "name"          -> Where (name +. "name",MyString $ parseSubStr valueStr)
-                "content"       -> Where (name +. "content",MyString $ parseSubStr valueStr)
+                "tags_all"      -> Where (name +. "tag_ids", myValue)
+                "name"          -> Filter $ name +. "name ILIKE " <> (parseStr . parseSubStr) valueStr
+                "content"       -> Filter $ name +. "content ILIKE " <> (parseStr . parseSubStr) valueStr
                 "author_name"   -> Filter $ parseAuthorName clause valueStr
         "search" -> flip (:) [] $
             case specificField of
@@ -90,16 +92,18 @@ pickClause name (field,myValue) =
                     <> (parseStr . parseSearchStr) valueStr
                 "tag_name"      -> Filter $ "tag.name ILIKE "
                     <> (parseStr . parseSearchStr) valueStr
-        "sort"   ->
-            case valueStr of
-                "author_name"      ->
-                    OrderBy "person.last_name" : OrderBy "person.first_name" : []
-                "number_of_photos" ->
-                    OrderBy ("ARRAY_LENGTH("<> name +. "draft_optional_photos, 1) DESC")
-                    : OrderBy (name +. "draft_main_photo") : []
-                "category_name"    -> [OrderBy "category.name"]
-                "date_of_creation" -> [OrderBy $ name +. "date_of_creation"]
-                _                  -> []
+        "sort"   -> case myValue of
+            MyBool True ->
+                case specificField of
+                    "author_name"      ->
+                        OrderBy "person.last_name" : OrderBy "person.first_name" : []
+                    "number_of_photos" ->
+                        OrderBy ("ARRAY_LENGTH("<> name +. "draft_optional_photos, 1) DESC")
+                        : OrderBy (name +. "draft_main_photo") : []
+                    "category_name"    -> [OrderBy "category.name"]
+                    "date_of_creation" -> [OrderBy $ name +. "date_of_creation"]
+                    _                  -> []
+            _           -> []
         "page"   -> [OffsetLimit offsetLimit]
         _        -> [Where (name +. field,myValue)]
 
@@ -167,7 +171,7 @@ parseAuthorFullName clauseName (firstName,lastName) =
             "(person.first_name ILIKE " <> searchF
             <> " AND person.last_name ILIKE " <> searchL
             <> ") OR ("
-            <> "(person.first_name ILIKE" <> searchL
+            <> "person.first_name ILIKE " <> searchL
             <> " AND person.last_name ILIKE " <> searchF <> ")"
         _        -> ""
 
@@ -175,7 +179,7 @@ parseFullName :: String -> (String,String)
 parseFullName value =
     let
         firstName = takeWhile (/=' ') value
-        lastName = tail $ dropWhile (/=' ') value
+        lastName = tailCase $ dropWhile (/=' ') value
     in (firstName,lastName)
 
 parseSearchStr :: String -> String

@@ -14,19 +14,21 @@ import Tests.Essence
 import Test.HUnit
 
 essenceParseClauseTests =
-    [ TestLabel "toEssenceClauseTest"       toEssenceClauseTest
-    , TestLabel "pickTableNameTest"         pickTableNameTest
-    , TestLabel "pickClauseTest"            pickClauseTest
-    , TestLabel "matchEssenceTest"          matchEssenceTest
-    , TestLabel "addEssenceNameTest"        addEssenceNameTest
-    , TestLabel "parseTagsInTest"           parseTagsInTest
-    , TestLabel "parseAuthorNameTest"       parseAuthorNameTest
-    , TestLabel "parseAuthorAnyNameTest"    parseAuthorAnyNameTest
-    , TestLabel "parseAuthorFullNameTest"   parseAuthorFullNameTest
-    , TestLabel "parseFullNameTest"         parseFullNameTest
-    , TestLabel "parseSearchStrTest"        parseSearchStrTest
-    , TestLabel "parseStrTest"              parseStrTest
-    , TestLabel "parseSubStrTest"           parseSubStrTest
+    [ TestLabel "toEssenceClauseTest"               toEssenceClauseTest
+    , TestLabel "pickTableNameTest"                 pickTableNameTest
+    , TestLabel "pickClauseTest"                    pickClauseTest
+    , TestLabel "matchEssenceTest"                  matchEssenceTest
+    , TestLabel "addEssenceNameTest"                addEssenceNameTest
+    , TestLabel "parseTagsInTest"                   parseTagsInTest
+    , TestLabel "parseAuthorNameTest"               parseAuthorNameTest
+    , TestLabel "parse_filter_AuthorAnyNameTest"    parse_filter_AuthorAnyNameTest
+    , TestLabel "parse_search_AuthorAnyNameTest"    parse_search_AuthorAnyNameTest
+    , TestLabel "parse_filter_AuthorFullNameTest"   parse_filter_AuthorFullNameTest
+    , TestLabel "parse_search_AuthorFullNameTest"   parse_search_AuthorFullNameTest
+    , TestLabel "parseFullNameTest"                 parseFullNameTest
+    , TestLabel "parseSearchStrTest"                parseSearchStrTest
+    , TestLabel "parseStrTest"                      parseStrTest
+    , TestLabel "parseSubStrTest"                   parseSubStrTest
     ]
 
 toEssenceClauseTest =
@@ -84,19 +86,31 @@ parseAuthorNameTest =
     <> "person.first_name ILIKE 'dragon' AND person.last_name ILIKE 'misha')")
     $ parseAuthorName "filter" "misha dragon"
 
-parseAuthorAnyNameTest =
+parse_filter_AuthorAnyNameTest =
+    TestCase $
+    assertEqual "for (parseAuthorAnyName \"search\" \"dragon\")"
+    "person.first_name ILIKE 'dran' OR person.last_name ILIKE 'dran'"
+    $ parseAuthorAnyName "filter" "dran"
+parse_search_AuthorAnyNameTest =
     TestCase $
     assertEqual "for (parseAuthorAnyName \"search\" \"dragon\")"
     "person.first_name ILIKE '%dran%' OR person.last_name ILIKE '%dran%'"
     $ parseAuthorAnyName "search" "dran"
 
-parseAuthorFullNameTest =
+parse_filter_AuthorFullNameTest =
     TestCase $
     assertEqual "for (parseAuthorFullName \"sort\" (\"misha\",\"dragon\"))"
     ("(person.first_name ILIKE 'misha' AND person.last_name ILIKE 'dragon'"
     <> ") OR ("
     <> "person.first_name ILIKE 'dragon' AND person.last_name ILIKE 'misha')")
     $ parseAuthorFullName "filter" ("misha","dragon")
+parse_search_AuthorFullNameTest =
+    TestCase $
+    assertEqual "for (parseAuthorFullName \"sort\" (\"misha\",\"dragon\"))"
+    ("(person.first_name ILIKE '%misha%' AND person.last_name ILIKE '%dragon%'"
+    <> ") OR ("
+    <> "person.first_name ILIKE '%dragon%' AND person.last_name ILIKE '%misha%')")
+    $ parseAuthorFullName "search" ("misha","dragon")
 
 parseFullNameTest =
     TestCase $

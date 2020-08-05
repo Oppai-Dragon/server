@@ -165,7 +165,7 @@ parseObjEssence :: Name -> Name
 parseObjEssence name = name <> "1"
 
 afterUnderscore :: Name -> Field
-afterUnderscore = L.tail . L.dropWhile (/='_')
+afterUnderscore = tailCase . L.dropWhile (/='_')
 
 getListOfPairFromObj :: Field -> Object -> [(String,MyValue.MyValue)]
 getListOfPairFromObj field obj =

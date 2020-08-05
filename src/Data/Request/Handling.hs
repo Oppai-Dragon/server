@@ -71,9 +71,7 @@ getEssenceList :: Request -> ReaderT Config IO (Essence List)
 getEssenceList req = do
     config <- ask
     api <- lift setApi
-    let pathReq = pathInfo req
-    let essence' = head pathReq
-    let action = head $ tail pathReq
+    let [essence',action] = pathInfo req
     let essence = if action == "publish" then "news" else essence'
     let queryMBS = queryString req
     let essenceDB = getEssenceDB essence action config api

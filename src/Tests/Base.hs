@@ -18,6 +18,7 @@ baseTests =
     , TestLabel "replaceByTest"             replaceByTest
     , TestLabel "ordToBoolTest"             ordToBoolTest
     , TestLabel "lookup2Test"               lookup2Test
+    , TestLabel "tailCaseTest"              tailCaseTest
     ]
 
 ifElseThenTest =
@@ -84,3 +85,8 @@ lookup2Test =
     TestCase $
     assertEqual "for (lookup2 \"person\" \"id\" [(\"person\",[(\"id\",1)])])"
     (Just 1) $ lookup2 "person" "id" [("person",[("id",1)])]
+
+tailCaseTest =
+    TestCase $
+    assertEqual "for (tailCase [])"
+    ([] :: String) $ tailCase []

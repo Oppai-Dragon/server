@@ -39,10 +39,10 @@ parseType =
     $ try parseDate
     <|> try parseBool
     <|> try parseUuid
-    <|> try parseInt
     <|> try parseIntArr
-    <|> try parseStr
+    <|> try parseInt
     <|> try parseStrArr
+    <|> try parseStr
 
 parseDate,parseInt, parseIntArr, parseStr, parseStrArr, parseBool, parseUuid ::
     Parsec String String String
@@ -53,7 +53,7 @@ parseInt = do
     try (string "BIGINT") <|> try (string "INTEGER") <|> string "INT"  <|> string "SMALLINT" <|> string "BIGSERIAL"
     return "int"
 parseIntArr = do
-    try (string "BIGINT") <|> string "INTEGER" <|> string "INT"  <|> string "SMALLINT"
+    try (string "BIGINT") <|> try (string "INTEGER") <|> string "INT"  <|> string "SMALLINT"
     string "[]"
     return "array int"
 parseStr = do
