@@ -31,6 +31,7 @@ toFields required = case required of
     NullFields   -> []
 
 getRequiredFields :: Essence DB -> Api -> Required [Field]
+getRequiredFields (EssenceDB "comment" "get" _)        _ = Required [AND ["news_id"]]
 getRequiredFields newsDB@(EssenceDB "news" "create" _) _ = getFields newsDB
 getRequiredFields essenceDB api =
     let

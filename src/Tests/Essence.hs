@@ -1,11 +1,40 @@
 module Tests.Essence where
 
 import Data.MyValue
-import Data.Essence
+import Data.Essence hiding (name)
 
 import Data.Aeson
 import qualified Data.HashMap.Strict as HM
+import Data.Time.Clock
+import qualified Data.Text           as T
 
+import System.IO.Unsafe (unsafePerformIO)
+
+--------------------------------------------------------------------------------------------
+-----------------------------------Default Setting
+defaultFirstName, defaultLastName, defaultDate,
+    defaultAvatar, defaultAccessKey, defaultName,
+        defaultContent :: T.Text
+defaultFirstName = T.pack lastName
+defaultLastName  = T.pack firstName
+defaultAvatar    = T.pack avatar
+defaultDate      = T.pack date
+defaultAccessKey = T.pack accessKey
+defaultName      = T.pack name
+defaultContent   = T.pack content
+
+defaultHM :: Object
+defaultHM = HM.fromList defaultList
+defaultList :: [(T.Text,Value)]
+defaultList =
+    [("first_name",String defaultFirstName)
+    ,("last_name",String defaultLastName)
+    ,("avatar",String defaultAvatar)
+    ,("date_of_creation",String defaultDate)
+    ,("access_key",String defaultAccessKey)
+    ,("name",String defaultName)
+    ,("content",String defaultContent)
+    ]
 --------------------------------------------------------------------------------------------
 -----------------------------------Essence List
 createEssenceList =
@@ -19,32 +48,43 @@ createEssenceList =
     ]
 --------------------------------------------------------------------------------------------
 essences = ["person","author","category","tag","draft","news","comment"]
-accessKeyStr = "12345678-1234-1234-1234-123456789abc"
+firstName, lastName, accessKey,
+    avatar, date, name,
+        content :: String
+firstName = "testFirstName"
+lastName  = "testLastName"
+accessKey = "12345678-1234-1234-1234-123456789abc"
+avatar    = "https://oppai-dragon.site/images/avatar.jpg"
+date      = "2020-08-06"
+name      = "testName"
+content   = "testContent"
 -- | Person
 testPersonListCreate = EssenceList "person" "create" testPersonListCreateFields
 testPersonListCreateFields =
-    [("first_name",MyString "testFirstName")
-    ,("last_name",MyString "testLastName")
-    ,("avatar",MyString "uri")
-    ,("access_key",MyString accessKeyStr)
+    [("first_name",MyString firstName)
+    ,("last_name",MyString lastName)
+    ,("date_of_creation",MyDate date)
+    ,("avatar",MyString avatar)
+    ,("access_key",MyString accessKey)
     ,("is_admin",MyBool True)]
 -- | Author
 testAuthorListCreate = EssenceList "author" "create" testAuthorListCreateFields
 testAuthorListCreateFields = []
 -- | Category
 testCategoryListCreate = EssenceList "category" "create" testCategoryListCreateFields
-testCategoryListCreateFields = []
+testCategoryListCreateFields = [("name",MyString name)]
 -- | Tag
 testTagListCreate = EssenceList "tag" "create" testTagListCreateFields
-testTagListCreateFields = []
+testTagListCreateFields = [("name",MyString name)]
 -- | Draft
 testDraftListCreate = EssenceList "draft" "create" testDraftListCreateFields
 testDraftListCreateFields =
-    [("name",MyString "testDraft")
-    ,("content",MyString "testContent")]
+    [("name",MyString name)
+    ,("content",MyString content)
+    ,("date_of_creation",MyDate date)]
 -- | News
 testNewsListCreate = EssenceList "news" "create" testNewsListCreateFields
-testNewsListCreateFields = []
+testNewsListCreateFields = [("date_of_creation",MyDate date)]
 -- For functions without access to database
 testNewsCreateFields = [("id",MyInteger 1),("content",MyString "kek")]
 testNewsEditFields = [("id",MyInteger 1),("content",MyString "kek")]
@@ -52,16 +92,18 @@ testNewsGetFields =
     [("id",MyInteger 1)
     ,("filter_author_name",MyString "misha dragon")
     ,("search_category_name",MyString "cat")
-    ,("sort",MyString "date_of_creation")]
+    ,("sort_date_of_creation",MyBool True)]
 testNewsDeleteFields = [("id",MyInteger 1)]
 -- | Comment
 testCommentListCreate = EssenceList "comment" "create" testCommentListCreateFields
-testCommentListCreateFields = [("content",MyString "privet")]
+testCommentListCreateFields =
+    [("content",MyString content)
+    ,("date_of_creation",MyDate date)]
 --------------------------------------------------------------------------------------------
 -----------------------------------Essence Database
 --------------------------------------------------------------------------------------------
 -- | Person
-testEssenceDatabase = EssenceDatabase "person" "create"
+testEssenceDatabase = EssenceDatabase "person"
     $ HM.fromList testEssenceDatabaseFields
 testEssenceDatabaseFields =
     zip testEssemceDatabaseFieldsName testEssenceDatabaseDescription
@@ -87,16 +129,25 @@ testEssenceDatabaseDescription =
 -----------------------------------Essence DB
 --------------------------------------------------------------------------------------------
 -- | Author
-testAuthorGetDB = EssenceDB "author" "get" $ HM.fromList
-    [("id",Description (MyInteger 0) Nothing Nothing (Just PRIMARY))
-    ,("person_id",Description (MyInteger 0) (Just $ NOT NULL) (Just $ Relations "person" "id") (Just UNIQUE))
-    ,("description",Description (MyString "") Nothing Nothing Nothing)
+testAuthorGetDB = EssenceDB "author" "get" testAuthorHMDescription
+testAuthorHMDescription = HM.fromList testAuthorDBFields
+testAuthorDBFields = zip testAuthorDBFieldsName testAuthorDBDescription
+testAuthorDBFieldsName =
+    [ "id"
+    , "person_id"
+    , "description"
+    ]
+testAuthorDBDescription =
+    [ Description (MyInteger 0) Nothing Nothing (Just PRIMARY)
+    , Description (MyInteger 0) (Just $ NOT NULL) (Just $ Relations "person" "id") (Just UNIQUE)
+    , Description (MyString "") Nothing Nothing Nothing
     ]
 
 -- | Person
-testPersonCreateDB = EssenceDB "person" "create" $ HM.fromList testPersonCreateDBFields
-testPersonCreateDBFields = zip testPersonCreateDBFieldsName testPersonCreateDBDescription
-testPersonCreateDBFieldsName =
+testPersonCreateDB = EssenceDB "person" "create" testPersonHMDescription
+testPersonHMDescription = HM.fromList testPersonDBFields
+testPersonDBFields = zip testPersonDBFieldsName testPersonDBDescription
+testPersonDBFieldsName =
     [ "id"
     , "avatar"
     , "date_of_creation"
@@ -104,7 +155,7 @@ testPersonCreateDBFieldsName =
     , "last_name"
     , "first_name"
     ]
-testPersonCreateDBDescription =
+testPersonDBDescription =
     [ Description (MyInteger 0) Nothing             Nothing (Just PRIMARY)
     , Description (MyString "") (Just NULL)         Nothing Nothing
     , Description (MyDate "") (Just $ NULL)     Nothing Nothing

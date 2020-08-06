@@ -74,9 +74,9 @@ getEssenceDBTest =
 
 getEssenceDatabaseTest =
     TestCase $
-    assertEqual "for (getEssenceDatabase \"person\" \"create\" testConfig testApi)"
+    assertEqual "for (getEssenceDatabase \"person\" testConfig testApi)"
     testEssenceDatabase
-    $ getEssenceDatabase "person" "create" testConfig testApi
+    $ getEssenceDatabase "person" testConfig testApi
 
 getHashMapDescriptionTest =
     TestCase $

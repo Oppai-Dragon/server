@@ -1,6 +1,9 @@
 module Database.Test
     ( EssenceData
     , EssenceName
+    , goodResultValue
+    , buildEssenceValue
+    , getTest
     , createEssenceTest
     , editEssenceTest
     , getEssenceTest
@@ -18,7 +21,7 @@ module Database.Test
 
 import Config
 import Data.Base
-import Data.Essence
+import Data.Essence hiding (name)
 import Data.Essence.Methods
 import Database.Create
 import Database.Delete
@@ -36,6 +39,8 @@ import Control.Monad.Trans.Reader
 import Control.Monad.Trans.State.Strict
 import Control.Monad.Trans.Class          (lift)
 
+import Tests.Essence
+
 import Test.HUnit
 
 type EssenceList = [(String,MyValue)]
@@ -44,10 +49,49 @@ type EssenceName = T.Text
 
 -- | First create, then edit of get, and only then delete
 
-testAction :: String -> String -> Value -> Assertion
-testAction funcName essenceName (Object obj) = assertBool
-    ("fail " <> funcName <> " on " <> essenceName)
-    . not $ HM.null obj
+testAction :: String -> String -> Value -> Value -> Test
+testAction funcName essenceName = (TestCase .) . assertEqual ("fail " <> funcName <> " on " <> essenceName)
+
+goodResultValue :: Value
+goodResultValue = object ["result" .= Number 1]
+
+buildEssenceValue :: Essence List -> StateT EssenceData (ReaderT Config IO) Value
+buildEssenceValue (EssenceList name "create" list) = do
+    essenceData <- get
+    api <- fromStateT setApi
+    config <- lift ask
+    let essenceDB = getEssenceDB (T.pack name) "create" config api
+    let fields = HM.keys $ hashMapOf essenceDB
+    let listData = case lookup name essenceData of
+            Just arr -> arr
+            Nothing  -> []
+    return . Object . HM.fromList $ iterateFields fields listData
+buildEssenceValue (EssenceList name "get" list) = do
+    api <- fromStateT setApi
+    config <- lift ask
+    let essenceDB = getEssenceDB (T.pack name) "get" config api
+    undefined
+buildEssenceValue (EssenceList _ "edit"   _)    = pure goodResultValue
+buildEssenceValue (EssenceList _ "delete" _)    = pure goodResultValue
+buildEssenceValue _                             = pure $ object []
+
+iterateFields :: [String] -> EssenceList -> [(T.Text,Value)]
+iterateFields []           _        = []
+iterateFields (field:rest) listData =
+    case lookup field listData of
+        Just myValue -> (T.pack field, toValue myValue)
+            : iterateFields rest listData
+        Nothing      -> case lookup (T.pack field) defaultList of
+            Just value -> (T.pack field,value)
+                : iterateFields rest listData
+            Nothing    -> (T.pack field,Null)
+                : iterateFields rest listData
+
+getTest :: Essence List -> String -> Value -> StateT EssenceData (ReaderT Config IO) Test
+getTest essenceList funcName got = do
+    expected <- buildEssenceValue essenceList
+    let test = testAction funcName name expected got
+    pure test
 
 createEssenceTest :: [Essence List] -> StateT EssenceData (ReaderT Config IO) [Test]
 createEssenceTest []                                                    = return []
@@ -57,24 +101,30 @@ createEssenceTest (essenceList@(EssenceList name "create" list') : rest) = do
     list <- fromStateT $ handleUniqueName name list'
     essenceValue <- lift $ evalStateT dbCreate (EssenceList name "create" (list <> fields))
     updateData (T.pack name) essenceValue
-    let test = TestCase $ testAction "dbCreate" name essenceValue
-    pure ((:) (TestLabel "dbCreateTest" test)) <*> (createEssenceTest rest)
+    let funcName = "dbCreate"
+    test <- getTest essenceList funcName essenceValue
+    let label = funcName <> "_" <> name <> "_Test"
+    pure ((:) (TestLabel label test)) <*> (createEssenceTest rest)
 
 editEssenceTest :: [String] -> EssenceData -> ReaderT Config IO [Test]
 editEssenceTest []             _        = return []
 editEssenceTest (essence:rest) listData = do
     let fields = fromJust (lookup essence listData)
     resultValue <- evalStateT dbEdit (EssenceList essence "edit" fields)
-    let test = TestCase $ assertEqual ("for dbEdit for " <> essence) (object ["result" .= Number 1]) resultValue
-    pure ((:) (TestLabel "dbEditTest" test)) <*> (editEssenceTest rest) listData
+    let funcName = "dbEdit"
+    test <- evalStateT (getTest (EssenceList essence "edit" []) funcName resultValue) listData
+    let label = funcName <> "_" <> essence <> "_Test"
+    pure ((:) (TestLabel label test)) <*> (editEssenceTest rest) listData
 
 getEssenceTest :: [String] -> EssenceData -> ReaderT Config IO [Test]
 getEssenceTest []             _        = return []
 getEssenceTest (essence:rest) listData = do
     let fields = fromJust (lookup essence listData)
     essenceValue <- evalStateT dbGet (EssenceList essence "get" fields)
-    let test = TestCase $ testAction "dbGet" essence essenceValue
-    pure ((:) (TestLabel "dbGetTest" test)) <*> (getEssenceTest rest) listData
+    let funcName = "dbGet"
+    test <- evalStateT (getTest (EssenceList essence "get" []) funcName essenceValue) listData
+    let label = funcName <> "_" <> essence <> "_Test"
+    pure ((:) (TestLabel label test)) <*> (getEssenceTest rest) listData
 
 getOneTest :: EssenceData -> ReaderT Config IO [Test]
 getOneTest listData = do
@@ -82,9 +132,12 @@ getOneTest listData = do
     let pare = case lookup2 essence "id" listData of
             Just x  -> ("id",x)
             Nothing -> ("id",MyEmpty)
-    essenceValue <- dbGetOne (EssenceList essence "get" [pare])
-    let test = TestCase $ testAction "dbGetOne" essence essenceValue
-    return [test]
+    let essenceList = EssenceList essence "get" [pare]
+    essenceValue <- dbGetOne essenceList
+    let funcName = "dbGetOne"
+    test <- evalStateT (getTest essenceList funcName essenceValue) listData
+    let label = funcName <> "_" <> essence <> "_Test"
+    return [TestLabel label test]
 
 getArrayTest :: EssenceData -> ReaderT Config IO [Test]
 getArrayTest listData = do
@@ -92,17 +145,22 @@ getArrayTest listData = do
     let pare = case lookup2 essence "id" listData of
             Just (MyInteger id)  -> ("id",MyIntegers [id])
             Nothing              -> ("id",MyEmpty)
-    essenceValue <- dbGetArray (EssenceList essence "get" [pare])
-    let test = TestCase $ testAction "dbGetArray" essence essenceValue
-    return [test]
+    let essenceList = EssenceList essence "get" [pare]
+    essenceValue <- dbGetArray essenceList
+    let funcName = "dbGetArray"
+    test <- evalStateT (getTest essenceList "dbGetArray" essenceValue) listData
+    let label = funcName <> "_" <> essence <> "_Test"
+    return [TestLabel label test]
 
 deleteEssenceTest :: [String] -> EssenceData -> ReaderT Config IO [Test]
 deleteEssenceTest []             _        = return []
 deleteEssenceTest (essence:rest) listData = do
     let fields = fromJust (lookup essence listData)
     resultValue <- evalStateT dbDelete (EssenceList essence "delete" fields)
-    let test = TestCase $ assertEqual ("for dbDelete for " <> essence) (object ["result" .= Number 1]) resultValue
-    pure ((:) (TestLabel "dbDeleteTest" test)) <*> (deleteEssenceTest rest) listData
+    let funcName = "dbDelete"
+    test <- evalStateT (getTest (EssenceList essence "delete" []) funcName resultValue) listData
+    let label = funcName <> "_" <> essence <> "_Test"
+    pure ((:) (TestLabel label test)) <*> (deleteEssenceTest rest) listData
 
 getNeededFields :: EssenceName -> Object -> EssenceList
 getNeededFields "draft" obj =

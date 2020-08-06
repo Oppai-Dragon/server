@@ -100,14 +100,14 @@ instance GetFields [Field] where
 getEssenceDB :: T.Text -> T.Text -> Config -> Api -> Essence DB
 getEssenceDB essence apiAction conf api =
     let dbAction = getApiDBMethod apiAction api
-    in case getEssenceDatabase essence dbAction conf api of
-        EssenceDatabase name dbAction hashMapDB ->
+    in case getEssenceDatabase essence conf api of
+        EssenceDatabase name hashMapDB ->
             EssenceDB name dbAction $ getHashMapDescription hashMapDB
         _                             ->
             EssenceDB "" "" HM.empty
 
-getEssenceDatabase :: T.Text -> T.Text -> Config -> Api -> Essence Database
-getEssenceDatabase essence action conf api =
+getEssenceDatabase :: T.Text -> Config -> Api -> Essence Database
+getEssenceDatabase essence conf api =
     let unpackObj obj = do
             (field,value) <- HM.toList obj
             let resultArr = map parsePsql $ toStrArr value
@@ -115,12 +115,13 @@ getEssenceDatabase essence action conf api =
     in case parseMaybe (.: essence) conf of
         Just (Object objFromConf) -> case parseMaybe (.: essence) api of
             Just (Object objFromApi) ->
-                EssenceDatabase essence action . HM.fromList
+                EssenceDatabase essence . HM.fromList
                 $ unpackObj objFromConf <> unpackObj objFromApi
             _                        ->
-                EssenceDatabase essence action . HM.fromList
+                EssenceDatabase essence . HM.fromList
                 $ unpackObj objFromConf
-        _                 -> EssenceDatabase "" "" HM.empty
+        _                 ->
+            EssenceDatabase "" HM.empty
 
 getHashMapDescription :: Database -> DB
 getHashMapDescription = HM.fromList . iterateHashMapDBList . HM.toList

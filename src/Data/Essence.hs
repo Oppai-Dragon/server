@@ -34,7 +34,7 @@ data instance Essence (Clause String) = EssenceClause
     , clauseList :: [Clause String]
     } deriving (Show,Eq)
 data instance Essence Database =
-    EssenceDatabase Text Text Database
+    EssenceDatabase Text Database
     deriving (Show,Eq)
 data instance Essence DB = EssenceDB
     { nameOf          :: Text

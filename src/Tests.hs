@@ -59,10 +59,10 @@ testList = TestList $ []
     <> sqlTests
     <> sqlActionsTests
     <> sqlToValueTests
+    <> databaseCreateTests
     <> databaseGetTests
     <> databaseTestTests
     <> databaseTests
-    <> databaseCreateTests
 
 runTest :: IO ()
 runTest =

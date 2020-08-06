@@ -2,8 +2,11 @@ module Tests.Database.Test
     ( databaseTestTests
     ) where
 
-import Database.Test
+import Config
+
+import Data.Essence
 import Data.MyValue
+import Database.Test
 
 import Data.Aeson
 import qualified Data.HashMap.Strict as HM
@@ -13,16 +16,113 @@ import Control.Monad.Trans.Reader
 import Control.Monad.Trans.State.Strict
 import Control.Monad.Trans.Writer.CPS
 
+import Tests.Essence
+
 import Test.HUnit
 
 databaseTestTests =
-    [ TestLabel "getNeededFields_draft_Test"    getNeededFields_draft_Test
+    [ TestLabel "build_create_EssenceValueTest" build_create_EssenceValueTest
+    , TestLabel "build_edit_EssenceValueTest"   build_edit_EssenceValueTest
+    , TestLabel "build_get_EssenceValueTest"    build_get_EssenceValueTest
+    , TestLabel "build_delete_EssenceValueTest" build_delete_EssenceValueTest
+    , TestLabel "getNeededFields_draft_Test"    getNeededFields_draft_Test
     , TestLabel "getNeededFields_person_Test"   getNeededFields_person_Test
     , TestLabel "updateDataTest"                updateDataTest
     , TestLabel "get_news_RelatedFieldsTest"    get_news_RelatedFieldsTest
     , TestLabel "get_other_RelatedFieldsTest"   get_other_RelatedFieldsTest
     , TestLabel "handleDraftCaseTest"           handleDraftCaseTest
     ] <> chooseNameForAddingTests
+
+build_create_EssenceValueTest =
+    TestCase $
+    runReaderT
+        (evalStateT
+            (buildEssenceValue testAuthorListCreate)
+        [("author",[("id",MyInteger 2)])
+        ,("person",[("id",MyInteger 1)])]
+    ) testConfig
+    >>= assertEqual
+    ("for ("
+    <> "runReaderT"
+    <> "(evalStateT"
+    <> "(buildEssenceValue testAuthorListCreate)"
+    <> "[(\"author\",[(\"id\",MyInteger 2)])"
+    <> ",(\"person\",[(\"id\",MyInteger 1)])]"
+    <> ") testConfig)")
+    (object
+        ["author1" .= object
+            ["id"          .= Number 2
+            ,"person_id"   .= Number 1
+            ,"description" .= Null
+            ]
+        ]
+    )
+
+build_edit_EssenceValueTest =
+    TestCase $
+    runReaderT
+        (evalStateT
+            (buildEssenceValue (EssenceList "author" "edit" []))
+        []
+    ) testConfig
+    >>= assertEqual
+    ("for "
+    <> "(runReaderT"
+    <> "(evalStateT"
+    <> "(buildEssenceValue (EssenceList \"author\" \"edit\" []))"
+    <> "[]"
+    <> ") testConfig)")
+    goodResultValue
+
+build_get_EssenceValueTest =
+    TestCase $
+    runReaderT
+        (evalStateT
+            (buildEssenceValue (EssenceList "author" "get" []))
+        [("author",[("id",MyInteger 2)])
+        ,("person",[("id",MyInteger 1)])]
+    ) testConfig
+    >>= assertEqual
+    ("for "
+    <> "(runReaderT"
+    <> "(evalStateT"
+    <> "(buildEssenceValue (EssenceList \"author\" \"get\" []))"
+    <> "[(\"author\",[(\"id\",MyInteger 2)])"
+    <> ",(\"person\",[(\"id\",MyInteger 1)])]"
+    <> ") testConfig)")
+    (object
+        ["author1" .= object
+            ["id"          .= Number 2
+            ,"person1"     .= object
+                ["id"                .= Number 1
+                , "first_name"       .= String defaultFirstName
+                , "last_name"        .= String defaultLastName
+                , "date_of_creation" .= String defaultDate
+                , "avatar"           .= String defaultAvatar
+                , "id_admin"         .= Bool True
+                , "access_key"       .= String defaultAccessKey
+                ]
+            ,"description" .= Null
+            ]
+        ]
+    )
+
+build_delete_EssenceValueTest =
+    TestCase $
+    runReaderT
+        (evalStateT
+            (buildEssenceValue (EssenceList "author" "edit" []))
+        []
+    ) testConfig
+    >>= assertEqual
+    ("for "
+    <> "(runReaderT"
+    <> "(evalStateT"
+    <> "(buildEssenceValue (EssenceList \"author\" \"delete\" []))"
+    <> "[]"
+    <> ") testConfig)")
+    goodResultValue
+
 
 getNeededFields_draft_Test =
     TestCase $

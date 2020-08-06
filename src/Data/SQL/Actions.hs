@@ -4,6 +4,7 @@ module Data.SQL.Actions where
 import Data.Essence
 import Data.Essence.Methods
 import Data.Essence.Parse.Clause
+import Data.MyValue
 import Data.SQL
 
 import Data.List
@@ -19,9 +20,16 @@ instance ShowSQL (Essence List) where
         in showSql (Insert name fields values)
     showSql (EssenceList name "edit" listOfPairs)   =
         let
+            newsWhere = case lookup "draft_id" listOfPairs of
+                Just draftId -> [Where ("draft_id",draftId)]
+                Nothing -> case lookup "id" listOfPairs of
+                    Just id -> [Where ("id",id)]
+                    Nothing -> [Where ("id",MyInteger 0)]
             wherePart = case name of
-                "news" -> [Where ("draft_id",fromJust $ lookup "draft_id" listOfPairs)]
-                _      -> [Where ("id",fromJust $ lookup "id" listOfPairs)]
+                "news" -> newsWhere
+                _      -> case lookup "id" listOfPairs of
+                    Just id -> [Where ("id",id)]
+                    Nothing -> [Where ("id",MyInteger 0)]
             setPart = map Set listOfPairs
         in showSql (Edit name setPart wherePart)
     showSql essenceList@(EssenceList name "get" list)   =

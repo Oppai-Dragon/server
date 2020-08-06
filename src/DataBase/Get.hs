@@ -54,8 +54,10 @@ dbGet = do
             Object obj -> obj
             _          -> HM.empty
     lift . lift $ disconnect conn
-    value <- lift $ nesteEssences pageObj
-    pure value
+    case (name essenceList) of
+        "news" -> (lift . nesteEssences) pageObj
+            >>= pure
+        _      -> pure $ Object pageObj
 
 dbGetOne :: Essence List -> ReaderT Config IO Value
 dbGetOne (EssenceList _     _      [(_,    MyEmpty )]) = return (Object HM.empty)
