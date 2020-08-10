@@ -34,7 +34,7 @@ defaultList =
     ,("access_key",String defaultAccessKey)
     ,("name",String defaultName)
     ,("content",String defaultContent)
-    ]
+    ,("is_admin",Bool True)]
 --------------------------------------------------------------------------------------------
 -----------------------------------Essence List
 createEssenceList =
@@ -103,11 +103,11 @@ testCommentListCreateFields =
 -----------------------------------Essence Database
 --------------------------------------------------------------------------------------------
 -- | Person
-testEssenceDatabase = EssenceDatabase "person"
-    $ HM.fromList testEssenceDatabaseFields
-testEssenceDatabaseFields =
-    zip testEssemceDatabaseFieldsName testEssenceDatabaseDescription
-testEssemceDatabaseFieldsName =
+testPersonDatabase = EssenceDatabase "person"
+    $ HM.fromList testPersonDatabaseFields
+testPersonDatabaseFields =
+    zip testPersonDatabaseFieldsName testPersonDatabaseDescription
+testPersonDatabaseFieldsName =
     [ "id"
     , "avatar"
     , "date_of_creation"
@@ -116,7 +116,7 @@ testEssemceDatabaseFieldsName =
     , "last_name"
     , "first_name"
     ]
-testEssenceDatabaseDescription =
+testPersonDatabaseDescription =
     [[("type","int"),("constraint","primary key")]
     ,[("type","string"),("value","null")]
     ,[("type","date"),("value","null")]

@@ -45,7 +45,6 @@ dbCreate = do
     essenceList@(EssenceList name action list) <- get
     let createQuery = showSql essenceList
     let uriDB = getUri config
-    let essence = T.pack name
     conn <- lift . lift $ connectPostgreSQL uriDB
     lift . lift $ run conn createQuery []
     lift . lift $ commit conn

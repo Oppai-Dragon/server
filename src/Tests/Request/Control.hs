@@ -3,6 +3,7 @@ module Tests.Request.Control
     ) where
 
 import Config
+import Data.Base
 import Data.Request.Access
 import Data.Empty
 import Data.Essence
@@ -54,14 +55,14 @@ ifGetUpdateTest =
 
 parseRequestTest =
     TestCase $
-    assertEqual "for (parseRequest testPersonCreateReq)"
+    parseRequest testPersonCreateReq
+    >>= assertEqual "for (parseRequest testPersonCreateReq)"
     ("person","create",[("first_name",Just "misha"),("last_name",Just "dragon")],"POST")
-    $ parseRequest testPersonCreateReq
 
 isRequestCorrectTest =
     TestCase $
     runReaderT (isRequestCorrect testPersonCreateReq) testConfig >>=
-    assertEqual "for (isRequestCorrect testPersonCreateReq)" True . fst
+    assertEqual "for (isRequestCorrect testPersonCreateReq)" True . fst3
 
 getAccessArrTest =
     TestCase $

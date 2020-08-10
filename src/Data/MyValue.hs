@@ -146,7 +146,7 @@ toStr myValue = case myValue of
     MyString str      -> str
     MyBool bool       -> show bool
     MyIntegers intArr -> show intArr
-    MyStrings strArr  -> show strArr
+    MyStrings strArr  -> filter (/='\"') $ show strArr
     MyNextval val     -> val
     MyDate date       -> date
     MyEmpty           -> ""

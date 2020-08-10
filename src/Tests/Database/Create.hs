@@ -30,7 +30,7 @@ addingDefaultTest = TestCase $ do
             [("first_name",MyString "testFirstName")
             ,("last_name",MyString "testLastName")
             ,("avatar",MyString "uri")
-            ,("access_key",MyString accessKeyStr)
+            ,("access_key",MyString accessKey)
             ,("is_admin",MyBool True)
             ,("id",MyNextval "nextval('person_id_seq')")
             ]
@@ -44,7 +44,7 @@ addIdTest =
         [("first_name",MyString "testFirstName")
         ,("last_name",MyString "testLastName")
         ,("avatar",MyString "uri")
-        ,("access_key",MyString accessKeyStr)
+        ,("access_key",MyString accessKey)
         ,("is_admin",MyBool True)
         ,("id",MyNextval "nextval('person_id_seq')")
         ]

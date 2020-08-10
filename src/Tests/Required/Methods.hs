@@ -40,33 +40,33 @@ getRequiredFieldsTest =
 
 iterateHMTest =
     TestCase $
-    assertEqual "for (iterateHM testPersonCreateDBFields \"create\")"
+    assertEqual "for (iterateHM testPersonDBFields \"create\")"
     ([AND ["last_name"],AND ["first_name"]] :: [Required [String]])
-    $ iterateHM testPersonCreateDBFields "create"
+    $ iterateHM testPersonDBFields "create"
 
 iterateHMCreateTest =
     TestCase $
-    assertEqual "for (iterateHMCreate testPersonCreateDBFields)"
+    assertEqual "for (iterateHMCreate testPersonDBFields)"
     ([AND ["last_name"], AND ["first_name"]] :: [Required [String]])
-    $ iterateHMCreate testPersonCreateDBFields
+    $ iterateHMCreate testPersonDBFields
 
 iterateHMGetTest =
     TestCase $
-    assertEqual "for (iterateHMGet testPersonCreateDBFields)"
+    assertEqual "for (iterateHMGet testPersonDBFields)"
     ([] :: [Required [String]])
-    $ iterateHMGet testPersonCreateDBFields
+    $ iterateHMGet testPersonDBFields
 
 iterateHMEditTest =
     TestCase $
-    assertEqual "for (iterateHMEdit testPersonCreateDBFields)"
+    assertEqual "for (iterateHMEdit testPersonDBFields)"
     ([AND ["id"],OR ["avatar"],OR ["is_admin"],OR ["last_name"],OR ["first_name"]] :: [Required [String]])
-    $ iterateHMEdit testPersonCreateDBFields
+    $ iterateHMEdit testPersonDBFields
 
 iterateHMDeleteTest =
     TestCase $
-    assertEqual "for (iterateHMDelete testPersonCreateDBFields)"
+    assertEqual "for (iterateHMDelete testPersonDBFields)"
     ([AND ["id"]] :: [Required [String]])
-    $ iterateHMDelete testPersonCreateDBFields
+    $ iterateHMDelete testPersonDBFields
 
 requiredSequenceATest =
     TestCase $

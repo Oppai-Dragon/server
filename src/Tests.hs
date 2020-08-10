@@ -23,6 +23,7 @@ import Tests.MyValue
 
 import Tests.Required.Methods
 
+import Tests.Request
 import Tests.Request.Control
 import Tests.Request.Access.Methods
 import Tests.Request.Handling
@@ -50,6 +51,7 @@ testList = TestList $ []
     <> essenceParseClauseTests
     <> myValueTests
     <> requiredMethodsTests
+    <> requestTests
     <> requestControlTests
     <> requestAccessMethodsTests
     <> requestHandlingTests

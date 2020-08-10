@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 129ae040c2af6cf83086f35e5190e6bf428bd09ccc291f5f9dea7ce7977039cd
+-- hash: abab409f3c27103537465748f8c4f17ad18cc90a4f4580a1bacb92a04292273f
 
 name:           server
 version:        0.1.0.0
@@ -39,6 +39,7 @@ library
       Data.Essence.RelationsTree.Methods
       Data.Handler
       Data.MyValue
+      Data.Request
       Data.Request.Access
       Data.Request.Access.Methods
       Data.Request.Control

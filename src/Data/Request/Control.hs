@@ -15,6 +15,7 @@ import           Data.Essence.Methods
 import           Data.Empty
 import           Data.MyValue
 import           Data.Required.Methods                          (getRequiredFields)
+import           Data.Request
 import           Data.Request.Access
 import           Data.Request.Access.Methods                    (isAccess)
 import           Data.Request.Method.Methods                    (isMethodCorrect)
@@ -37,6 +38,7 @@ import           Network.HTTP.Types
 
 import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State.Strict
+import           Control.Monad.Trans.Writer.CPS
 import           Control.Monad.Trans.Class          (lift)
 
 import           System.IO.Unsafe                               (unsafePerformIO)
@@ -79,21 +81,20 @@ ifGetUpdate essenceDB = if (actionOf essenceDB) == "get"
         (hashMapOf essenceDB)
     else essenceDB
 
-parseRequest :: Request -> (EssenceName,Action,QueryMBS,Method)
-parseRequest req =
-    let
-        pathReq = pathInfo req
-        essence = head pathReq
-        action = head $ tail pathReq
-        queryMBS = queryString req
-        method = requestMethod req
-    in (essence,action,queryMBS,method)
+parseRequest :: Request -> IO (EssenceName,Action,QueryMBS,Method)
+parseRequest req = do
+    let pathReq = pathInfo req
+    let essence = head pathReq
+    let action = head $ tail pathReq
+    queryMBS <- getQueryString req
+    let method = requestMethod req
+    return (essence,action,queryMBS,method)
 
-isRequestCorrect :: Request -> ReaderT Config IO (Bool, Response)
+isRequestCorrect :: Request -> ReaderT Config IO (Bool, Response, Query)
 isRequestCorrect req = do
     config <- ask
     api <- lift setApi
-    let (essence',action,queryMBS,method) = parseRequest req
+    (essence',action,queryMBS,method) <- lift $ parseRequest req
     let essence = if action == "publish" then "news" else essence'
     let essenceDB = getEssenceDB essence action config api
     let essenceFields = getEssenceFields essenceDB api
@@ -104,20 +105,24 @@ isRequestCorrect req = do
             . show
             $ getRequiredFields essenceDB api
     accessArr <- lift $ getAccessArr queryMBS
+    isCorrectParams <- execWriterT $ isParamsCorrect essenceDB listOfPairs
     let checkingList =
             [isPathRequestCorrect req api
             ,isMethodCorrect method action api
             ,isAccess essence action accessArr api
             ,isRequiredParams essenceDB queryMBS api
-            ,and $ isTypeParamsCorrect essenceDB listOfPairs]
+            ,and $ isTypeParamsCorrect essenceDB listOfPairs
+            ,and $ isCorrectParams]
     let elseThenList =
             [(False, notFound)
             ,(False, responseBuilder status400 [] "Incorrect request method")
             ,(False, notFound)
             ,(False, responseBuilder status400 [] paramsMsg)
             ,(False, responseBuilder status400 [] "Incorrect type of params")
+            ,(False, responseBuilder status400 [] "Bad values")
             ,(True, notFound)]
-    pure $ ifElseThen checkingList elseThenList
+    let (x1,x2) = ifElseThen checkingList elseThenList
+    pure (x1,x2,queryMBS)
 
 getAccessArr :: QueryMBS -> IO [Access]
 getAccessArr queryMBS = case lookup "access_key" queryMBS of

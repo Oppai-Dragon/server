@@ -1,8 +1,56 @@
 module Tests.Request where
 
+import Data.Request
+
+import Data.Aeson
+import qualified Data.HashMap.Strict as HM
+import qualified Data.Vector         as V
+
 import Network.Wai
 import Network.Wai.Internal
 
+import Test.HUnit
+
+requestTests =
+    [ TestLabel "queryFromObjTest"                       queryFromObjTest
+    , TestLabel "getQueryString_fromQueryString_Test"    getQueryString_fromQueryString_Test
+    , TestLabel "getQueryString_fromJson_Test"           getQueryString_fromJson_Test
+    ]
+
+queryFromObjTest =
+    TestCase $
+    assertEqual
+    "for (queryFromObj testObj)"
+    [("first_name",Just "misha")
+    ,("access_key",Just "")
+    ,("is_admin",Just "True")
+    ,("id",Just "1")
+    ,("tag_ids",Just "[1,2]")
+    ,("optional_photos",Just "[uri1,uri2]")]
+    $ queryFromObj testObj
+
+getQueryString_fromQueryString_Test =
+    TestCase $
+    getQueryString testPersonCreateReq
+    >>= assertEqual "for (getQueryString testPersonCreateReq)"
+    personCreateQueryString
+
+getQueryString_fromJson_Test =
+    TestCase $
+    getQueryString testPersonCreateReqJson
+    >>= assertEqual "for (getQueryString testPersonCreateReqJson)"
+    personCreateQueryString
+
+testObj = HM.fromList
+    [("first_name",String "misha")
+    ,("tag_ids",Array $ V.fromList [Number 1,Number 2])
+    ,("optional_photos",Array $ V.fromList [String "uri1",String "uri2"])
+    ,("id",Number 1)
+    ,("is_admin",Bool True)
+    ,("access_key",Null)
+    ]
+
+testPersonCreateReqJson = testPostReq { pathInfo = personCreate, requestBody = return personCreateBSJson, requestHeaders = [("Content-Type", "application/json")]}
 ------------------------------------------------------------------
 ---------------------------Test Request
 ------------------------------------------------------------------
@@ -12,6 +60,7 @@ testAuthorCreateReq = testPostReq { pathInfo = authorCreate, queryString = autho
 ---------------------------Essence Query String
 ------------------------------------------------------------------
 -- | Person
+personCreateBSJson      = "{\"first_name\":\"misha\",\"last_name\":\"dragon\"}"
 personCreateQueryString = [("first_name",Just "misha"),("last_name",Just "dragon")]
 personGetQueryString    = []
 personDeleteQueryString = [("access_key",Just "key"),("id",Just "1")]   ------------ HOW GET THAT ACCESS KEY??

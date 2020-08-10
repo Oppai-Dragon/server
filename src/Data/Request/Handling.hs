@@ -13,6 +13,7 @@ import           Config
 import           Data.Base              hiding (deletePair)
 import           Data.Handler
 import           Data.MyValue                                   (fromBS)
+import           Data.Request
 import           Data.Request.Control
 import           Data.Request.Access
 import           Data.SQL.Actions
@@ -62,9 +63,10 @@ notFound = responseBuilder status404 [] "Not found"
 pathHandler :: Request -> ReaderT Config IO Response
 pathHandler req = do
     config <- ask
-    (isValidRequest, response) <- isRequestCorrect req
+    (isValidRequest, response,query) <- isRequestCorrect req
+    let req' = req {queryString = query}
     if isValidRequest
-        then evalStateT (essenceResponse req) mempty
+        then evalStateT (essenceResponse req') mempty
         else pure response
 
 getEssenceList :: Request -> ReaderT Config IO (Essence List)

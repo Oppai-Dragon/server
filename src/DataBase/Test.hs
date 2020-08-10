@@ -2,6 +2,7 @@ module Database.Test
     ( EssenceData
     , EssenceName
     , goodResultValue
+    , getDefaultValues
     , buildEssenceValue
     , getTest
     , createEssenceTest
@@ -33,6 +34,7 @@ import Data.Aeson
 import Data.Aeson.Types (parseMaybe)
 import qualified Data.HashMap.Strict as HM
 import Data.Maybe (fromJust)
+import qualified Data.List           as L
 import qualified Data.Text           as T
 
 import Control.Monad.Trans.Reader
@@ -55,37 +57,29 @@ testAction funcName essenceName = (TestCase .) . assertEqual ("fail " <> funcNam
 goodResultValue :: Value
 goodResultValue = object ["result" .= Number 1]
 
-buildEssenceValue :: Essence List -> StateT EssenceData (ReaderT Config IO) Value
-buildEssenceValue (EssenceList name "create" list) = do
-    essenceData <- get
-    api <- fromStateT setApi
-    config <- lift ask
-    let essenceDB = getEssenceDB (T.pack name) "create" config api
-    let fields = HM.keys $ hashMapOf essenceDB
-    let listData = case lookup name essenceData of
-            Just arr -> arr
-            Nothing  -> []
-    return . Object . HM.fromList $ iterateFields fields listData
-buildEssenceValue (EssenceList name "get" list) = do
-    api <- fromStateT setApi
-    config <- lift ask
-    let essenceDB = getEssenceDB (T.pack name) "get" config api
-    undefined
-buildEssenceValue (EssenceList _ "edit"   _)    = pure goodResultValue
-buildEssenceValue (EssenceList _ "delete" _)    = pure goodResultValue
-buildEssenceValue _                             = pure $ object []
+getDefaultValues :: [String] -> [(T.Text,Value)]
+getDefaultValues []           = []
+getDefaultValues (field:rest) =
+    case lookup (T.pack field) defaultList of
+        Just value -> (T.pack field,value) : getDefaultValues rest
+        Nothing    -> (T.pack field,Null) : getDefaultValues rest
 
-iterateFields :: [String] -> EssenceList -> [(T.Text,Value)]
-iterateFields []           _        = []
-iterateFields (field:rest) listData =
-    case lookup field listData of
-        Just myValue -> (T.pack field, toValue myValue)
-            : iterateFields rest listData
-        Nothing      -> case lookup (T.pack field) defaultList of
-            Just value -> (T.pack field,value)
-                : iterateFields rest listData
-            Nothing    -> (T.pack field,Null)
-                : iterateFields rest listData
+buildEssenceValue :: Essence List -> StateT EssenceData (ReaderT Config IO) Value
+buildEssenceValue (EssenceList _    "edit"   _)  = pure goodResultValue
+buildEssenceValue (EssenceList _    "delete" _)  = pure goodResultValue
+buildEssenceValue (EssenceList name action   _)  = do
+    currentData <- get
+    let list = handleDraftCase name $ getRelatedFields name currentData
+    fromStateT $ print list
+    api <- fromStateT setApi
+    config <- lift ask
+    let (EssenceDB essence action' hashMap) = getEssenceDB (T.pack name) (T.pack action) config api
+    let fields = HM.keys hashMap L.\\ (fst . unzip) list
+    let hmList = map (\(l,r) -> (T.pack l, toValue r)) list
+    let fieldsValue = Object . HM.fromList $ hmList <> getDefaultValues fields
+    let essenceValue = object [(<>) essence "1" .= fieldsValue]
+    return essenceValue
+buildEssenceValue _                             = pure $ object []
 
 getTest :: Essence List -> String -> Value -> StateT EssenceData (ReaderT Config IO) Test
 getTest essenceList funcName got = do
@@ -95,11 +89,16 @@ getTest essenceList funcName got = do
 
 createEssenceTest :: [Essence List] -> StateT EssenceData (ReaderT Config IO) [Test]
 createEssenceTest []                                                    = return []
-createEssenceTest (essenceList@(EssenceList name "create" list') : rest) = do
+createEssenceTest ((EssenceList name "create" list') : rest) = do
     currentData <- get
+    fromStateT $ print "CURRENT DATA "
+    fromStateT $ print currentData
     let fields = handleDraftCase name $ getRelatedFields name currentData
     list <- fromStateT $ handleUniqueName name list'
-    essenceValue <- lift $ evalStateT dbCreate (EssenceList name "create" (list <> fields))
+    let essenceList = EssenceList name "create" (list <> fields)
+    fromStateT $ print essenceList
+    essenceValue <- lift $ evalStateT dbCreate essenceList
+    fromStateT . print $ "CREATED " <> name
     updateData (T.pack name) essenceValue
     let funcName = "dbCreate"
     test <- getTest essenceList funcName essenceValue
@@ -122,7 +121,7 @@ getEssenceTest (essence:rest) listData = do
     let fields = fromJust (lookup essence listData)
     essenceValue <- evalStateT dbGet (EssenceList essence "get" fields)
     let funcName = "dbGet"
-    test <- evalStateT (getTest (EssenceList essence "get" []) funcName essenceValue) listData
+    test <- evalStateT (getTest (EssenceList essence "get" fields) funcName essenceValue) listData
     let label = funcName <> "_" <> essence <> "_Test"
     pure ((:) (TestLabel label test)) <*> (getEssenceTest rest) listData
 

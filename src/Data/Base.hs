@@ -14,6 +14,7 @@ module Data.Base
     , getRandom
     , lookup2
     , tailCase
+    , fst3
     ) where
 
 import           Data.Aeson
@@ -113,3 +114,6 @@ tailCase :: [a] -> [a]
 tailCase arr = case arr of
     [] -> []
     _  -> tail arr
+
+fst3 :: (a,b,c) -> a
+fst3 (x1,x2,x3) = x1

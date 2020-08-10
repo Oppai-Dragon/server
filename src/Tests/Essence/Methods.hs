@@ -43,7 +43,7 @@ addListTest =
         [("first_name",MyString "testFirstName")
         ,("last_name",MyString "testLastName")
         ,("avatar",MyString "uri")
-        ,("access_key",MyString accessKeyStr)
+        ,("access_key",MyString accessKey)
         ,("is_admin",MyBool True)
         ,("access_key",MyString "key")]
     ) $ addList [("access_key",MyString "key")] testPersonListCreate
@@ -55,7 +55,7 @@ deletePairTest =
     (EssenceList "person" "create"
         [("last_name",MyString "testLastName")
         ,("avatar",MyString "uri")
-        ,("access_key",MyString accessKeyStr)
+        ,("access_key",MyString accessKey)
         ,("is_admin",MyBool True)]
     )
     $ deletePair "first_name" testPersonListCreate
@@ -75,24 +75,24 @@ getEssenceDBTest =
 getEssenceDatabaseTest =
     TestCase $
     assertEqual "for (getEssenceDatabase \"person\" testConfig testApi)"
-    testEssenceDatabase
+    testPersonDatabase
     $ getEssenceDatabase "person" testConfig testApi
 
 getHashMapDescriptionTest =
     TestCase $
-    assertEqual "for (getHashMapDescription (HM.fromList testEssenceDatabaseFields))"
-    (HM.fromList testPersonCreateDBFields)
-    $ getHashMapDescription (HM.fromList testEssenceDatabaseFields)
+    assertEqual "for (getHashMapDescription (HM.fromList testPersonDatabaseFields))"
+    (HM.fromList testPersonDBFields)
+    $ getHashMapDescription (HM.fromList testPersonDatabaseFields)
 
 iterateHashMapDBListTest =
     TestCase $
-    assertEqual "for (iterateHashMapDBList testEssenceDatabaseFields)"
-    testPersonCreateDBFields
-    $ iterateHashMapDBList testEssenceDatabaseFields
+    assertEqual "for (iterateHashMapDBList testPersonDatabaseFields)"
+    testPersonDBFields
+    $ iterateHashMapDBList testPersonDatabaseFields
 
 setDescriptionTest =
     TestCase $
-    assertEqual "for (setDescription testEssenceDatabaseDescription)"
+    assertEqual "for (setDescription testPersonDatabaseDescription)"
     (Description (MyInteger 0) Nothing Nothing (Just PRIMARY))
     $ setDescription [("type","int"),("constraint","primary key")]
 

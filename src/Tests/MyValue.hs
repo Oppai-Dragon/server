@@ -289,7 +289,7 @@ myIntegers_toStrTest =
 myStrings_toStrTest =
     TestCase $
     assertEqual "for (toStr (MyStrings [\"k1\",\"k2\"]))"
-    "[\"k1\",\"k2\"]"
+    "[k1,k2]"
     $ toStr (MyStrings ["k1","k2"])
 myNextVal_toStrTest =
     TestCase $

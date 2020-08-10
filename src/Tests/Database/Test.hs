@@ -21,7 +21,8 @@ import Tests.Essence
 import Test.HUnit
 
 databaseTestTests =
-    [ TestLabel "build_create_EssenceValueTest" build_create_EssenceValueTest
+    [ TestLabel "getDefaultValuesTest"          getDefaultValuesTest
+    , TestLabel "build_create_EssenceValueTest" build_create_EssenceValueTest
     , TestLabel "build_edit_EssenceValueTest"   build_edit_EssenceValueTest
     , TestLabel "build_get_EssenceValueTest"    build_get_EssenceValueTest
     , TestLabel "build_delete_EssenceValueTest" build_delete_EssenceValueTest
@@ -33,14 +34,29 @@ databaseTestTests =
     , TestLabel "handleDraftCaseTest"           handleDraftCaseTest
     ] <> chooseNameForAddingTests
 
+getDefaultValuesTest =
+    TestCase $
+    assertEqual
+    "for (getDefaultValues [\"first_name\",\"last_name\",\"date_of_creation\",\"avatar\",\"is_admin\",\"access_key\"])"
+    [("first_name",String defaultFirstName)
+    ,("last_name",String defaultLastName)
+    ,("date_of_creation",String defaultDate)
+    ,("avatar",String defaultAvatar)
+    ,("is_admin",Bool True)
+    ,("access_key",String defaultAccessKey)]
+    $ getDefaultValues ["first_name","last_name","date_of_creation","avatar","is_admin","access_key"]
+
 build_create_EssenceValueTest =
     TestCase $
     runReaderT
-        (evalStateT
-            (buildEssenceValue testAuthorListCreate)
-        [("author",[("id",MyInteger 2)])
-        ,("person",[("id",MyInteger 1)])]
-    ) testConfig
+        ((evalStateT
+            (buildEssenceValue
+                (EssenceList "author" "create"
+                    [("id",MyInteger 2)
+                    ,("person_id",MyInteger 1)]
+                )
+            )
+        [])) testConfig
     >>= assertEqual
     ("for ("
     <> "runReaderT"
@@ -93,15 +109,7 @@ build_get_EssenceValueTest =
     (object
         ["author1" .= object
             ["id"          .= Number 2
-            ,"person1"     .= object
-                ["id"                .= Number 1
-                , "first_name"       .= String defaultFirstName
-                , "last_name"        .= String defaultLastName
-                , "date_of_creation" .= String defaultDate
-                , "avatar"           .= String defaultAvatar
-                , "id_admin"         .= Bool True
-                , "access_key"       .= String defaultAccessKey
-                ]
+            ,"person_id"      .= Number 1
             ,"description" .= Null
             ]
         ]

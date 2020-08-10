@@ -19,6 +19,7 @@ baseTests =
     , TestLabel "ordToBoolTest"             ordToBoolTest
     , TestLabel "lookup2Test"               lookup2Test
     , TestLabel "tailCaseTest"              tailCaseTest
+    , TestLabel "fst3Test"                  fst3Test
     ]
 
 ifElseThenTest =
@@ -90,3 +91,5 @@ tailCaseTest =
     TestCase $
     assertEqual "for (tailCase [])"
     ([] :: String) $ tailCase []
+
+fst3Test = TestCase $ assertEqual "for (fst3 (1,2,3))" 1 $ fst3 (1,2,3)
