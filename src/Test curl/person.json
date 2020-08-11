@@ -1,0 +1,11 @@
+{
+  "person1": {
+    "first_name": "First",
+    "access_key": "e4ab3dde-f65b-4082-86f2-14e6a69d334e",
+    "date_of_creation": "2020-08-11",
+    "last_name": "Admin",
+    "is_admin": true,
+    "id": 97,
+    "avatar": "https://oppai-dragon.site/images/avatar.jpg"
+  }
+}
