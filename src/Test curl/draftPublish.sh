@@ -5,7 +5,7 @@ generate_post_data()
 {
 cat <<EOF
 { "id": $id
-, "access_key": "$access_key"
+, "access_key": $access_key
 }
 EOF
 }

@@ -7,7 +7,7 @@ generate_post_data()
 cat <<EOF
 { "content": "$content"
 , "news_id": $news_id
-, "access_key": "$access_key"
+, "access_key": $access_key
 }
 EOF
 }

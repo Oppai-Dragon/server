@@ -1,1 +1,1 @@
-Something went wrong
+{"result":1}
