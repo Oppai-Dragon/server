@@ -60,13 +60,12 @@ import           System.IO.Unsafe                               (unsafePerformIO
 notFound :: Response
 notFound = responseBuilder status404 [] "Not found"
 
-pathHandler :: Request -> ReaderT Config IO Response
+pathHandler :: Request -> IO Response
 pathHandler req = do
-    config <- ask
-    (isValidRequest, response,query) <- isRequestCorrect req
+    (isValidRequest, response, query, config) <- isRequestCorrect req
     let req' = req {queryString = query}
     if isValidRequest
-        then evalStateT (essenceResponse req') mempty
+        then runReaderT (evalStateT (essenceResponse req') mempty) config
         else pure response
 
 getEssenceList :: Request -> ReaderT Config IO (Essence List)
@@ -103,7 +102,7 @@ setEssenceList req = do
 deleteAccessKey :: StateT (Essence List) (ReaderT Config IO) ()
 deleteAccessKey = do
     essenceList <- get
-    put $ deletePair "access_key" essenceList
+    modify $ deletePair "access_key"
 
 essenceResponse :: Request -> StateT (Essence List) (ReaderT Config IO) Response
 essenceResponse req = do

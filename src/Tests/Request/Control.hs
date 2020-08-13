@@ -61,8 +61,8 @@ parseRequestTest =
 
 isRequestCorrectTest =
     TestCase $
-    runReaderT (isRequestCorrect testPersonCreateReq) testConfig >>=
-    assertEqual "for (isRequestCorrect testPersonCreateReq)" True . fst3
+    isRequestCorrect testPersonCreateReq >>=
+    assertEqual "for (isRequestCorrect testPersonCreateReq)" True . fst4
 
 getAccessArrTest =
     TestCase $

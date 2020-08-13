@@ -61,6 +61,6 @@ addingDefault = addId
 
 addId :: StateT (Essence List) (ReaderT Config IO) ()
 addId = do
-    essenceList@(EssenceList name action list) <- get
+    (EssenceList name action list) <- get
     let idValue = "nextval('" <> name <> "_id_seq')"
-    put $ addList [("id", MyNextval idValue)] essenceList
+    modify $ addList [("id", MyNextval idValue)]

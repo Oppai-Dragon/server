@@ -7,8 +7,9 @@
         , "person_id":
             [ "BIGINT"
             , "NOT NULL"
-            , "REFERENCES person (id)"
             , "UNIQUE"
+            , "REFERENCES person (id)"
+            , "ON DELETE CASCADE"
             ]
         , "description":
             [ "VARCHAR(150)"

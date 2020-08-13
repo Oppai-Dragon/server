@@ -92,4 +92,4 @@ parseConstraint =
 parsePrimaryKey,parseUnique,parseOnAction :: Parsec String String String
 parsePrimaryKey = string "PRIMARY KEY" >> return "primary key"
 parseUnique = string "UNIQUE" >> return "unique"
-parseOnAction = string "ON DELETE CASCADE" >> return "delete with parent"
+parseOnAction = return ""

@@ -15,6 +15,7 @@ module Data.Base
     , lookup2
     , tailCase
     , fst3
+    , fst4
     ) where
 
 import           Data.Aeson
@@ -99,7 +100,7 @@ ordToBool :: Ordering -> Bool
 ordToBool EQ = True
 ordToBool _  = False
 
-fromStateT :: (Monad m) => m a -> StateT s (ReaderT Object m) a
+fromStateT :: (Monad m) => m a -> StateT s (ReaderT c m) a
 fromStateT = lift . lift
 
 getRandom :: IO Integer
@@ -117,3 +118,6 @@ tailCase arr = case arr of
 
 fst3 :: (a,b,c) -> a
 fst3 (x1,x2,x3) = x1
+
+fst4 :: (a,b,c,d) -> a
+fst4 (x1,x2,x3,x4) = x1

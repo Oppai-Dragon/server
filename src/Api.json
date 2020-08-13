@@ -86,8 +86,7 @@
         }
     , "news":
         { "create": "Author"
-        , "edit": "Author"
-        , "delete": "Author"
+        , "delete": "Admin"
         , "publish": "Author"
         , "get": "Everyone"
         }

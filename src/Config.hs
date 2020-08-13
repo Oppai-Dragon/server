@@ -1,16 +1,18 @@
 module Config
-    ( Config
-    , Api
-    , Psql
+    ( Config (..)
+    , Api (..)
+    , Psql (..)
     , set
     , setPsql
     , setConfig
     , setApi
     , setPath
+    , setGlobalConfigPath
     , setConfigPath
     , setPsqlPath
     , setApiPath
     , parsePath
+    , chooseConfig
     , getApiActions
     , parseFieldsFunc
     , getEssences
@@ -49,9 +51,9 @@ import System.IO.Unsafe                         (unsafePerformIO)
 
 type Action         = T.Text
 type Actions        = [Action]
-type Config         = Object
-type Api            = Object
-type Psql           = Object
+newtype Config      = Config Object
+newtype Api         = Api Object
+newtype Psql        = Psql Object
 type EssenceName    = T.Text
 type Field          = T.Text
 type Fields         = [Field]
@@ -67,16 +69,18 @@ set ioPath =
             Just hm -> pure hm
             Nothing -> pure HM.empty
 
-setPsql,setConfig,setApi :: IO Object
-setPsql = set setPsqlPath
-setConfig = set setConfigPath
-setApi = set setApiPath
+setPsql :: IO Psql
+setPsql = set setPsqlPath >>= return . Psql
+setConfig :: IO Config
+setConfig = set setConfigPath >>= return . Config
+setApi :: IO Api
+setApi = set setApiPath >>= return . Api
 
 setPath :: FilePath -> IO FilePath
-setPath path =
-    fmap (flip (<>) $ "\\server\\src\\" <> path)
-    $ parsePath <*> getCurrentDirectory
-setConfigPath,setPsqlPath,setApiPath :: IO FilePath
+setPath path = fmap (flip (<>) $ "\\server\\src\\" <> path) getCurrentPath
+getCurrentPath = parsePath <*> getCurrentDirectory
+setGlobalConfigPath,setConfigPath,setPsqlPath,setApiPath :: IO FilePath
+setGlobalConfigPath = setPath "GlobalConfig.json"
 setConfigPath = setPath "Config.json"
 setPsqlPath = setPath "Psql.json"
 setApiPath  = setPath "Api.json"
@@ -91,8 +95,20 @@ parsePath = return
     . L.group
     )
 
+chooseConfig :: EssenceName -> IO Config
+chooseConfig essence = do
+    globalConfig <- set setGlobalConfigPath
+    let localConfig = case AT.parseMaybe (.: "config") globalConfig of
+            Just (Object obj) -> obj
+            _                 -> HM.empty
+    let essenceObj = case AT.parseMaybe (.: essence) globalConfig of
+            Just (Object obj) -> obj
+            _                 -> HM.empty
+    let config = HM.union localConfig essenceObj
+    return $ Config config
+
 getApiActions :: Api -> Actions
-getApiActions api =
+getApiActions (Api api) =
     case AT.parseMaybe (.: "api") api of
         Just (Object obj) -> HM.keys obj
         Nothing           -> []
@@ -103,25 +119,25 @@ parseFieldsFunc (field:rest) obj = obj .: field
     >>= parseFieldsFunc rest
 
 getEssences :: Api -> [T.Text]
-getEssences api = case AT.parseMaybe (.: "essences") api of
+getEssences (Api api) = case AT.parseMaybe (.: "essences") api of
     Just arr@(Array vector) -> toTextArr arr
     _                       -> []
 
 getAccess :: EssenceName -> Action -> Api -> Access
-getAccess essence action api =
+getAccess essence action (Api api) =
     let parseFunc = parseFieldsFunc ["access",essence,action]
     in case AT.parseMaybe parseFunc api of
         Just (String access) -> read $ T.unpack access
         _                    -> maxBound
 
 getUri :: Config -> String
-getUri conf =
+getUri (Config conf) =
     case AT.parseMaybe (.: "uriDB") conf of
         Just str -> str
         _        -> ""
 
 getUriDB :: Psql -> String
-getUriDB psql =
+getUriDB (Psql psql) =
     let
         getValue field obj =
             case HM.lookup field obj of
@@ -140,13 +156,13 @@ getUriDB psql =
     <> "/" <> database psql
 
 getMethodActions :: Field -> Api -> Actions
-getMethodActions method api =
+getMethodActions method (Api api) =
     let parseFunc obj = obj .: "method" >>= (.: method)
     in case AT.parseMaybe parseFunc api of
         Just actions -> actions
         Nothing      -> []
 getApiDBMethod :: Action -> Api -> Action
-getApiDBMethod action api =
+getApiDBMethod action (Api api) =
     let parseFunc = parseFieldsFunc ["api",action]
     in case AT.parseMaybe parseFunc api of
         Just (String text) -> text
@@ -165,7 +181,7 @@ getRelationsTree :: EssenceName -> Api -> RelationsTree
 getRelationsTree essence api = getRelationsTree' essence 0 essence api
 
 getRelationsTree' :: EssenceName -> Int -> Field -> Api -> RelationsTree
-getRelationsTree' essence n field api =
+getRelationsTree' essence n field (Api api) =
     let
         parseFind = parseFieldsFunc
             ["relations", essence]
@@ -178,7 +194,7 @@ getRelationsTree' essence n field api =
             _                   -> []
     in case AT.parseMaybe parseFind api of
         Just (Object obj) ->
-            getRelationsTree' (getRootName obj) 1 (getRoot obj) api
+            getRelationsTree' (getRootName obj) 1 (getRoot obj) (Api api)
             <> if n == 0
                 then Branch (T.unpack essence) (getLeafs $ getRoot obj)
                 else Branch (T.unpack field) (getLeafs $ getRoot obj)
@@ -187,7 +203,7 @@ getRelationsTree' essence n field api =
         _                 -> Ground
 
 getOffsetLimit :: Int -> Psql -> String
-getOffsetLimit pageCounter psql =
+getOffsetLimit pageCounter (Psql psql) =
     let
         limit = show . scientificToInteger
         offset var = show $ read (limit var) * (pageCounter - 1)
@@ -197,7 +213,9 @@ getOffsetLimit pageCounter psql =
             <> " LIMIT " <> limit pageLimit
         Nothing                       -> []
 
-testApi,testConfig,testPsql :: Config
+testApi     :: Api
 testApi = unsafePerformIO setApi
+testConfig  :: Config
 testConfig = unsafePerformIO setConfig
+testPsql    :: Psql
 testPsql = unsafePerformIO setPsql

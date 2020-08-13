@@ -12,6 +12,5 @@ import           Control.Monad.Trans.Reader
 
 app :: Application
 app req send = do
-    config <- setConfig
-    response <- runReaderT (pathHandler req) config
+    response <- pathHandler req
     send response

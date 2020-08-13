@@ -87,13 +87,13 @@ instance Read Relations where
             field = pack $ valueArr !! 3
         in [(Relations table field,"")]
 
-data Constraint = UNIQUE | PRIMARY | OnAction
+data Constraint = UNIQUE | PRIMARY
     deriving (Show,Eq)
 instance Read Constraint where
     readsPrec _ input = case input of
         "primary key"        -> [(PRIMARY,"")]
         "unique"             -> [(UNIQUE,"")]
-        "delete with parent" -> [(OnAction,"")]
+        _                    -> []
 
 class GetFields a where
     getFields :: Essence DB -> a

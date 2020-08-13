@@ -8,6 +8,8 @@ import Data.MyValue
 import Data.Required
 import Data.Request.Params.Methods
 
+import Data.Monoid
+
 import Tests.Essence
 
 import Test.HUnit
@@ -55,7 +57,7 @@ isTypeParamsCorrectTest =
     TestCase $
     assertEqual
     "for (isTypeParamsCorrect testPersonCreateDB [(\"first_name\",MyString \"misha\"),(\"last_name\",MyString \"dragon\")])"
-    [True,True]
+    (All True)
     $ isTypeParamsCorrect testPersonCreateDB
     [("first_name",MyString "misha"),("last_name",MyString "dragon")]
 

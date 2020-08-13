@@ -12,7 +12,7 @@
         , "child_category":
             [ "INT"
             , "REFERENCES category (id)"
-            , "UNIQUE"
+            , "ON DELETE SET NULL"
             ]
         }
     }

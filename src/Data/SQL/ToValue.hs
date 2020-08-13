@@ -36,9 +36,9 @@ fromZip :: [T.Text] -> [Value] -> Object
 fromZip = (HM.fromList .) . zip
 
 sqlValuesToJsonValue :: Essence List -> [SqlValue] -> Config -> Value
-sqlValuesToJsonValue (EssenceList name action list) sqlValues conf =
+sqlValuesToJsonValue (EssenceList name action list) sqlValues (Config conf) =
     let
-        essenceDB = getEssenceDB (T.pack name) (T.pack action) conf
+        essenceDB = getEssenceDB (T.pack name) (T.pack action) (Config conf)
         essenceFields = case parseMaybe (.: T.pack name) conf of
             Just (Object fieldsObj) -> HM.keys fieldsObj
             _                       -> []

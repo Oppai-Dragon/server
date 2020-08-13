@@ -1,1 +1,1 @@
-main = print "somefunc"
+main = putStrLn "somefunc"

@@ -107,7 +107,7 @@ getEssenceDB essence apiAction conf api =
             EssenceDB "" "" HM.empty
 
 getEssenceDatabase :: T.Text -> Config -> Api -> Essence Database
-getEssenceDatabase essence conf api =
+getEssenceDatabase essence (Config conf) (Api api) =
     let unpackObj obj = do
             (field,value) <- HM.toList obj
             let resultArr = map parsePsql $ toStrArr value

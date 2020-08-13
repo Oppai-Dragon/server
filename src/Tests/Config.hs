@@ -43,10 +43,11 @@ getApiActionsTest =
 
 parseFieldsFuncTest =
     TestCase $
-    assertEqual "for (parseMaybe (parseFieldsFunc [\"essences\"]) testApi)"
+    setApi >>= \(Api api) -> assertEqual
+    "for (setApi >>= \\(Api api) -> parseMaybe (parseFieldsFunc [\"essences\"]) api)"
     (Just . Array $ V.fromList
     ["person","author","category","tag","draft","news","comment"])
-    $ parseMaybe (parseFieldsFunc ["essences"]) testApi
+    (parseMaybe (parseFieldsFunc ["essences"]) api)
 
 getEssencesTest =
     TestCase $

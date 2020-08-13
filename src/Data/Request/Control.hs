@@ -29,6 +29,8 @@ import qualified Data.ByteString                        as BS
 import qualified Data.ByteString.Char8                  as BS8
 import           Data.ByteString.Builder.Internal               (byteStringCopy)
 
+import           Data.Monoid
+
 import           Database.HDBC                          as HDBC
 import qualified Database.HDBC.PostgreSQL               as PSQL
 
@@ -90,12 +92,12 @@ parseRequest req = do
     let method = requestMethod req
     return (essence,action,queryMBS,method)
 
-isRequestCorrect :: Request -> ReaderT Config IO (Bool, Response, Query)
+isRequestCorrect :: Request -> IO (Bool, Response, Query, Config)
 isRequestCorrect req = do
-    config <- ask
-    api <- lift setApi
-    (essence',action,queryMBS,method) <- lift $ parseRequest req
+    api <- setApi
+    (essence',action,queryMBS,method) <- parseRequest req
     let essence = if action == "publish" then "news" else essence'
+    config <- chooseConfig essence
     let essenceDB = getEssenceDB essence action config api
     let essenceFields = getEssenceFields essenceDB api
     let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
@@ -104,15 +106,15 @@ isRequestCorrect req = do
             . BS8.pack
             . show
             $ getRequiredFields essenceDB api
-    accessArr <- lift $ getAccessArr queryMBS
-    isCorrectParams <- execWriterT $ isParamsCorrect essenceDB listOfPairs
+    accessArr <- getAccessArr queryMBS
+    isConstraintsCorrect <- runReaderT (execWriterT $ isConstraintCorrect essenceDB listOfPairs) config
     let checkingList =
             [isPathRequestCorrect req api
             ,isMethodCorrect method action api
             ,isAccess essence action accessArr api
             ,isRequiredParams essenceDB queryMBS api
-            ,and $ isTypeParamsCorrect essenceDB listOfPairs
-            ,and $ isCorrectParams]
+            ,getAll $ isTypeParamsCorrect essenceDB listOfPairs
+            ,getAll isConstraintsCorrect]
     let elseThenList =
             [(False, notFound)
             ,(False, responseBuilder status400 [] "Incorrect request method")
@@ -122,7 +124,7 @@ isRequestCorrect req = do
             ,(False, responseBuilder status400 [] "Bad values")
             ,(True, notFound)]
     let (x1,x2) = ifElseThen checkingList elseThenList
-    pure (x1,x2,queryMBS)
+    pure (x1,x2,queryMBS,config)
 
 getAccessArr :: QueryMBS -> IO [Access]
 getAccessArr queryMBS = case lookup "access_key" queryMBS of

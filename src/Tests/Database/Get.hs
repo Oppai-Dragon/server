@@ -2,6 +2,7 @@ module Tests.Database.Get
     ( databaseGetTests
     ) where
 
+import Config
 import Database.Get
 import Data.Essence
 import Data.MyValue
@@ -19,7 +20,7 @@ databaseGetTests =
 
 addOffsetLimitTest =
     TestCase $
-    runReaderT (execStateT addOffsetLimit mempty) HM.empty >>=
+    runReaderT (execStateT addOffsetLimit mempty) (Config HM.empty) >>=
     assertEqual
-    "for (runReaderT (runStateT addOffsetLimit mempty) HM.empty)"
+    "for (runReaderT (runStateT addOffsetLimit mempty) (Config HM.empty))"
     (EssenceList "" "" [("page",MyString "OFFSET 0 LIMIT 10")])

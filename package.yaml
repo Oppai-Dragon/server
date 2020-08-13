@@ -2,9 +2,9 @@ name:                server
 version:             0.1.0.0
 github:              "githubuser/server"
 license:             BSD3
-author:              "Author name here"
+author:              "Misha Dragon"
 maintainer:          "example@example.com"
-copyright:           "2020 Author name here"
+copyright:           "2020 Misha Dragon"
 
 extra-source-files:
 - README.md
@@ -57,6 +57,24 @@ executables:
   server-exe:
     main:                Main.hs
     source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - server
+  server-build:
+    main:                Build.hs
+    source-dirs:         build
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - server
+  server-rebuild:
+    main:                Rebuild.hs
+    source-dirs:         rebuild
     ghc-options:
     - -threaded
     - -rtsopts

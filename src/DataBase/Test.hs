@@ -178,7 +178,7 @@ updateData essence value = do
     currentData <- get
     let essenceObj = case value of {Object obj -> obj; _ -> HM.empty}
     let fieldsData = getNeededFields essence essenceObj
-    put $ (T.unpack essence,fieldsData) : currentData
+    modify $ (:) (T.unpack essence,fieldsData)
 
 chooseNameForAdding :: String -> [String]
 chooseNameForAdding name = case name of

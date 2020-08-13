@@ -93,7 +93,8 @@ addOffsetLimit = do
             Just (MyInteger num) -> fromInteger num
             Nothing              -> 1
     let offsetLimit = getOffsetLimit pageCounter psql
-    put . addList [("page",MyString offsetLimit)] $ deletePair "page" essenceList
+    modify $ deletePair "page"
+    modify $ addList [("page",MyString offsetLimit)]
 
 nesteEssences :: Object -> ReaderT Config IO Value
 nesteEssences pageObj = do
@@ -123,12 +124,11 @@ nesteEssence []                                           = do
     fieldsObj <- get
     let table = "tag"
     let field = "id"
-    let objWithoutField = HM.delete "tag_ids" fieldsObj
     case HM.lookup "tag_ids" fieldsObj of
         Just value ->
             lift (dbGetArray (EssenceList table "get" [(field, fromValue value)]))
-            >>= \value ->
-            put (HM.union (HM.singleton "tags" value) objWithoutField)
+            >>= \value -> modify (HM.delete "tag_ids") >>
+            modify (HM.union (HM.singleton "tags" value))
         Nothing    -> return ()
 nesteEssence ((field,Relations table tableField) : rest) = do
     fieldsObj <- get
@@ -137,8 +137,8 @@ nesteEssence ((field,Relations table tableField) : rest) = do
             Nothing    -> []
     (Object essenceObj) <- lift $ dbGetOne (EssenceList (T.unpack table) "get" listOfPair)
     (Object completeObj) <- lift $ nesteEssences essenceObj
-    let objWithoutField = HM.delete (T.pack field) fieldsObj
     if HM.null completeObj
-        then put $ HM.union essenceObj fieldsObj
-        else put $ HM.union completeObj objWithoutField
+        then modify $ HM.union essenceObj
+        else modify (HM.delete (T.pack field))
+            >> modify (HM.union completeObj)
     nesteEssence rest

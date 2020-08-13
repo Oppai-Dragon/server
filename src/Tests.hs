@@ -67,8 +67,9 @@ testList = TestList $ []
     <> databaseTests
 
 runTest :: IO ()
-runTest =
-    if HM.null testConfig
+runTest = do
+    (Config config) <- setConfig
+    if HM.null config
         then runTestTT (TestList setupTests)
             >> print "Can't find Config.json" --- Need different look
         else runTestTT (TestList [TestList setupTests,testList])

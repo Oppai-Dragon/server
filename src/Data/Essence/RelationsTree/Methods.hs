@@ -65,9 +65,13 @@ addRelationsFields = do
     (EssenceList name action list) <- get
     config <- lift ask
     api <- lift . lift $ setApi
-    if isEssenceRelations name api
-        then relationsHandler name
-        else return $ HM.singleton "result" (Number 1)
+    case [name,action] of
+        ["news","delete"] ->
+            return $ HM.singleton "result" (Number 1)
+        _                 ->
+            if isEssenceRelations name api
+                then relationsHandler name
+                else return $ HM.singleton "result" (Number 1)
 
 relationsHandler :: Name -> StateT (Essence List) (ReaderT Config IO) Object
 relationsHandler name = do
@@ -109,18 +113,17 @@ iterateRelations (Trunk t (Branch b leafs)) objOld = do
                 let requiredFields = toFields $ getRequiredFields essenceDB api
                 let bool = ifFieldsFill requiredFields addedFields
                 if and [isRightRelations objOld objNew t b, bool]
-                    then put (addList addedFields $ deletePair "id" essenceList)
+                    then modify (deletePair "id") >> modify (addList addedFields)
                         >> return (HM.singleton "result" (Number 1))
                     else return HM.empty
             _      -> do
                 (Object objNew) <- lift $ dbGetOne (EssenceList b "get" listOfPair)
                 let addedFields = unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld
                 if isRightRelations objOld objNew t b
-                    then put (addList addedFields essenceList)
-                        >> return (HM.singleton "result" (Number 1))
+                    then modify (addList addedFields) >> return (HM.singleton "result" (Number 1))
                     else return HM.empty
         []                   ->
-            put (addList (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld) essenceList)
+            modify (addList (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld))
             >> return (HM.singleton "result" (Number 1))
 iterateRelations (Trunk t1 trunk@(Trunk t2 rlt)) objOld = do
     (Object objNew) <- lift $ findEssence t2 (getListOfPairFromObj t1 objOld)

@@ -3,7 +3,7 @@ module Data.Request.Params.Methods
     , iterateRequiredParams
     , iterateParams
     , queryBSWithoutMaybe
-    , isParamsCorrect
+    , isConstraintCorrect
     , isUniqueParams
     , isRightRelationsParams
     , isTypeParamsCorrect
@@ -23,6 +23,7 @@ import Data.Aeson
 import qualified Data.HashMap.Strict as HM
 import qualified Data.ByteString     as BS
 import qualified Data.ByteString.Char8 as BSC8
+import Data.Monoid
 import qualified Data.Text           as T
 import qualified Data.Text.Encoding  as TE
 
@@ -77,50 +78,46 @@ queryBSWithoutMaybe ((l,maybeR):rest) =
         Just valueBS -> (l,valueBS) : queryBSWithoutMaybe rest
         Nothing      -> queryBSWithoutMaybe rest
 
-isParamsCorrect :: Essence DB -> [(String,MyValue)] -> WriterT [Bool] (ReaderT Config IO) ()
-isParamsCorrect _                             []                                = tell [True]
-isParamsCorrect (EssenceDB _     "get"    _)  _                                 = tell [True]
-isParamsCorrect (EssenceDB _     "delete" _)  _                                 = tell [True]
-isParamsCorrect (EssenceDB table action   hm) (("tag_ids",MyIntegers arr):rest) = do
+isConstraintCorrect :: Essence DB -> [(String,MyValue)] -> WriterT All (ReaderT Config IO) ()
+isConstraintCorrect _                             []                                = tell $ All True
+isConstraintCorrect (EssenceDB _     "get"    _)  _                                 = tell $ All True
+isConstraintCorrect (EssenceDB _     "delete" _)  _                                 = tell $ All True
+isConstraintCorrect (EssenceDB table action   hm) (("tag_ids",MyIntegers arr):rest) = do
     (Object pageObj) <- lift $ dbGetArray (EssenceList "tag" "get" [("id",MyIntegers arr)])
     let bool = length (HM.keys pageObj) == length arr
-    tell [bool]
-isParamsCorrect (EssenceDB table action   hm) ((field,myValue):rest)            =
+    tell $ All bool
+isConstraintCorrect (EssenceDB table action   hm) ((field,myValue):rest)            =
     case HM.lookup field hm of
         Just description -> do
             isUniqueParams table (field,myValue) (constraintOf description)
             isRightRelationsParams (relationsOf description) myValue
-            isParamsCorrect (EssenceDB table action hm) rest
-        Nothing          -> isParamsCorrect (EssenceDB table action hm) rest
+            isConstraintCorrect (EssenceDB table action hm) rest
+        Nothing          -> isConstraintCorrect (EssenceDB table action hm) rest
 
 -- Tell True, if essence with unique value doesn't exist
-isUniqueParams :: T.Text -> (String,MyValue) -> Maybe Constraint -> WriterT [Bool] (ReaderT Config IO) ()
+isUniqueParams :: T.Text -> (String,MyValue) -> Maybe Constraint -> WriterT All (ReaderT Config IO) ()
 isUniqueParams table pare (Just UNIQUE) = do
     let name = T.unpack table
     (Object obj) <- lift $ dbGetOne (EssenceList name "get" [pare])
-    if HM.null obj
-        then tell [True]
-        else tell [False]
+    tell . All $ HM.null obj
 isUniqueParams _     _    _             = return ()
 
 -- Tell True, if essence with dependent value exist
-isRightRelationsParams :: Maybe Relations -> MyValue -> WriterT [Bool] (ReaderT Config IO) ()
+isRightRelationsParams :: Maybe Relations -> MyValue -> WriterT All (ReaderT Config IO) ()
 isRightRelationsParams Nothing                         _       = return ()
 isRightRelationsParams (Just (Relations table fieldT)) myValue = do
     let name = T.unpack table
     let field = T.unpack fieldT
     let pare = (field,myValue)
     (Object obj) <- lift $ dbGetOne (EssenceList name "get" [pare])
-    if HM.null obj
-        then tell [False]
-        else tell [True]
+    tell . All . not $ HM.null obj
 
-isTypeParamsCorrect :: Essence DB -> [(String,MyValue)] -> [Bool]
-isTypeParamsCorrect _                                     []                     = []
+isTypeParamsCorrect :: Essence DB -> [(String,MyValue)] -> All
+isTypeParamsCorrect _                                     []                       = All True
 isTypeParamsCorrect essence@(EssenceDB name action hashMap) ((field,myValue):rest) =
     case HM.lookup field hashMap of
-        Just description -> compareValueType (valueTypeOf description) myValue
-            : isTypeParamsCorrect essence rest
+        Just description -> All (compareValueType (valueTypeOf description) myValue)
+            <> isTypeParamsCorrect essence rest
         Nothing          -> isTypeParamsCorrect essence rest
 
 compareValueType :: MyValue -> MyValue -> Bool

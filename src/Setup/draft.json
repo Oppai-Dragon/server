@@ -16,10 +16,12 @@
             [ "INT"
             , "NOT NULL"
             , "REFERENCES author (id)"
+            , "ON DELETE CASCADE"
             ]
         , "category_id":
             [ "INT"
             , "REFERENCES category (id)"
+            , "ON DELETE SET NULL"
             ]
         , "tag_ids":
             [ "INTEGER[]"

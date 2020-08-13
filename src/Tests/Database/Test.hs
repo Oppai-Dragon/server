@@ -154,9 +154,9 @@ getNeededFields_person_Test =
 
 updateDataTest =
     TestCase $
-    runReaderT (execStateT (updateData "person" (Object testPersonObj)) []) HM.empty >>=
+    runReaderT (execStateT (updateData "person" (Object testPersonObj)) []) (Config HM.empty) >>=
     assertEqual
-    "runReaderT (execStateT (updateData \"person\" testPersonObj) []) HM.empty"
+    "runReaderT (execStateT (updateData \"person\" testPersonObj) []) (Config HM.empty)"
     [("person",[("id",MyInteger 1)])]
 
 chooseNameForAddingTests =
