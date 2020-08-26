@@ -1,16 +1,10 @@
 module App where
 
-import Config
 import Data.Request.Handling
 
-import           Network.Wai
-import qualified Network.Wai.Handler.Warp               as Warp
-import           Network.Wai.Middleware.RequestLogger
-import           Network.Wai.Middleware.Autohead
+import qualified Network.Wai as Wai
 
-import           Control.Monad.Trans.Reader
-
-app :: Application
+app :: Wai.Application
 app req send = do
-    response <- pathHandler req
-    send response
+  response <- pathHandler req
+  send response

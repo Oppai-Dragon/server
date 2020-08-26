@@ -3,7 +3,6 @@ module Data.Request
     , getQueryString
     ) where
 
-import Data.Base
 import Data.MyValue
 
 import Data.Aeson
@@ -13,7 +12,6 @@ import qualified Data.Text             as T
 
 import Network.HTTP.Types.URI
 import Network.Wai
-import Network.Wai.Internal
 
 queryFromObj :: Object -> Query
 queryFromObj =

@@ -6,7 +6,7 @@ import Config
 import Data.MyValue         (MyValue (..))
 import Data.Essence
 import Data.Essence.Methods
-import Data.SQL.Actions
+import Data.SQL
 
 import qualified Data.HashMap.Strict as HM
 import           Control.Monad.Trans.Reader

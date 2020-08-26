@@ -1,40 +1,29 @@
 module Database.Delete
-    ( dbDelete
-    ) where
+  ( dbDelete
+  ) where
 
 import Config
-import Data.Base
-import Data.Handler
 import Data.Essence
-import Data.Essence.Methods
 import Data.MyValue
-import Data.SQL
-import Data.SQL.ToValue
-import Data.SQL.Actions
-import Data.Aeson
-import Database.HDBC
-    ( disconnect
-    , run
-    , commit
-    )
-import Database.HDBC.PostgreSQL
-    ( connectPostgreSQL
-    , Connection
-    )
+import Data.SQL.ShowSql
 
-import           Control.Monad.Trans.Reader
-import           Control.Monad.Trans.State.Strict
-import           Control.Monad.Trans.Class          (lift)
+import qualified Data.Aeson as A
+import qualified Database.HDBC as HDBC
+import qualified Database.HDBC.PostgreSQL as PSQL
 
-dbDelete :: StateT (Essence List) (ReaderT Config IO) Value
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Reader
+import Control.Monad.Trans.State.Strict
+
+dbDelete :: StateT (Essence List) (ReaderT Config IO) A.Value
 dbDelete = do
-    essenceList <- get
-    config <- lift ask
-    let deleteQuery = showSql essenceList
-    let uriDB = getUri config
-    conn <- lift . lift $ connectPostgreSQL uriDB
-    result <- lift . lift $ run conn deleteQuery []
-    lift . lift $ commit conn
-    let value = object [ "result" .= (toValue . MyInteger) result]
-    lift . lift $ disconnect conn
-    pure value
+  essenceList <- get
+  config <- lift ask
+  let deleteQuery = showSql essenceList
+  let uriDB = getUri config
+  conn <- lift . lift $ PSQL.connectPostgreSQL uriDB
+  result <- lift . lift $ HDBC.run conn deleteQuery []
+  lift . lift $ HDBC.commit conn
+  let value = A.object ["result" A..= (toValue . MyInteger) result]
+  lift . lift $ HDBC.disconnect conn
+  pure value

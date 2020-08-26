@@ -1,48 +1,39 @@
 module Data.Value
-    ( toTextArr
-    , toStrArr
-    , toText
-    , toStr
-    , isNull
-    ) where
+  ( toTextArr
+  , toStrArr
+  , toText
+  , toStr
+  , toObj
+  , toInt
+  , isNull
+  ) where
 
-import           Data.Base
-
-import           Data.Aeson
+import qualified Data.Aeson as A
+import qualified Data.Aeson.Types as AT
+import Data.Maybe
+import qualified Data.Text as T
 import qualified Data.HashMap.Strict as HM
-import qualified Data.Vector         as V
-import qualified Data.Text           as T
-import           Data.Text.Encoding (encodeUtf8)
-import qualified Data.List as L
-import           Data.Scientific
 
-toTextArr :: Value -> [T.Text]
-toTextArr value = case value of
-    Array vector -> map toText $ V.toList vector
-    Object obj   -> HM.keys obj
-    Null         -> []
-    value        -> [toText value]
+toTextArr :: A.Value -> [T.Text]
+toTextArr = fromMaybe [] . AT.parseMaybe A.parseJSON
 
-toStrArr :: Value -> [String]
-toStrArr value = case value of
-    Array vector -> map toStr $ V.toList vector
-    Object obj   -> map T.unpack $ HM.keys obj
-    Null         -> []
-    value        -> [toStr value]
+toStrArr :: A.Value -> [String]
+toStrArr = fromMaybe [] . AT.parseMaybe A.parseJSON
 
-toText :: Value -> T.Text
-toText value = case value of
-    String text -> text
-    Number num  -> T.pack . show $ scientificToInteger num
-    Bool bool   -> T.pack $ show bool
-    _           -> ""
+toText :: A.Value -> T.Text
+toText = fromMaybe "" . AT.parseMaybe A.parseJSON
 
-toStr :: Value -> String
-toStr value = case value of
-    String text -> T.unpack text
-    Number num  -> show $ scientificToInteger num
-    Bool bool   -> show bool
-    _           -> ""
+toStr :: A.Value -> String
+toStr = fromMaybe "" . AT.parseMaybe A.parseJSON
 
-isNull :: Value -> Bool
-isNull result = case result of {Null -> True; _ -> False}
+toObj :: A.Value -> A.Object
+toObj = fromMaybe HM.empty . AT.parseMaybe A.parseJSON
+
+toInt :: A.Value -> Int
+toInt = fromMaybe 1 . AT.parseMaybe A.parseJSON
+
+isNull :: A.Value -> Bool
+isNull result =
+  case result of
+    A.Null -> True
+    _ -> False

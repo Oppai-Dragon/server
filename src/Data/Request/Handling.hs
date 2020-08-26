@@ -1,142 +1,122 @@
 module Data.Request.Handling
-    ( pathHandler
-    , getEssenceList
-    , addAccessKey
-    , setEssenceList
-    , deleteAccessKey
-    , essenceResponse
-    , postEssenceResponse
-    , getEssenceResponse
-    ) where
+  ( pathHandler
+  , getEssenceList
+  , addAccessKey
+  , setEssenceList
+  , deleteAccessKey
+  , essenceResponse
+  , postEssenceResponse
+  , getEssenceResponse
+  ) where
 
-import           Config
-import           Data.Base              hiding (deletePair)
-import           Data.Handler
-import           Data.MyValue                                   (fromBS)
-import           Data.Request
-import           Data.Request.Control
-import           Data.Request.Access
-import           Data.SQL.Actions
-import           Data.SQL.ToValue
-import qualified Data.Empty                             as E
-import           Data.Essence
-import           Data.Essence.Methods
-import           Data.Essence.RelationsTree.Methods
-import           Database.Get
-import           Database.Edit
-import           Database.Create
-import           Database.Delete
+import Config
+import Data.Base hiding (deletePair)
+import Data.Essence
+import Data.Essence.Methods
+import Data.Essence.RelationsTree.Methods
+import Data.MyValue (fromBS)
+import Data.Request.Access
+import Data.Request.Control
+import Database.Create
+import Database.Delete
+import Database.Edit
+import Database.Get
 
-import           Control.Monad.Trans.Reader
-import           Control.Monad.Trans.State.Strict
-import           Control.Monad.Trans.Class          (lift)
-import           Control.Concurrent.STM.TVar
-import           Control.Monad.STM
+import Control.Monad
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Reader
+import Control.Monad.Trans.State.Strict
 
-import qualified Data.Aeson                             as A
-import qualified Data.HashMap.Strict                    as HM
+import qualified Data.Aeson as A
+import qualified Data.HashMap.Strict as HM
+import qualified Data.Text as T
 
-import           Data.ByteString (ByteString)
+import qualified Network.Wai as Wai
 
-import qualified Data.List                              as L    (deleteBy)
+import qualified Network.HTTP.Types as HTTPTypes
 
-import qualified Data.Text                              as T
-import           Data.Text.Encoding
-
-import           Database.HDBC                          as HDBC
-import qualified Database.HDBC.PostgreSQL               as PSQL
-
-import           Network.Wai
-import           Network.Wai.Middleware.RequestLogger
-import qualified Network.Wai.Handler.Warp               as Warp
-import           Network.Wai.Parse
-
-import           Network.HTTP.Types
-
-import           System.IO.Unsafe                               (unsafePerformIO)
-
----------------------------Response helpers------------------------------------------
--- Common error responses
-notFound :: Response
-notFound = responseBuilder status404 [] "Not found"
-
-pathHandler :: Request -> IO Response
+pathHandler :: Wai.Request -> IO Wai.Response
 pathHandler req = do
-    (isValidRequest, response, query, config) <- isRequestCorrect req
-    let req' = req {queryString = query}
-    if isValidRequest
-        then runReaderT (evalStateT (essenceResponse req') mempty) config
-        else pure response
+  (isValidRequest, response, query, config) <- isRequestCorrect req
+  let req' = req {Wai.queryString = query}
+  if isValidRequest
+    then runReaderT (evalStateT (essenceResponse req') mempty) config
+    else pure response
 
-getEssenceList :: Request -> ReaderT Config IO (Essence List)
+getEssenceList :: Wai.Request -> ReaderT Config IO (Essence List)
 getEssenceList req = do
-    config <- ask
-    api <- lift setApi
-    let [essence',action] = pathInfo req
-    let essence = if action == "publish" then "news" else essence'
-    let queryMBS = queryString req
-    let essenceDB = getEssenceDB essence action config api
-    essenceList <- toEssenceList essenceDB queryMBS
-    return essenceList
+  config <- ask
+  api <- lift setApi
+  let [essence', action] = Wai.pathInfo req
+  let essence =
+        if action == "publish"
+          then "news"
+          else essence'
+  let queryMBS = Wai.queryString req
+  let essenceDB = getEssenceDB essence action config api
+  essenceList <- toEssenceList essenceDB queryMBS
+  return essenceList
 
-addAccessKey :: Request -> StateT (Essence List) (ReaderT Config IO) ()
+addAccessKey :: Wai.Request -> StateT (Essence List) (ReaderT Config IO) ()
 addAccessKey req = do
-    api <- fromStateT setApi
-    (EssenceList name action list) <- get
-    let queryMBS = queryString req
-    let access = getAccess (T.pack name) (T.pack action) api
-    let isNeed = access > Everyone
-    let accessKeyList = case lookup "access_key" queryMBS of
-            Just (Just accessKey) -> [("access_key",fromBS accessKey)]
-            _                     -> []
-    let essenceList = list <> accessKeyList
-    if isNeed
-        then put (EssenceList name action essenceList)
-        else return ()
+  api <- fromStateT setApi
+  (EssenceList name action list) <- get
+  let queryMBS = Wai.queryString req
+  let access = getAccess (T.pack name) (T.pack action) api
+  let isNeed = access > Everyone
+  let accessKeyList =
+        case lookup "access_key" queryMBS of
+          Just (Just accessKey) -> [("access_key", fromBS accessKey)]
+          _ -> []
+  let essenceList = list <> accessKeyList
+  when isNeed $ put (EssenceList name action essenceList)
 
-setEssenceList :: Request -> StateT (Essence List) (ReaderT Config IO) ()
+setEssenceList :: Wai.Request -> StateT (Essence List) (ReaderT Config IO) ()
 setEssenceList req = do
-    essenceList <- lift $ getEssenceList req
-    put essenceList
+  essenceList <- lift $ getEssenceList req
+  put essenceList
 
 deleteAccessKey :: StateT (Essence List) (ReaderT Config IO) ()
 deleteAccessKey = do
-    essenceList <- get
-    modify $ deletePair "access_key"
+  modify $ deletePair "access_key"
 
-essenceResponse :: Request -> StateT (Essence List) (ReaderT Config IO) Response
+essenceResponse ::
+     Wai.Request -> StateT (Essence List) (ReaderT Config IO) Wai.Response
 essenceResponse req = do
-    setEssenceList req
-    addAccessKey req
-    relationsObj <- addRelationsFields
-    deleteAccessKey
-    if HM.null relationsObj
-        then pure $ responseBuilder status404 [] "Bad Relations"
-        else case requestMethod req of
-            "POST"  -> postEssenceResponse
-            "GET"   -> getEssenceResponse
-            _       -> pure notFound
+  setEssenceList req
+  addAccessKey req
+  relationsObj <- addRelationsFields
+  deleteAccessKey
+  if HM.null relationsObj
+    then pure $ notFoundWith "Bad Relations"
+    else case Wai.requestMethod req of
+           "POST" -> postEssenceResponse
+           "GET" -> getEssenceResponse
+           _ -> pure notFound
 
 -- | Build a successful JSON response
-jsonResponse :: A.ToJSON a => a -> Response
-jsonResponse = responseBuilder
-    status200
-    [(hContentType, "application/json")]
-    . A.fromEncoding . A.toEncoding
+jsonResponse :: A.ToJSON a => a -> Wai.Response
+jsonResponse =
+  Wai.responseBuilder
+    HTTPTypes.status200
+    [(HTTPTypes.hContentType, "application/json")] .
+  A.fromEncoding . A.toEncoding
+
 ---------------------------------Set via POST------------------------------------------
-postEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Response
+postEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Wai.Response
 postEssenceResponse = do
-    let wrapResponse = pure . jsonResponse
-    (EssenceList name action list) <- get
-    isExiste <- isNewsExiste
-    case action of
-        "create" -> if isExiste
-            then dbEdit >>= wrapResponse
-            else dbCreate >>= wrapResponse
-        "edit"   -> dbEdit >>= wrapResponse
-        "delete" -> dbDelete >>= wrapResponse
-        _        -> pure notFound
+  let wrapResponse = pure . jsonResponse
+  (EssenceList _ action _) <- get
+  isExiste <- isNewsExiste
+  case action of
+    "create" ->
+      if isExiste
+        then dbEdit >>= wrapResponse
+        else dbCreate >>= wrapResponse
+    "edit" -> dbEdit >>= wrapResponse
+    "delete" -> dbDelete >>= wrapResponse
+    _ -> pure notFound
 
 ---------------------------------Set via GET-------------------------------------------
-getEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Response
+getEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Wai.Response
 getEssenceResponse = dbGet >>= pure . jsonResponse

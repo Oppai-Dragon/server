@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 20d450b5fe31fc3d505ee1dc4f5f9d044801eb19899d6af0a7afdb53c969d2b3
+-- hash: b6eb769573af490ab7b8f219d478d48d5998ba0ec34af743101873ce7216d811
 
 name:           server
 version:        0.1.0.0
@@ -29,15 +29,18 @@ library
   exposed-modules:
       App
       Config
+      Config.Get
+      Config.Internal
+      Config.Set
       Data.Base
       Data.Empty
       Data.Essence
+      Data.Essence.GetFields
       Data.Essence.Methods
       Data.Essence.Parse
       Data.Essence.Parse.Clause
       Data.Essence.RelationsTree
       Data.Essence.RelationsTree.Methods
-      Data.Handler
       Data.MyValue
       Data.Request
       Data.Request.Access
@@ -49,7 +52,7 @@ library
       Data.Required
       Data.Required.Methods
       Data.SQL
-      Data.SQL.Actions
+      Data.SQL.ShowSql
       Data.SQL.ToValue
       Data.Value
       Database.Create
@@ -57,7 +60,12 @@ library
       Database.Edit
       Database.Get
       Database.Test
-      Lib
+      Log
+      Log.Console
+      Log.File
+      Log.Handle
+      Log.Handle.Builder
+      Log.Level
       Setup
       Tests
       Tests.Base
@@ -81,8 +89,7 @@ library
       Tests.Request.Params.Methods
       Tests.Required.Methods
       Tests.Setup
-      Tests.SQL
-      Tests.SQL.Actions
+      Tests.SQL.ShowSql
       Tests.SQL.ToValue
       Tests.Value
   other-modules:
@@ -90,6 +97,7 @@ library
   hs-source-dirs:
       src
   default-extensions: OverloadedStrings
+  ghc-options: -Wall -Werror
   build-depends:
       HDBC
     , HDBC-postgresql
@@ -126,7 +134,7 @@ executable server-build
   hs-source-dirs:
       build
   default-extensions: OverloadedStrings
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HDBC
     , HDBC-postgresql
@@ -164,7 +172,7 @@ executable server-exe
   hs-source-dirs:
       app
   default-extensions: OverloadedStrings
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HDBC
     , HDBC-postgresql
@@ -202,7 +210,7 @@ executable server-rebuild
   hs-source-dirs:
       rebuild
   default-extensions: OverloadedStrings
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HDBC
     , HDBC-postgresql
@@ -241,7 +249,7 @@ test-suite server-test
   hs-source-dirs:
       test
   default-extensions: OverloadedStrings
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       HDBC
     , HDBC-postgresql

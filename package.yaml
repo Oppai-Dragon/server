@@ -50,6 +50,10 @@ dependencies:
 - parsec
 - random
 
+ghc-options:
+- -Wall
+- -Werror
+
 library:
   source-dirs: src
 
