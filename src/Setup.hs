@@ -1,156 +1,140 @@
 {-# LANGUAGE FlexibleContexts #-}
+
 module Setup
-    ( setup
-    , resetup
-    , buildGlobalConfigJson
-    , createTables
-    , collectEssenceJson
-    , getEssenceObjects
-    , getAllQueris
-    , getCreateQuery
-    , parseAllQueries
-    , iterateObj
-    ) where
+  ( setup
+  , resetup
+  , buildGlobalConfigJson
+  , createTables
+  , collectEssenceJson
+  , getEssenceObjects
+  , getAllQueris
+  , getCreateQuery
+  , parseAllQueries
+  , iterateObj
+  ) where
 
 import Config
 import Data.Base
 import Data.Value
 
-import Tests.Essence
+import qualified Data.Aeson as A
+import qualified Data.HashMap.Strict as HM
+import Data.List as L
+import qualified Data.Text as T
+import Debug.Trace
 
-import Data.Aeson
-import Data.Aeson.Types (parseMaybe)
-import qualified Data.HashMap.Strict    as HM
-import qualified Data.Vector            as V
+import Control.Monad.Trans.Writer.CPS
 
-import qualified Data.List              as L
-import qualified Data.Text              as T
-import qualified Data.Text.Encoding     as TE
-import qualified Data.ByteString        as BS
-import qualified Data.ByteString.Lazy   as BSL
-
-import           Control.Monad.Trans.Writer.CPS
-import           Control.Monad.Trans.Class          (lift)
-
+import qualified Database.HDBC as HDBC
 import qualified Database.HDBC.PostgreSQL as PSQL
-import           Database.HDBC
 
-import System.IO.Unsafe                         (unsafePerformIO)
-import System.Directory                         (getCurrentDirectory)
+import System.IO.Unsafe (unsafePerformIO)
 
 -- For changing settings in SQL Shell (psql)
 -- SET lc_messages = 'en_US.UTF8'; SET client_encoding = 'UTF8';
-
 -- For deleting all tables
 dropTablesQuery :: String
-dropTablesQuery = "DROP TABLE person, author, category, tag, news, draft, comment;"
+dropTablesQuery =
+  "DROP TABLE person, author, category, tag, news, draft, comment;"
 
 setup :: IO ()
 setup = do
-    buildGlobalConfigJson
-    createTables
+  buildGlobalConfigJson
+  createTables
 
 resetup :: IO ()
 resetup = do
-    dropTables
-    setup
+  dropTables
+  setup
+
+getConnection :: IO PSQL.Connection
+getConnection = do
+  config <- setConfig
+  let uriDB = getUri config
+  PSQL.connectPostgreSQL uriDB
 
 dropTables :: IO ()
 dropTables = do
-    config <- setConfig
-    let uriDB = getUri config
-    conn <- PSQL.connectPostgreSQL uriDB
-    run conn dropTablesQuery []
-    commit conn
-    disconnect conn
-    print "Database for server is rebuilded, all tables are empty"
+  conn <- getConnection
+  _ <- HDBC.run conn dropTablesQuery []
+  HDBC.commit conn
+  HDBC.disconnect conn
+  traceIO "Database for server is rebuilded, all tables are empty"
 
 buildGlobalConfigJson :: IO ()
 buildGlobalConfigJson = do
-    path <- setGlobalConfigPath
-    api <- setApi
-    psql <- setPsql
-    let uriObj = HM.singleton "uriDB" . String . T.pack $ getUriDB psql
-    let configObj = HM.singleton "config" $ Object uriObj
-    objEssenceList <- collectEssenceJson
-    let jsonObj =  HM.unions objEssenceList
-    let essences = getEssences api
-    let json = Object $ HM.unions [jsonObj,configObj]
-    encodeFile path json
+  path <- setGlobalConfigPath
+  psql <- setPsql
+  let uriObj = HM.singleton "uriDB" . A.String . T.pack $ getUriDB psql
+  let configObj = HM.singleton "config" $ A.Object uriObj
+  objEssenceList <- collectEssenceJson
+  let jsonObj = HM.unions objEssenceList
+  let json = A.Object $ HM.unions [jsonObj, configObj]
+  A.encodeFile path json
 
 createTables :: IO ()
 createTables = do
-    psql <- setPsql
-    config <- setConfig
-    let uriDB = getUri config
-    conn <- PSQL.connectPostgreSQL uriDB
-    sqlQueries <- getAllQueris
-    ioStack (flip (run conn) []) sqlQueries
-    let success = commit conn >> disconnect conn >> print "Success"
-    --let fail = rollback conn >> disconnect conn >> print "Fail"
-    success
+  conn <- getConnection
+  sqlQueries <- getAllQueris
+  ioStack (flip (HDBC.run conn) []) sqlQueries
+  HDBC.commit conn
+  HDBC.disconnect conn
+  traceIO "Success"
 
-collectEssenceJson :: IO [Object]
+collectEssenceJson :: IO [A.Object]
 collectEssenceJson = do
-    objList <- getEssenceObjects
-    let parseOnlyTable obj =
-            case parseMaybe (.: "TABLE") obj of
-                Just (Object o) -> o
-                _               -> HM.empty
-    let result = [obj | obj <- [parseOnlyTable o | o <- objList], not $ null obj]
-    return result
+  objList <- getEssenceObjects
+  let parseOnlyTable obj =
+        case getValue ["TABLE"] obj of
+          A.Object o -> o
+          _ -> HM.empty
+  let result = [obj | obj <- [parseOnlyTable o | o <- objList], not $ null obj]
+  return result
 
-getEssenceObjects :: IO [Object]
+getEssenceObjects :: IO [A.Object]
 getEssenceObjects = do
-    api <- setApi
-    let essences = getEssences api
-    let createStrList = "extension" : map T.unpack essences
-    let createObjList =
-            map
-            (\x -> unsafePerformIO . set . setPath $ "\\Setup\\" <> x <> ".json")
-            createStrList
-    return createObjList
+  api <- setApi
+  let essences = getEssences api
+  let createStrList = "extension" : map T.unpack essences
+  let createObjList =
+        map
+          (\x -> unsafePerformIO . set . setPath $ "\\Setup\\" <> x <> ".json")
+          createStrList
+  return createObjList
 
 getAllQueris :: IO [String]
 getAllQueris = do
-    createObjList <- getEssenceObjects
-    let result =
-            (\x -> L.delete ')' (head x) : tailCase x)
-            [ "CREATE " <> getCreateQuery obj | obj <- createObjList]
-    return result
+  createObjList <- getEssenceObjects
+  let result =
+        (\x -> L.delete ')' (head x) : tailCase x)
+          ["CREATE " <> getCreateQuery obj | obj <- createObjList]
+  return result
 
-getCreateQuery :: Object -> String
-getCreateQuery obj =
-    parseAllQueries . execWriter . iterateObj . Object $ obj
+getCreateQuery :: A.Object -> String
+getCreateQuery obj = parseAllQueries . execWriter $ iterateObj obj
 
 parseAllQueries :: String -> String
 parseAllQueries str =
-    let
-        addingSemicolon = flip (<>) ");" . init
-        addingLBracket = map2Var
-            (\x1 x2 -> if x1 == "TABLE" then x2 <> " (" else x2)
-    in addingSemicolon . unwords .
-    addingLBracket . words $ str
+  let addingSemicolon = flip (<>) ");" . init
+      addingLBracket =
+        map2Var
+          (\x1 x2 ->
+             case x1 of
+               "TABLE" -> x2 <> " ("
+               _ -> x2)
+   in addingSemicolon . unwords . addingLBracket . words $ str
 
-iterateObj :: Value -> Writer String ()
-iterateObj (Object obj') =
-    let
-        parseObj a obj = parseMaybe (.: a) obj
-
-        iterate []      = tell ""
-        iterate (a:arr) = do
-            tell $ T.unpack a <> " "
-            case parseObj a obj' of
-                Just (Object obj) ->
-                    (tell . execWriter . iterateObj) (Object obj)
-                    >> iterate arr
-                Just (Array vector) ->
-                    (tell . L.intercalate " " . map T.unpack . toTextArr)
-                    (Array vector)
-                    >> tell " ,"
-                    >> iterate arr
-                Just (String text)->
-                    tell (T.unpack text)
-                    >> tell " ,"
-                    >> iterate arr
-    in iterate $ HM.keys obj'
+iterateObj :: A.Object -> Writer String ()
+iterateObj obj =
+  let helper [] = tell ""
+      helper (a:arr) = do
+        tell $ T.unpack a <> " "
+        case getValue [a] obj of
+          A.Object x -> (tell . execWriter . iterateObj) x >> helper arr
+          A.Array vector ->
+            (tell . unwords . map T.unpack . toTextArr) (A.Array vector) >>
+            tell " ," >>
+            helper arr
+          A.String text -> tell (T.unpack text) >> tell " ," >> helper arr
+          _ -> helper arr
+   in helper $ HM.keys obj

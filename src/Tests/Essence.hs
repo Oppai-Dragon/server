@@ -1,165 +1,242 @@
 module Tests.Essence where
 
+import Data.Essence
 import Data.MyValue
-import Data.Essence hiding (name)
 
-import Data.Aeson
+import qualified Data.Aeson as A
 import qualified Data.HashMap.Strict as HM
-import Data.Time.Clock
-import qualified Data.Text           as T
-
-import System.IO.Unsafe (unsafePerformIO)
+import qualified Data.Text as T
 
 --------------------------------------------------------------------------------------------
 -----------------------------------Default Setting
-defaultFirstName, defaultLastName, defaultDate,
-    defaultAvatar, defaultAccessKey, defaultName,
-        defaultContent :: T.Text
-defaultFirstName = T.pack lastName
-defaultLastName  = T.pack firstName
-defaultAvatar    = T.pack avatar
-defaultDate      = T.pack date
-defaultAccessKey = T.pack accessKey
-defaultName      = T.pack name
-defaultContent   = T.pack content
+defaultFirstName, defaultLastName, defaultDate, defaultAvatar, defaultAccessKey, defaultName, defaultContent ::
+     T.Text
+defaultFirstName = T.pack testLastName
 
-defaultHM :: Object
+defaultLastName = T.pack testFirstName
+
+defaultAvatar = T.pack testAvatar
+
+defaultDate = T.pack testDate
+
+defaultAccessKey = T.pack testAccessKey
+
+defaultName = T.pack testName
+
+defaultContent = T.pack testContent
+
+defaultHM :: A.Object
 defaultHM = HM.fromList defaultList
-defaultList :: [(T.Text,Value)]
+
+defaultList :: [(T.Text, A.Value)]
 defaultList =
-    [("first_name",String defaultFirstName)
-    ,("last_name",String defaultLastName)
-    ,("avatar",String defaultAvatar)
-    ,("date_of_creation",String defaultDate)
-    ,("access_key",String defaultAccessKey)
-    ,("name",String defaultName)
-    ,("content",String defaultContent)
-    ,("is_admin",Bool True)]
+  [ ("first_name", A.String defaultFirstName)
+  , ("last_name", A.String defaultLastName)
+  , ("avatar", A.String defaultAvatar)
+  , ("date_of_creation", A.String defaultDate)
+  , ("access_key", A.String defaultAccessKey)
+  , ("name", A.String defaultName)
+  , ("content", A.String defaultContent)
+  , ("is_admin", A.Bool True)
+  ]
+
 --------------------------------------------------------------------------------------------
 -----------------------------------Essence List
+createEssenceList :: [Essence List]
 createEssenceList =
-    [testPersonListCreate
-    ,testAuthorListCreate
-    ,testCategoryListCreate
-    ,testTagListCreate
-    ,testDraftListCreate
-    ,testNewsListCreate
-    ,testCommentListCreate
-    ]
+  [ testPersonListCreate
+  , testAuthorListCreate
+  , testCategoryListCreate
+  , testTagListCreate
+  , testDraftListCreate
+  , testNewsListCreate
+  , testCommentListCreate
+  ]
+
 --------------------------------------------------------------------------------------------
-essences = ["person","author","category","tag","draft","news","comment"]
-firstName, lastName, accessKey,
-    avatar, date, name,
-        content :: String
-firstName = "testFirstName"
-lastName  = "testLastName"
-accessKey = "12345678-1234-1234-1234-123456789abc"
-avatar    = "https://oppai-dragon.site/images/avatar.jpg"
-date      = "2020-08-06"
-name      = "testName"
-content   = "testContent"
+testEssences :: [String]
+testEssences =
+  ["person", "author", "category", "tag", "draft", "news", "comment"]
+
+testFirstName, testLastName, testAccessKey, testAvatar, testDate, testName, testContent ::
+     String
+testFirstName = "testFirstName"
+
+testLastName = "testLastName"
+
+testAccessKey = "12345678-1234-1234-1234-123456789abc"
+
+testAvatar = "https://oppai-dragon.site/images/avatar.jpg"
+
+testDate = "2020-08-06"
+
+testName = "testName"
+
+testContent = "testContent"
+
 -- | Person
+testPersonListCreate :: Essence List
 testPersonListCreate = EssenceList "person" "create" testPersonListCreateFields
+
+testPersonListCreateFields :: List
 testPersonListCreateFields =
-    [("first_name",MyString firstName)
-    ,("last_name",MyString lastName)
-    ,("date_of_creation",MyDate date)
-    ,("avatar",MyString avatar)
-    ,("access_key",MyString accessKey)
-    ,("is_admin",MyBool True)]
+  [ ("first_name", MyString testFirstName)
+  , ("last_name", MyString testLastName)
+  , ("date_of_creation", MyDate testDate)
+  , ("avatar", MyString testAvatar)
+  , ("access_key", MyString testAccessKey)
+  , ("is_admin", MyBool True)
+  ]
+
 -- | Author
+testAuthorListCreate :: Essence List
 testAuthorListCreate = EssenceList "author" "create" testAuthorListCreateFields
+
+testAuthorListCreateFields :: List
 testAuthorListCreateFields = []
+
 -- | Category
-testCategoryListCreate = EssenceList "category" "create" testCategoryListCreateFields
-testCategoryListCreateFields = [("name",MyString name)]
+testCategoryListCreate :: Essence List
+testCategoryListCreate =
+  EssenceList "category" "create" testCategoryListCreateFields
+
+testCategoryListCreateFields :: List
+testCategoryListCreateFields = [("name", MyString testName)]
+
 -- | Tag
+testTagListCreate :: Essence List
 testTagListCreate = EssenceList "tag" "create" testTagListCreateFields
-testTagListCreateFields = [("name",MyString name)]
+
+testTagListCreateFields :: List
+testTagListCreateFields = [("name", MyString testName)]
+
 -- | Draft
+testDraftListCreate :: Essence List
 testDraftListCreate = EssenceList "draft" "create" testDraftListCreateFields
+
+testDraftListCreateFields :: List
 testDraftListCreateFields =
-    [("name",MyString name)
-    ,("content",MyString content)
-    ,("date_of_creation",MyDate date)]
+  [ ("name", MyString testName)
+  , ("content", MyString testContent)
+  , ("date_of_creation", MyDate testDate)
+  ]
+
 -- | News
+testNewsListCreate :: Essence List
 testNewsListCreate = EssenceList "news" "create" testNewsListCreateFields
-testNewsListCreateFields = [("date_of_creation",MyDate date)]
+
+testNewsListCreateFields :: List
+testNewsListCreateFields = [("date_of_creation", MyDate testDate)]
+
 -- For functions without access to database
-testNewsCreateFields = [("id",MyInteger 1),("content",MyString "kek")]
-testNewsEditFields = [("id",MyInteger 1),("content",MyString "kek")]
+testNewsCreateFields :: List
+testNewsCreateFields = [("id", MyInteger 1), ("content", MyString "kek")]
+
+testNewsEditFields :: List
+testNewsEditFields = [("id", MyInteger 1), ("content", MyString "kek")]
+
+testNewsGetFields :: List
 testNewsGetFields =
-    [("id",MyInteger 1)
-    ,("filter_author_name",MyString "misha dragon")
-    ,("search_category_name",MyString "cat")
-    ,("sort_date_of_creation",MyBool True)]
-testNewsDeleteFields = [("id",MyInteger 1)]
+  [ ("id", MyInteger 1)
+  , ("filter_author_name", MyString "misha dragon")
+  , ("search_category_name", MyString "cat")
+  , ("sort_date_of_creation", MyBool True)
+  ]
+
+testNewsDeleteFields :: List
+testNewsDeleteFields = [("id", MyInteger 1)]
+
 -- | Comment
-testCommentListCreate = EssenceList "comment" "create" testCommentListCreateFields
+testCommentListCreate :: Essence List
+testCommentListCreate =
+  EssenceList "comment" "create" testCommentListCreateFields
+
+testCommentListCreateFields :: List
 testCommentListCreateFields =
-    [("content",MyString content)
-    ,("date_of_creation",MyDate date)]
+  [("content", MyString testContent), ("date_of_creation", MyDate testDate)]
+
 --------------------------------------------------------------------------------------------
 -----------------------------------Essence Database
 --------------------------------------------------------------------------------------------
 -- | Person
-testPersonDatabase = EssenceDatabase "person"
-    $ HM.fromList testPersonDatabaseFields
+testPersonDatabase :: Essence Database
+testPersonDatabase =
+  EssenceDatabase "person" $ HM.fromList testPersonDatabaseFields
+
+testPersonDatabaseFields :: [(String, [(String, String)])]
 testPersonDatabaseFields =
-    zip testPersonDatabaseFieldsName testPersonDatabaseDescription
+  zip testPersonDatabaseFieldsName testPersonDatabaseDescription
+
+testPersonDatabaseFieldsName :: [String]
 testPersonDatabaseFieldsName =
-    [ "id"
-    , "avatar"
-    , "date_of_creation"
-    , "is_admin"
-    , "access_key"
-    , "last_name"
-    , "first_name"
-    ]
+  [ "id"
+  , "avatar"
+  , "date_of_creation"
+  , "is_admin"
+  , "access_key"
+  , "last_name"
+  , "first_name"
+  ]
+
+testPersonDatabaseDescription :: [[(String, String)]]
 testPersonDatabaseDescription =
-    [[("type","int"),("constraint","primary key")]
-    ,[("type","string"),("value","null")]
-    ,[("type","date"),("value","null")]
-    ,[("type","bool"),("value","null")]
-    ,[("type","uuid"),("value","null")]
-    ,[("type","string"),("value","not null")]
-    ,[("type","string"),("value","not null")]
-    ]
+  [ [("type", "int"), ("constraint", "primary key")]
+  , [("type", "string"), ("value", "null")]
+  , [("type", "date"), ("value", "null")]
+  , [("type", "bool"), ("value", "null")]
+  , [("type", "uuid"), ("value", "null")]
+  , [("type", "string"), ("value", "not null")]
+  , [("type", "string"), ("value", "not null")]
+  ]
+
 --------------------------------------------------------------------------------------------
 -----------------------------------Essence DB
 --------------------------------------------------------------------------------------------
 -- | Author
+testAuthorGetDB :: Essence DB
 testAuthorGetDB = EssenceDB "author" "get" testAuthorHMDescription
+
+testAuthorHMDescription :: DB
 testAuthorHMDescription = HM.fromList testAuthorDBFields
+
+testAuthorDBFields :: [(String, Description)]
 testAuthorDBFields = zip testAuthorDBFieldsName testAuthorDBDescription
-testAuthorDBFieldsName =
-    [ "id"
-    , "person_id"
-    , "description"
-    ]
+
+testAuthorDBFieldsName :: [String]
+testAuthorDBFieldsName = ["id", "person_id", "description"]
+
+testAuthorDBDescription :: [Description]
 testAuthorDBDescription =
-    [ Description (MyInteger 0) Nothing Nothing (Just PRIMARY)
-    , Description (MyInteger 0) (Just $ NOT NULL) (Just $ Relations "person" "id") (Just UNIQUE)
-    , Description (MyString "") Nothing Nothing Nothing
-    ]
+  [ Description (MyInteger 0) Nothing Nothing (Just PRIMARY)
+  , Description
+      (MyInteger 0)
+      (Just $ NOT NULL)
+      (Just $ Relations "person" "id")
+      (Just UNIQUE)
+  , Description (MyString "") Nothing Nothing Nothing
+  ]
 
 -- | Person
+testPersonCreateDB :: Essence DB
 testPersonCreateDB = EssenceDB "person" "create" testPersonHMDescription
+
+testPersonHMDescription :: DB
 testPersonHMDescription = HM.fromList testPersonDBFields
+
+testPersonDBFields :: [(String, Description)]
 testPersonDBFields = zip testPersonDBFieldsName testPersonDBDescription
+
+testPersonDBFieldsName :: [String]
 testPersonDBFieldsName =
-    [ "id"
-    , "avatar"
-    , "date_of_creation"
-    , "is_admin"
-    , "last_name"
-    , "first_name"
-    ]
+  ["id", "avatar", "date_of_creation", "is_admin", "last_name", "first_name", "access_key"]
+
+testPersonDBDescription :: [Description]
 testPersonDBDescription =
-    [ Description (MyInteger 0) Nothing             Nothing (Just PRIMARY)
-    , Description (MyString "") (Just NULL)         Nothing Nothing
-    , Description (MyDate "") (Just $ NULL)     Nothing Nothing
-    , Description (MyBool False) (Just NULL)        Nothing Nothing
-    , Description (MyString "") (Just $ NOT NULL)   Nothing Nothing
-    , Description (MyString "") (Just $ NOT NULL)   Nothing Nothing
-    ]
+  [ Description (MyInteger 0) Nothing Nothing (Just PRIMARY)
+  , Description (MyString "") (Just NULL) Nothing Nothing
+  , Description (MyDate "") (Just NULL) Nothing Nothing
+  , Description (MyBool False) (Just NULL) Nothing Nothing
+  , Description (MyString "") (Just $ NOT NULL) Nothing Nothing
+  , Description (MyString "") (Just $ NOT NULL) Nothing Nothing
+  , Description (MyString "") (Just $ NOT NULL) Nothing Nothing
+  ]

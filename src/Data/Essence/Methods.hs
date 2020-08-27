@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE InstanceSigs #-}
 
 module Data.Essence.Methods
   ( addList
@@ -110,10 +109,10 @@ getMyValue :: String -> MyValue
 getMyValue = read
 
 parseOnlyValues :: List -> [MyValue]
-parseOnlyValues = snd . unzip
+parseOnlyValues = map snd
 
 parseOnlyFields :: List -> [String]
-parseOnlyFields = fst . unzip
+parseOnlyFields = map fst
 
 withoutEmpty :: [(Field, MyValue)] -> [(Field, MyValue)]
 withoutEmpty [] = []

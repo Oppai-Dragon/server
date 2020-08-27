@@ -56,11 +56,7 @@ notFound :: Wai.Response
 notFound = notFoundWith "Not found"
 
 set :: IO FilePath -> IO A.Object
-set ioPath =
-  ioPath >>= BSL.readFile >>= pure . A.decode >>= \x ->
-    case x of
-      Just hm -> pure hm
-      Nothing -> pure HM.empty
+set = fmap (fromMaybe HM.empty . A.decode) . (>>= BSL.readFile)
 
 setPath :: FilePath -> IO FilePath
 setPath path = fmap (flip (<>) $ "\\src\\" <> path) getRepDir
@@ -96,7 +92,7 @@ ifElseThen (bool:bools) (act:acts) =
     else act
 ifElseThen _ _ = error "ifElseThen bad arguments"
 
-reverseMap :: a -> [(a -> b)] -> [b]
+reverseMap :: a -> [a -> b] -> [b]
 reverseMap _ [] = []
 reverseMap var (func:rest) = func var : reverseMap var rest
 

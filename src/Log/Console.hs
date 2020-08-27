@@ -15,6 +15,7 @@ import Log.Handle
 import Log.Level
 
 import Control.Exception
+import Control.Monad
 import Debug.Trace
 import GHC.Stack
 
@@ -32,10 +33,7 @@ logM (Handle path maybeLevel) level text = do
   let prettyLoc = prettyFileLog callStack
   let msg = time <> "-" <> prettyLog level text <> "\n\t" <> prettyLoc <> "\n"
   case maybeLevel of
-    Just currentLevel ->
-      if currentLevel <= level
-        then writeLog path msg
-        else return ()
+    Just currentLevel -> when (currentLevel <= level) $ writeLog path msg
     Nothing -> writeLog path msg
 
 -------------------------------------------------------------------------------

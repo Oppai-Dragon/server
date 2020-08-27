@@ -32,7 +32,7 @@ import Control.Monad.Trans.State.Strict
 
 dbGet :: StateT (Essence List) (ReaderT Config IO) A.Value
 dbGet = do
-  config <- lift $ ask
+  config <- lift ask
   addOffsetLimit
   essenceList <- get
   let getQuery = showSql essenceList

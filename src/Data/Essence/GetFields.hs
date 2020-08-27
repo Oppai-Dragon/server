@@ -97,11 +97,10 @@ instance GetFields [Field] where
       "id" -> iterateHMCreate rest
       "date_of_creation" -> iterateHMCreate rest
       _ -> [field] : iterateHMCreate rest
-  iterateHMGet = flip (:) [] . fst . unzip
+  iterateHMGet = flip (:) [] . map fst
   iterateHMEdit [] = []
   iterateHMEdit ((field, _):rest) =
     case field of
-      "access_key" -> iterateHMEdit rest
       "date_of_creation" -> iterateHMEdit rest
       _ -> [field] : iterateHMEdit rest
   iterateHMDelete [] = []

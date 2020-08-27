@@ -1,36 +1,43 @@
 module Tests.SQL.ShowSql
-  ( sqlTests
+  ( showSqlTests
   ) where
 
+import Data.Essence
 import Data.MyValue
 import Data.SQL
+import Data.SQL.ShowSql
+
+import Tests.Essence
 
 import Test.HUnit
 
-sqlTests =
-  [ TestLabel "showSql_insert_Test" showSql_insert_Test
-  , TestLabel "showSql_edit_Test" showSql_edit_Test
-  , TestLabel "showSql_get_Test" showSql_get_Test
-  , TestLabel "showSql_delete_Test" showSql_delete_Test
-  , TestLabel "showSql_arrClauseString_Test" showSql_arrClauseString_Test
-  , TestLabel "showSql_setList_Test" showSql_setList_Test
-  , TestLabel "showSql_whereList_Test" showSql_whereList_Test
-  , TestLabel "showSql_filterList_Test" showSql_filterList_Test
-  , TestLabel "showSql_orderByList_Test" showSql_orderByList_Test
-  , TestLabel "showSql_arrClauseArrString_Test" showSql_arrClauseArrString_Test
+showSqlTests :: [Test]
+showSqlTests =
+  [ TestLabel "showSqlInsertTest" showSqlInsertTest
+  , TestLabel "showSqlEditTest" showSqlEditTest
+  , TestLabel "showSqlGetTest" showSqlGetTest
+  , TestLabel "showSqlDeleteTest" showSqlDeleteTest
+  , TestLabel "showSqlArrClauseStringTest" showSqlArrClauseStringTest
+  , TestLabel "showSqlSetListTest" showSqlSetListTest
+  , TestLabel "showSqlWhereListTest" showSqlWhereListTest
+  , TestLabel "showSqlFilterListTest" showSqlFilterListTest
+  , TestLabel "showSqlOrderByListTest" showSqlOrderByListTest
+  , TestLabel "showSqlArrClauseArrStringTest" showSqlArrClauseArrStringTest
   , TestLabel "clauseSequenceATest" clauseSequenceATest
   , TestLabel "withoutManyWhereTest" withoutManyWhereTest
   ] <>
   sqlActionsTests
 
-showSql_insert_Test =
+showSqlInsertTest, showSqlEditTest, showSqlGetTest, showSqlDeleteTest, showSqlArrClauseStringTest, showSqlSetListTest, showSqlWhereListTest, showSqlFilterListTest, showSqlOrderByListTest, showSqlArrClauseArrStringTest, clauseSequenceATest, withoutManyWhereTest ::
+     Test
+showSqlInsertTest =
   TestCase $
   assertEqual
     "for(showSql (Insert \"person\" [\"first_name\"] [MyString \"misha\"]))"
     "INSERT INTO person (first_name) VALUES ('misha');" $
   showSql (Insert "person" ["first_name"] [MyString "misha"])
 
-showSql_edit_Test =
+showSqlEditTest =
   TestCase $
   assertEqual
     ("for(showSql " <>
@@ -46,7 +53,7 @@ showSql_edit_Test =
        ]
        [Where ("id", MyInteger 1)])
 
-showSql_get_Test =
+showSqlGetTest =
   TestCase $
   assertEqual
     ("for(showSql (Get \"person\" " <>
@@ -63,14 +70,14 @@ showSql_get_Test =
        , OrderBy "date_of_creation"
        ])
 
-showSql_delete_Test =
+showSqlDeleteTest =
   TestCase $
   assertEqual
     "for(showSql (Delete \"person\" [Where (\"id\",MyInteger 1)]))"
     "DELETE FROM person WHERE id=1;" $
   showSql (Delete "person" [Where ("id", MyInteger 1)])
 
-showSql_arrClauseString_Test =
+showSqlArrClauseStringTest =
   TestCase $
   assertEqual
     ("for(showSql " <>
@@ -84,35 +91,35 @@ showSql_arrClauseString_Test =
     , OrderBy "date_of_creation"
     ]
 
-showSql_setList_Test =
+showSqlSetListTest =
   TestCase $
   assertEqual
     "for(showSql (SetList [(\"first_name\",\"'misha'\")]))"
     " SET first_name='misha'" $
   showSql (SetList [("first_name", "'misha'")])
 
-showSql_whereList_Test =
+showSqlWhereListTest =
   TestCase $
   assertEqual
     "for(showSql (WhereList [(\"first_name\",\"'misha'\")]))"
     " WHERE first_name='misha'" $
   showSql (WhereList [("first_name", "'misha'")])
 
-showSql_filterList_Test =
+showSqlFilterListTest =
   TestCase $
   assertEqual
     "for(showSql (FilterList [\"last_name ILIKE ('%dragon%')\"]))"
     " WHERE last_name ILIKE '%dragon%'" $
   showSql (FilterList ["last_name ILIKE '%dragon%'"])
 
-showSql_orderByList_Test =
+showSqlOrderByListTest =
   TestCase $
   assertEqual
     "for(showSql (OrderByList [\"date_of_creation\"]))"
     " ORDER BY (date_of_creation)" $
   showSql (OrderByList ["date_of_creation"])
 
-showSql_arrClauseArrString_Test =
+showSqlArrClauseArrStringTest =
   TestCase $
   assertEqual
     ("for(showSql " <>
@@ -126,28 +133,31 @@ showSql_arrClauseArrString_Test =
     , OrderByList ["date_of_creation"]
     ]
 
+sqlActionsTests :: [Test]
 sqlActionsTests =
-  [ TestLabel "showSql_create_Test" showSql_create_Test
-  , TestLabel "showSql_edit_Test" showSql_edit_Test
-  , TestLabel "showSql_get_Test" showSql_get_Test
-  , TestLabel "showSql_delete_Test" showSql_delete_Test
+  [ TestLabel "showSqlEssenceCreateTest" showSqlEssenceCreateTest
+  , TestLabel "showSqlEssenceEditTest" showSqlEssenceEditTest
+  , TestLabel "showSqlEssenceGetTest" showSqlEssenceGetTest
+  , TestLabel "showSqlEssenceDeleteTest" showSqlEssenceDeleteTest
   ]
 
-showSql_create_Test =
+showSqlEssenceCreateTest, showSqlEssenceEditTest, showSqlEssenceGetTest, showSqlEssenceDeleteTest ::
+     Test
+showSqlEssenceCreateTest =
   TestCase $
   assertEqual
     "for (showSql (EssenceList \"news\" \"create\" testNewsCreateFields))"
     "INSERT INTO news (id,content) VALUES (1,'kek');" $
   showSql (EssenceList "news" "create" testNewsCreateFields)
 
-showSql_edit_Test =
+showSqlEssenceEditTest =
   TestCase $
   assertEqual
     "for (showS (EssenceList \"news\" \"edit\" testNewsEditFields))"
     "UPDATE news SET id=1,content='kek' WHERE id=1;" $
   showSql (EssenceList "news" "edit" testNewsEditFields)
 
-showSql_get_Test =
+showSqlEssenceGetTest =
   TestCase $
   assertEqual
     "for (show (EssenceList \"news\" \"get\" testNewsGetFields))"
@@ -159,7 +169,7 @@ showSql_get_Test =
      "AND category.name ILIKE '%cat%' ORDER BY (news.date_of_creation);") $
   showSql (EssenceList "news" "get" testNewsGetFields)
 
-showSql_delete_Test =
+showSqlEssenceDeleteTest =
   TestCase $
   assertEqual
     "for (showSql (EssenceList \"news\" \"delete\" testNewsDeleteFields))"

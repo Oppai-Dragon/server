@@ -54,8 +54,7 @@ getEssenceList req = do
           else essence'
   let queryMBS = Wai.queryString req
   let essenceDB = getEssenceDB essence action config api
-  essenceList <- toEssenceList essenceDB queryMBS
-  return essenceList
+  toEssenceList essenceDB queryMBS
 
 addAccessKey :: Wai.Request -> StateT (Essence List) (ReaderT Config IO) ()
 addAccessKey req = do
@@ -119,4 +118,4 @@ postEssenceResponse = do
 
 ---------------------------------Set via GET-------------------------------------------
 getEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Wai.Response
-getEssenceResponse = dbGet >>= pure . jsonResponse
+getEssenceResponse = jsonResponse <$> dbGet

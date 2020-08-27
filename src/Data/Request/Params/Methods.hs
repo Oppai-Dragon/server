@@ -51,7 +51,7 @@ iterateRequiredParams required queryBS =
         AND params -> and $ iterateParams (toBSArr params) queryBS
         OR params -> or $ iterateParams (toBSArr params) queryBS
         Required requiredArr ->
-          and $ map (\x -> iterateRequiredParams x queryBS) requiredArr
+          all (`iterateRequiredParams` queryBS) requiredArr
 
 iterateParams :: [BS.ByteString] -> QueryBS -> [Bool]
 iterateParams [] _ = []
@@ -74,7 +74,7 @@ isConstraintCorrect ::
 isConstraintCorrect _ [] = tell $ All True
 isConstraintCorrect (EssenceDB _ "get" _) _ = tell $ All True
 isConstraintCorrect (EssenceDB _ "delete" _) _ = tell $ All True
-isConstraintCorrect (EssenceDB _ _ _) (("tag_ids", MyIntegers arr):_) = do
+isConstraintCorrect EssenceDB {} (("tag_ids", MyIntegers arr):_) = do
   (A.Object pageObj) <-
     lift $ dbGetArray (EssenceList "tag" "get" [("id", MyIntegers arr)])
   let bool = length (HM.keys pageObj) == length arr

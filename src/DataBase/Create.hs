@@ -23,7 +23,7 @@ import Control.Monad.Trans.State.Strict
 
 dbCreate :: StateT (Essence List) (ReaderT Config IO) A.Value
 dbCreate = do
-  config <- lift $ ask
+  config <- lift ask
   addingDefault
   essenceList@(EssenceList name _ _) <- get
   let createQuery = showSql essenceList

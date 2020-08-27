@@ -105,7 +105,7 @@ iterateRelations (Trunk t (Branch b leafs)) objOld = do
                 unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objNew
           let requiredFields = toFields $ getRequiredFields essenceDB api
           let bool = ifFieldsFill requiredFields addedFields
-          if and [isRightRelations objOld objNew t b, bool]
+          if isRightRelations objOld objNew t b && bool
             then modify (deletePair "id") >> modify (addList addedFields) >>
                  return (HM.singleton "result" (A.Number 1))
             else return HM.empty
@@ -202,12 +202,12 @@ isRightRelations rootObj branchObj rootEssence "news" =
           [x] -> x
           (x:_) -> x
           _ -> A.Null
-   in any (branchValue ==) rootArrValue
+   in elem branchValue rootArrValue
 isRightRelations rootObj branchObj rootEssence branchEssence =
   let rKey1 = T.pack . parseObjEssence $ beforeUnderscore rootEssence
       rKey2 = T.pack $ afterUnderscore rootEssence
       bKey1 = T.pack $ parseObjEssence branchEssence
-      bKey2 = T.pack $ rootEssence
+      bKey2 = T.pack rootEssence
       rootValue = getValue [rKey1, rKey2] rootObj
       branchValue = getValue [bKey1, bKey2] branchObj
    in (==) rootValue branchValue

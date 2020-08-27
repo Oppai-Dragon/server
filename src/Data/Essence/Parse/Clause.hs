@@ -105,11 +105,13 @@ pickClause name (field, myValue) =
             MyBool True ->
               case specificField of
                 "author_name" ->
-                  OrderBy "person.last_name" : OrderBy "person.first_name" : []
+                  [OrderBy "person.last_name", OrderBy "person.first_name"]
                 "number_of_photos" ->
-                  OrderBy
-                    ("ARRAY_LENGTH(" <> name +. "draft_optional_photos, 1) DESC") :
-                  OrderBy (name +. "draft_main_photo") : []
+                  [ OrderBy
+                      ("ARRAY_LENGTH(" <>
+                       name +. "draft_optional_photos, 1) DESC")
+                  , OrderBy (name +. "draft_main_photo")
+                  ]
                 "category_name" -> [OrderBy "category.name"]
                 "date_of_creation" -> [OrderBy $ name +. "date_of_creation"]
                 _ -> []

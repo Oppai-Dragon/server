@@ -1,7 +1,6 @@
-{-# LANGUAGE LambdaCase #-}
 module Tests.Database
-    ( databaseTests
-    ) where
+  ( databaseTests
+  ) where
 
 import Config
 import Database.Test
@@ -16,19 +15,21 @@ import Tests.Essence
 import Test.HUnit
 
 databaseTests :: [Test]
-databaseTests = unsafePerformIO $ runReaderT
-    (( do
-        (testListCreate,essenceData) <- runStateT (createEssenceTest createEssenceList) []
-        testListEdit <- editEssenceTest essences essenceData
-        testListGet <- getEssenceTest essences essenceData
+{-# NOINLINE databaseTests #-}
+databaseTests =
+  unsafePerformIO $
+  runReaderT
+    (do (testListCreate, essenceData) <-
+          runStateT (createEssenceTest createEssenceList) []
+        testListEdit <- editEssenceTest testEssences essenceData
+        testListGet <- getEssenceTest testEssences essenceData
         testListGetOne <- getOneTest essenceData
         testListGetArray <- getArrayTest essenceData
-        testListDelete <- deleteEssenceTest (reverse essences) essenceData
-        let tests = testListCreate
-                <> testListEdit
-                <> testListGet
-                <> testListGetOne
-                <> testListGetArray
-                <> testListDelete
-        return tests
-    )) testConfig
+        testListDelete <- deleteEssenceTest (reverse testEssences) essenceData
+        let tests =
+              testListCreate <>
+              testListEdit <>
+              testListGet <>
+              testListGetOne <> testListGetArray <> testListDelete
+        return tests)
+    testConfig

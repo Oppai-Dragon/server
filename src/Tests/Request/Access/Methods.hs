@@ -1,23 +1,19 @@
 module Tests.Request.Access.Methods
-    ( requestAccessMethodsTests
-    ) where
+  ( requestAccessMethodsTests
+  ) where
 
 import Config
 
 import Data.Request.Access
 import Data.Request.Access.Methods
 
-import Data.Text (Text)
-
 import Test.HUnit
 
-requestAccessMethodsTests =
-    [ TestLabel "isAccessTest" isAccessTest
-    ]
+requestAccessMethodsTests :: [Test]
+requestAccessMethodsTests = [TestLabel "isAccessTest" isAccessTest]
 
+isAccessTest :: Test
 isAccessTest =
-    TestCase $
-    assertEqual
-    "for (isAccess \"category\" \"create\" [Admin] testApi)"
-    True
-    $ isAccess "category" "create" [Admin] testApi
+  TestCase $
+  assertEqual "for (isAccess \"category\" \"create\" [Admin] testApi)" True $
+  isAccess "category" "create" [Admin] testApi

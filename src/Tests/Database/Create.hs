@@ -1,51 +1,56 @@
 module Tests.Database.Create
-    ( databaseCreateTests
-    ) where
+  ( databaseCreateTests
+  ) where
 
 import Config
-import Database.Create
 import Data.Essence
 import Data.MyValue
+import Database.Create
 
-import Data.Time.Clock
-
-import           Control.Monad.Trans.Reader
-import           Control.Monad.Trans.State.Strict
+import Control.Monad.Trans.Reader
+import Control.Monad.Trans.State.Strict
 
 import Tests.Essence
 
 import Test.HUnit
 
+databaseCreateTests :: [Test]
 databaseCreateTests =
-    [ TestLabel "addingDefaultTest"     addingDefaultTest
-    , TestLabel "addIdTest"             addIdTest
-    ]
+  [ TestLabel "addingDefaultTest" addingDefaultTest
+  , TestLabel "addIdTest" addIdTest
+  ]
 
-addingDefaultTest = TestCase $ do
-    date <- getCurrentTime
-    let dateValue = show $ utctDay date
-    result <- runReaderT (execStateT addingDefault testPersonListCreate) testConfig
-    assertEqual "runReaderT (execStateT addingDefault testPersonListCreate) testConfig"
-        (EssenceList "person" "create"
-            [("first_name",MyString "testFirstName")
-            ,("last_name",MyString "testLastName")
-            ,("avatar",MyString "uri")
-            ,("access_key",MyString accessKey)
-            ,("is_admin",MyBool True)
-            ,("id",MyNextval "nextval('person_id_seq')")
-            ]
-        ) result
+addingDefaultTest, addIdTest :: Test
+addingDefaultTest =
+  TestCase $ do
+    result <-
+      runReaderT (execStateT addingDefault testPersonListCreate) testConfig
+    assertEqual
+      "runReaderT (execStateT addingDefault testPersonListCreate) testConfig"
+      (EssenceList
+         "person"
+         "create"
+         [ ("first_name", MyString testFirstName)
+         , ("last_name", MyString testLastName)
+         , ("avatar", MyString testAvatar)
+         , ("access_key", MyString testAccessKey)
+         , ("is_admin", MyBool True)
+         , ("id", MyNextval "nextval('person_id_seq')")
+         ])
+      result
 
 addIdTest =
-    TestCase $
-    runReaderT (execStateT addId testPersonListCreate) testConfig >>=
-    assertEqual "runReaderT (execStateT addId testPersonListCreate) testConfig"
-    (EssenceList "person" "create"
-        [("first_name",MyString "testFirstName")
-        ,("last_name",MyString "testLastName")
-        ,("avatar",MyString "uri")
-        ,("access_key",MyString accessKey)
-        ,("is_admin",MyBool True)
-        ,("id",MyNextval "nextval('person_id_seq')")
-        ]
-    )
+  TestCase $
+  runReaderT (execStateT addId testPersonListCreate) testConfig >>=
+  assertEqual
+    "runReaderT (execStateT addId testPersonListCreate) testConfig"
+    (EssenceList
+       "person"
+       "create"
+       [ ("first_name", MyString testFirstName)
+       , ("last_name", MyString testLastName)
+       , ("avatar", MyString testAvatar)
+       , ("access_key", MyString testAccessKey)
+       , ("is_admin", MyBool True)
+       , ("id", MyNextval "nextval('person_id_seq')")
+       ])

@@ -1,42 +1,39 @@
 module Tests.Empty
-    ( emptyTests
-    ) where
+  ( emptyTests
+  ) where
 
 import Data.Empty
-import Data.MyValue
 
 import Test.HUnit
 
+emptyTests :: [Test]
 emptyTests =
-    [ TestLabel "parse_string_ValueTest"    parse_string_ValueTest
-    , TestLabel "parse_strings_ValueTest"   parse_strings_ValueTest
-    , TestLabel "parse_integer_ValueTest"   parse_integer_ValueTest
-    , TestLabel "parse_integers_ValueTest"  parse_integers_ValueTest
-    , TestLabel "parse_bool_ValueTest"      parse_bool_ValueTest
-    ]
+  [ TestLabel "parseStringValueTest" parseStringValueTest
+  , TestLabel "parseStringsValueTest" parseStringsValueTest
+  , TestLabel "parseIntegerValueTest" parseIntegerValueTest
+  , TestLabel "parseIntegersValueTest" parseIntegersValueTest
+  , TestLabel "parseBoolValueTest" parseBoolValueTest
+  ]
 
-parse_string_ValueTest =
-    TestCase $
-    assertEqual "for (parseValue \"misha\")"
-    "'misha'"
-    $ parseValue ("misha" :: String)
-parse_strings_ValueTest =
-    TestCase $
-    assertEqual "for (parseValue [\"misha\",\"lox\"])"
-    "ARRAY['misha','lox']"
-    $ parseValue (["misha","lox"] :: [String])
-parse_integer_ValueTest =
-    TestCase $
-    assertEqual "for (parseValue 1)"
-    "1"
-    $ parseValue (1 :: Integer)
-parse_integers_ValueTest =
-    TestCase $
-    assertEqual "for (parseValue [1,2,3])"
-    "ARRAY[1,2,3]"
-    $ parseValue ([1,2,3] :: [Integer])
-parse_bool_ValueTest =
-    TestCase $
-    assertEqual "for (parseValue False)"
-    "False"
-    $ parseValue False
+parseStringValueTest, parseStringsValueTest, parseIntegerValueTest, parseIntegersValueTest, parseBoolValueTest ::
+     Test
+parseStringValueTest =
+  TestCase $
+  assertEqual "for (parseValue \"misha\")" "'misha'" $
+  parseValue ("misha" :: String)
+
+parseStringsValueTest =
+  TestCase $
+  assertEqual "for (parseValue [\"misha\",\"lox\"])" "ARRAY['misha','lox']" $
+  parseValue (["misha", "lox"] :: [String])
+
+parseIntegerValueTest =
+  TestCase $ assertEqual "for (parseValue 1)" "1" $ parseValue (1 :: Integer)
+
+parseIntegersValueTest =
+  TestCase $
+  assertEqual "for (parseValue [1,2,3])" "ARRAY[1,2,3]" $
+  parseValue ([1, 2, 3] :: [Integer])
+
+parseBoolValueTest =
+  TestCase $ assertEqual "for (parseValue False)" "False" $ parseValue False

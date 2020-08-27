@@ -13,7 +13,7 @@ toFields required =
   case required of
     AND fields -> fields
     OR fields -> fields
-    Required arr -> concat $ map toFields arr
+    Required arr -> concatMap toFields arr
     NullFields -> []
 
 requiredSequenceA :: [Required [a]] -> Required [a]

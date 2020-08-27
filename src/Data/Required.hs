@@ -22,7 +22,7 @@ instance Show (Required [String]) where
     show (OR fields)    =
         "At least one of these fields need to be fill: "
         <> intercalate "," fields <> "."
-    show (Required required) = concat $ map show required
+    show (Required required) = concatMap show required
 instance Show (Required String) where
     show NullFields          = ""
     show (AND fields)        ="AND " <> fields

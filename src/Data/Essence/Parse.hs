@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module Data.Essence.Parse
   ( parsePsql
   , parsePsqlExpr
@@ -33,8 +35,8 @@ parsePsqlExpr =
   parseType <|> parseValue <|> try parseRelations <|> parseConstraint
 
 parseType =
-  (<*>) (pure (\x -> ("type", x))) $
-  try parseDate <|> try parseBool <|> try parseUuid <|> try parseIntArr <|>
+  fmap ("type", ) $ try parseDate <|> try parseBool <|> try parseUuid <|>
+  try parseIntArr <|>
   try parseInt <|>
   try parseStrArr <|>
   try parseStr
@@ -65,8 +67,7 @@ parseStrArr =
   string "VARCHAR(" >> skipMany digit >> char ')' >> oneOf "[]" >>
   return "array string"
 
-parseValue =
-  (<*>) (pure (\x -> ("value", x))) $ try parseNotNull <|> try parseDefault
+parseValue = fmap ("value", ) $ try parseNotNull <|> try parseDefault
 
 parseNotNull, parseDefault :: Parsec String String String
 parseNotNull = string "NOT NULL" >> return "not null"
@@ -83,8 +84,8 @@ parseRelations = do
   return ("relations", "with " <> essence <> " by " <> field)
 
 parseConstraint =
-  (<*>) (pure (\x -> ("constraint", x))) $
-  try parsePrimaryKey <|> try parseUnique <|> try parseOnAction
+  fmap ("constraint", ) $ try parsePrimaryKey <|> try parseUnique <|>
+  try parseOnAction
 
 parsePrimaryKey, parseUnique, parseOnAction :: Parsec String String String
 parsePrimaryKey = string "PRIMARY KEY" >> return "primary key"

@@ -1,160 +1,137 @@
 module Tests.Value
-    ( valueTests
-    ) where
+  ( valueTests
+  ) where
 
-import           Data.Value
+import Data.Value
 
-import           Data.Aeson
-import qualified Data.Vector         as V
+import qualified Data.Aeson as A
+import qualified Data.Vector as V
 
 import Test.HUnit
 
+valueTests, isValueTests, toTextArrTests, toStrArrTests, toTextTests, toStrTests ::
+     [Test]
 valueTests =
-    isValueTests
-    <> toTextArrTests
-    <> toStrArrTests
-    <> toTextTests
-    <> toStrTests
+  isValueTests <> toTextArrTests <> toStrArrTests <> toTextTests <> toStrTests
 
-isValueTests =
-    [ TestLabel "isNullTest"            isNullTest
-    ]
+isValueTests = [TestLabel "isNullTest" isNullTest]
 
-isNullTest =
-    TestCase $ assertEqual "for (isNull Null)" True (isNull Null)
+isNullTest :: Test
+isNullTest = TestCase $ assertEqual "for (isNull Null)" True (isNull A.Null)
 
 toTextArrTests =
-    [ TestLabel "array_toTextArrTest"   array_toTextArrTest
-    , TestLabel "object_toTextArrTest"  object_toTextArrTest
-    , TestLabel "null_toTextArrTest"    null_toTextArrTest
-    , TestLabel "number_toTextArrTest"  number_toTextArrTest
-    , TestLabel "string_toTextArrTest"  string_toTextArrTest
-    , TestLabel "bool_toTextArrTest"    bool_toTextArrTest
-    ]
+  [ TestLabel "arrayToTextArrTest" arrayToTextArrTest
+  , TestLabel "objectToTextArrTest" objectToTextArrTest
+  , TestLabel "nullToTextArrTest" nullToTextArrTest
+  , TestLabel "numberToTextArrTest" numberToTextArrTest
+  , TestLabel "stringToTextArrTest" stringToTextArrTest
+  , TestLabel "boolToTextArrTest" boolToTextArrTest
+  ]
 
-array_toTextArrTest =
-    TestCase $
-    assertEqual "for (toTextArr (Array $ V.singleton $ String \"kek\"))"
-    ["kek"]
-    $ toTextArr (Array $ V.singleton $ String "kek")
-object_toTextArrTest =
-    TestCase $
-    assertEqual "for (toTextArr (object [\"kek\" .= String \"kok\"]))"
-    ["kek"]
-    $ toTextArr (object ["kek" .= String "kok"])
-null_toTextArrTest =
-    TestCase $
-    assertEqual "for (toTextArr Null)"
-    []
-    $ toTextArr Null
-number_toTextArrTest =
-    TestCase $
-    assertEqual "for (toTextArr (Number 1))"
-    ["1"]
-    $ toTextArr (Number 1)
-string_toTextArrTest =
-    TestCase $
-    assertEqual "for (toTextArr (String \"kek\"))"
-    ["kek"]
-    $ toTextArr (String "kek")
-bool_toTextArrTest =
-    TestCase $
-    assertEqual "for (toTextArr (Bool True))"
-    ["True"]
-    $ toTextArr (Bool True)
+arrayToTextArrTest, objectToTextArrTest, nullToTextArrTest, numberToTextArrTest, stringToTextArrTest, boolToTextArrTest ::
+     Test
+arrayToTextArrTest =
+  TestCase .
+  assertEqual "for (toTextArr (Array $ V.singleton $ String \"kek\"))" ["kek"] .
+  toTextArr . A.Array . V.singleton $
+  A.String "kek"
+
+objectToTextArrTest =
+  TestCase $
+  assertEqual "for (toTextArr (object [\"kek\" .= String \"kok\"]))" ["kek"] $
+  toTextArr (A.object ["kek" A..= A.String "kok"])
+
+nullToTextArrTest =
+  TestCase $ assertEqual "for (toTextArr Null)" [] $ toTextArr A.Null
+
+numberToTextArrTest =
+  TestCase $
+  assertEqual "for (toTextArr (Number 1))" ["1"] $ toTextArr (A.Number 1)
+
+stringToTextArrTest =
+  TestCase $
+  assertEqual "for (toTextArr (String \"kek\"))" ["kek"] $
+  toTextArr (A.String "kek")
+
+boolToTextArrTest =
+  TestCase $
+  assertEqual "for (toTextArr (Bool True))" ["True"] $ toTextArr (A.Bool True)
 
 toStrArrTests =
-    [ TestLabel "array_toStrArrTest"   array_toStrArrTest
-    , TestLabel "object_toStrArrTest"  object_toStrArrTest
-    , TestLabel "null_toStrArrTest"    null_toStrArrTest
-    , TestLabel "number_toStrArrTest"  number_toStrArrTest
-    , TestLabel "string_toStrArrTest"  string_toStrArrTest
-    , TestLabel "bool_toStrArrTest"    bool_toStrArrTest
-    ]
+  [ TestLabel "arrayToStrArrTest" arrayToStrArrTest
+  , TestLabel "objectToStrArrTest" objectToStrArrTest
+  , TestLabel "nullToStrArrTest" nullToStrArrTest
+  , TestLabel "numberToStrArrTest" numberToStrArrTest
+  , TestLabel "stringToStrArrTest" stringToStrArrTest
+  , TestLabel "boolToStrArrTest" boolToStrArrTest
+  ]
 
-array_toStrArrTest =
-    TestCase $
-    assertEqual "for (toStrArr (Array $ V.singleton $ String \"kek\"))"
-    ["kek"]
-    $ toStrArr (Array $ V.singleton $ String "kek")
-object_toStrArrTest =
-    TestCase $
-    assertEqual "for (toStrArr (object [\"kek\" .= String \"kok\"]))"
-    ["kek"]
-    $ toStrArr (object ["kek" .= String "kok"])
-null_toStrArrTest =
-    TestCase $
-    assertEqual "for (toStrArr Null)"
-    []
-    $ toStrArr Null
-number_toStrArrTest =
-    TestCase $
-    assertEqual "for (toStrArr (Number 1))"
-    ["1"]
-    $ toStrArr (Number 1)
-string_toStrArrTest =
-    TestCase $
-    assertEqual "for (toStrArr (String \"kek\"))"
-    ["kek"]
-    $ toStrArr (String "kek")
-bool_toStrArrTest =
-    TestCase $
-    assertEqual "for (toStrArr (Bool True))"
-    ["True"]
-    $ toStrArr (Bool True)
+arrayToStrArrTest, objectToStrArrTest, nullToStrArrTest, numberToStrArrTest, stringToStrArrTest, boolToStrArrTest ::
+     Test
+arrayToStrArrTest =
+  TestCase $
+  assertEqual "for (toStrArr (Array $ V.singleton $ String \"kek\"))" ["kek"] $
+  toStrArr (A.Array . V.singleton $ A.String "kek")
+
+objectToStrArrTest =
+  TestCase $
+  assertEqual "for (toStrArr (object [\"kek\" .= String \"kok\"]))" ["kek"] $
+  toStrArr (A.object ["kek" A..= A.String "kok"])
+
+nullToStrArrTest =
+  TestCase $ assertEqual "for (toStrArr Null)" [] $ toStrArr A.Null
+
+numberToStrArrTest =
+  TestCase $
+  assertEqual "for (toStrArr (Number 1))" ["1"] $ toStrArr (A.Number 1)
+
+stringToStrArrTest =
+  TestCase $
+  assertEqual "for (toStrArr (String \"kek\"))" ["kek"] $
+  toStrArr (A.String "kek")
+
+boolToStrArrTest =
+  TestCase $
+  assertEqual "for (toStrArr (Bool True))" ["True"] $ toStrArr (A.Bool True)
 
 toTextTests =
-    [ TestLabel "number_toTextTest"  number_toTextTest
-    , TestLabel "string_toTextTest"  string_toTextTest
-    , TestLabel "bool_toTextTest"    bool_toTextTest
-    , TestLabel "others_toTextTest"  others_toTextTest
-    ]
+  [ TestLabel "numberToTextTest" numberToTextTest
+  , TestLabel "stringToTextTest" stringToTextTest
+  , TestLabel "boolToTextTest" boolToTextTest
+  , TestLabel "othersToTextTest" othersToTextTest
+  ]
 
-number_toTextTest =
-    TestCase $
-    assertEqual "for (toText (Number 1))"
-    "1"
-    $ toText (Number 1)
-string_toTextTest =
-    TestCase $
-    assertEqual "for (toText (String \"kek\"))"
-    "kek"
-    $ toText (String "kek")
-bool_toTextTest =
-    TestCase $
-    assertEqual "for (toText (Bool False))"
-    "False"
-    $ toText (Bool False)
-others_toTextTest =
-    TestCase $
-    assertEqual "for (toText Null)"
-    ""
-    $ toText Null
+numberToTextTest, stringToTextTest, boolToTextTest, othersToTextTest :: Test
+numberToTextTest =
+  TestCase $ assertEqual "for (toText (Number 1))" "1" $ toText (A.Number 1)
+
+stringToTextTest =
+  TestCase $
+  assertEqual "for (toText (String \"kek\"))" "kek" $ toText (A.String "kek")
+
+boolToTextTest =
+  TestCase $
+  assertEqual "for (toText (Bool False))" "False" $ toText (A.Bool False)
+
+othersToTextTest = TestCase $ assertEqual "for (toText Null)" "" $ toText A.Null
 
 toStrTests =
-    [ TestLabel "number_toStrTest"  number_toStrTest
-    , TestLabel "string_toStrTest"  string_toStrTest
-    , TestLabel "bool_toStrTest"    bool_toStrTest
-    , TestLabel "others_toStrTest"  others_toStrTest
-    ]
+  [ TestLabel "numberToStrTest" numberToStrTest
+  , TestLabel "stringToStrTest" stringToStrTest
+  , TestLabel "boolToStrTest" boolToStrTest
+  , TestLabel "othersToStrTest" othersToStrTest
+  ]
 
-number_toStrTest =
-    TestCase $
-    assertEqual "for (toStr (Number 1))"
-    "1"
-    $ toStr (Number 1)
-string_toStrTest =
-    TestCase $
-    assertEqual "for (toStr (String \"kek\"))"
-    "kek"
-    $ toStr (String "kek")
-bool_toStrTest =
-    TestCase $
-    assertEqual "for (toStr (Bool False))"
-    "False"
-    $ toStr (Bool False)
-others_toStrTest =
-    TestCase $
-    assertEqual "for (toStr Null)"
-    ""
-    $ toStr Null
+numberToStrTest, stringToStrTest, boolToStrTest, othersToStrTest :: Test
+numberToStrTest =
+  TestCase $ assertEqual "for (toStr (Number 1))" "1" $ toStr (A.Number 1)
+
+stringToStrTest =
+  TestCase $
+  assertEqual "for (toStr (String \"kek\"))" "kek" $ toStr (A.String "kek")
+
+boolToStrTest =
+  TestCase $
+  assertEqual "for (toStr (Bool False))" "False" $ toStr (A.Bool False)
+
+othersToStrTest = TestCase $ assertEqual "for (toStr Null)" "" $ toStr A.Null

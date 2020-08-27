@@ -9,7 +9,8 @@ import Test.HUnit
 
 baseTests :: [Test]
 baseTests =
-  [ TestLabel "ifElseThenTest" ifElseThenTest
+  [ TestLabel "parsePathTest" parsePathTest
+  , TestLabel "ifElseThenTest" ifElseThenTest
   , TestLabel "reverseMapTest" reverseMapTest
   , TestLabel "map2VarTest" map2VarTest
   , TestLabel "deletePairTest" deletePairTest
@@ -21,15 +22,19 @@ baseTests =
   , TestLabel "ordToBoolTest" ordToBoolTest
   , TestLabel "lookup2Test" lookup2Test
   , TestLabel "tailCaseTest" tailCaseTest
-  , TestLabel "fst3Test" fst3Test
   ]
 
-ifElseThenTest, reverseMapTest, map2VarTest, deletePairTest, insertPairTest, mapToListOfPairTest, findTextTest, scientificToIntegerTest, replaceByTest, ordToBoolTest, lookup2Test, tailCaseTest, fst3Test ::
+parsePathTest, ifElseThenTest, reverseMapTest, map2VarTest, deletePairTest, insertPairTest, mapToListOfPairTest, findTextTest, scientificToIntegerTest, replaceByTest, ordToBoolTest, lookup2Test, tailCaseTest ::
      Test
+parsePathTest =
+  TestCase $
+  assertEqual "for (parsePath \"C:Repo\\server\\src\")" "C:Repo\\server" $
+  parsePath "C:Repo\\server\\src"
+
 ifElseThenTest =
   TestCase $
   assertEqual "for (ifElseThen [True,False] [1,2,3])" 2 $
-  ifElseThen [True, False] [Sum 1,Sum 2,Sum 3]
+  ifElseThen [True, False] ([Sum 1, Sum 2, Sum 3] :: [Sum Int])
 
 reverseMapTest =
   TestCase $
@@ -39,26 +44,26 @@ reverseMapTest =
 map2VarTest =
   TestCase $
   assertEqual "for (map2Var const [1,2,3,4,5,6])" [1, 3, 6, 10, 15, 21] $
-  map2Var (\x1 x2 -> x1 + x2) [1, 2, 3, 4, 5, 6]
+  map2Var (+) ([1, 2, 3, 4, 5, 6] :: [Int])
 
 deletePairTest =
   TestCase $
   assertEqual "for (deletePair (1,2) [(1,3),(2,3),(1,2)])" [(2, 3), (1, 2)] $
-  deletePair (1, 2) [(1, 3), (2, 3), (1, 2)]
+  deletePair ((1, 2) :: (Int, Int)) ([(1, 3), (2, 3), (1, 2)] :: [(Int, Int)])
 
 insertPairTest =
   TestCase $
   assertEqual
     "for (insertPair (1,2) [(1,3),(2,3),(1,4)])"
     [(1, 2), (2, 3), (1, 4)] $
-  insertPair (1, 2) [(1, 3), (2, 3), (1, 4)]
+  insertPair ((1, 2) :: (Int, Int)) ([(1, 3), (2, 3), (1, 4)] :: [(Int, Int)])
 
 mapToListOfPairTest =
   TestCase $
   assertEqual
     "for (mapToListOfPair (+1) [(1,3),(2,3),(1,4)])"
     [(2, 4), (3, 4), (2, 5)] $
-  mapToListOfPair (+ 1) [(1, 3), (2, 3), (1, 4)]
+  mapToListOfPair (+ 1) ([(1, 3), (2, 3), (1, 4)] :: [(Int, Int)])
 
 findTextTest =
   TestCase $
@@ -88,5 +93,3 @@ lookup2Test =
 
 tailCaseTest =
   TestCase $ assertEqual "for (tailCase [])" ([] :: String) $ tailCase []
-
-fst3Test = TestCase $ assertEqual "for (fst3 (1,2,3))" 1 $ (fst3 (1, 2, 3) :: (Int,Int,Int))

@@ -15,7 +15,7 @@ import Data.Essence.Parse.Clause
 import Data.MyValue
 import Data.SQL
 
-import Data.Maybe (fromJust)
+import Data.Maybe
 
 import Control.Monad.Trans.Writer.CPS
 
@@ -55,8 +55,8 @@ instance ShowSQL (Clause String) where
   parseList (Filter x) = parseList $ FilterList [x]
   parseList (OrderBy x) = parseList $ OrderByList [x]
   parseList (OffsetLimit x) = parseList $ OffsetLimitList [x]
-  unpack (Set (field, myValue)) = show $ (field, parseValue myValue)
-  unpack (Where (field, myValue)) = show $ (field, parseValue myValue)
+  unpack (Set (field, myValue)) = show (field, parseValue myValue)
+  unpack (Where (field, myValue)) = show (field, parseValue myValue)
   unpack (Filter x) = show x
   unpack (OrderBy x) = show x
   unpack (OffsetLimit x) = show x
