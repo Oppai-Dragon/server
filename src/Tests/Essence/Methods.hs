@@ -47,6 +47,7 @@ addListTest =
        "create"
        [ ("first_name", MyString testFirstName)
        , ("last_name", MyString testLastName)
+       , ("date_of_creation", MyDate testDate)
        , ("avatar", MyString testAvatar)
        , ("access_key", MyString testAccessKey)
        , ("is_admin", MyBool True)
@@ -62,6 +63,7 @@ deletePairTest =
        "person"
        "create"
        [ ("last_name", MyString testLastName)
+       , ("date_of_creation", MyDate testDate)
        , ("avatar", MyString testAvatar)
        , ("access_key", MyString testAccessKey)
        , ("is_admin", MyBool True)
@@ -165,7 +167,7 @@ toEssenceListTest =
     (toEssenceList
        testPersonCreateDB
        [("first_name", Just "misha"), ("last_name", Just "dragon")])
-    testConfig >>=
+    testHandle >>=
   assertEqual
     "for (toEssenceList testPersonCreateDB [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
     (EssenceList

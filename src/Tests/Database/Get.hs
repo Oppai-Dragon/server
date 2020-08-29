@@ -20,7 +20,7 @@ databaseGetTests = [TestLabel "addOffsetLimitTest" addOffsetLimitTest]
 addOffsetLimitTest :: Test
 addOffsetLimitTest =
   TestCase $
-  runReaderT (execStateT addOffsetLimit mempty) (Config HM.empty) >>=
+  runReaderT (execStateT addOffsetLimit mempty) (Config.Handle (Config HM.empty) undefined undefined) >>=
   assertEqual
     "for (runReaderT (runStateT addOffsetLimit mempty) (Config HM.empty))"
     (EssenceList "" "" [("page", MyString "OFFSET 0 LIMIT 10")])

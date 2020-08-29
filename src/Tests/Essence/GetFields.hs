@@ -71,26 +71,26 @@ iterateEssenceHMTest =
   TestCase $
   assertEqual
     "for (iterateHM testAuthorDBFields \"create\")"
-    ([["person_id", "description"]] :: [[String]]) $
+    ([["person_id"], ["description"]] :: [[String]]) $
   iterateHM testAuthorDBFields "create"
 
 iterateEssenceHMCreateTest =
   TestCase $
   assertEqual
     "for (iterateHMCreate testAuthorDBFields)"
-    ([["person_id", "description"]] :: [[String]]) $
+    ([["person_id"], ["description"]] :: [[String]]) $
   iterateHMCreate testAuthorDBFields
 
 iterateEssenceHMGetTest =
   TestCase $
-  assertEqual "for (iterateHMGet testAuthorDBFields)" ([] :: [[String]]) $
+  assertEqual "for (iterateHMGet testAuthorDBFields)" ([["id","person_id","description"]] :: [[String]]) $
   iterateHMGet testAuthorDBFields
 
 iterateEssenceHMEditTest =
   TestCase $
   assertEqual
     "for (iterateHMEdit testAuthorDBFields)"
-    ([["id", "person_id", "description"]] :: [[String]]) $
+    ([["id"], ["person_id"], ["description"]] :: [[String]]) $
   iterateHMEdit testAuthorDBFields
 
 iterateEssenceHMDeleteTest =

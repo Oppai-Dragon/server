@@ -23,9 +23,6 @@ import Database.Edit
 import Database.Get
 
 import Control.Monad
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Reader
-import Control.Monad.Trans.State.Strict
 
 import qualified Data.Aeson as A
 import qualified Data.HashMap.Strict as HM
@@ -37,16 +34,16 @@ import qualified Network.HTTP.Types as HTTPTypes
 
 pathHandler :: Wai.Request -> IO Wai.Response
 pathHandler req = do
-  (isValidRequest, response, query, config) <- isRequestCorrect req
+  (isValidRequest, response, query, configHandle) <- isRequestCorrect req
   let req' = req {Wai.queryString = query}
   if isValidRequest
-    then runReaderT (evalStateT (essenceResponse req') mempty) config
+    then runUnderApp (evalSApp (essenceResponse req') mempty) configHandle
     else pure response
 
-getEssenceList :: Wai.Request -> ReaderT Config IO (Essence List)
+getEssenceList :: Wai.Request -> UnderApp (Essence List)
 getEssenceList req = do
-  config <- ask
-  api <- lift setApi
+  (Config.Handle config _ _) <- askUnderApp
+  api <- liftIO setApi
   let [essence', action] = Wai.pathInfo req
   let essence =
         if action == "publish"
@@ -56,10 +53,10 @@ getEssenceList req = do
   let essenceDB = getEssenceDB essence action config api
   toEssenceList essenceDB queryMBS
 
-addAccessKey :: Wai.Request -> StateT (Essence List) (ReaderT Config IO) ()
+addAccessKey :: Wai.Request -> SApp ()
 addAccessKey req = do
-  api <- fromStateT setApi
-  (EssenceList name action list) <- get
+  api <- liftUnderApp $ liftIO setApi
+  (EssenceList name action list) <- getSApp
   let queryMBS = Wai.queryString req
   let access = getAccess (T.pack name) (T.pack action) api
   let isNeed = access > Everyone
@@ -68,19 +65,18 @@ addAccessKey req = do
           Just (Just accessKey) -> [("access_key", fromBS accessKey)]
           _ -> []
   let essenceList = list <> accessKeyList
-  when isNeed $ put (EssenceList name action essenceList)
+  when isNeed $ putSApp (EssenceList name action essenceList)
 
-setEssenceList :: Wai.Request -> StateT (Essence List) (ReaderT Config IO) ()
+setEssenceList :: Wai.Request -> SApp ()
 setEssenceList req = do
-  essenceList <- lift $ getEssenceList req
-  put essenceList
+  essenceList <- liftUnderApp $ getEssenceList req
+  putSApp essenceList
 
-deleteAccessKey :: StateT (Essence List) (ReaderT Config IO) ()
+deleteAccessKey :: SApp ()
 deleteAccessKey = do
-  modify $ deletePair "access_key"
+  modifySApp $ deletePair "access_key"
 
-essenceResponse ::
-     Wai.Request -> StateT (Essence List) (ReaderT Config IO) Wai.Response
+essenceResponse :: Wai.Request -> SApp Wai.Response
 essenceResponse req = do
   setEssenceList req
   addAccessKey req
@@ -102,10 +98,10 @@ jsonResponse =
   A.fromEncoding . A.toEncoding
 
 ---------------------------------Set via POST------------------------------------------
-postEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Wai.Response
+postEssenceResponse :: SApp Wai.Response
 postEssenceResponse = do
   let wrapResponse = pure . jsonResponse
-  (EssenceList _ action _) <- get
+  (EssenceList _ action _) <- getSApp
   isExiste <- isNewsExiste
   case action of
     "create" ->
@@ -117,5 +113,5 @@ postEssenceResponse = do
     _ -> pure notFound
 
 ---------------------------------Set via GET-------------------------------------------
-getEssenceResponse :: StateT (Essence List) (ReaderT Config IO) Wai.Response
+getEssenceResponse :: SApp Wai.Response
 getEssenceResponse = jsonResponse <$> dbGet

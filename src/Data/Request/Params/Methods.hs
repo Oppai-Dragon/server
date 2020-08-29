@@ -11,6 +11,7 @@ module Data.Request.Params.Methods
   ) where
 
 import Config
+import Data.Base
 import Data.Essence
 import Data.MyValue
 import Data.Required
@@ -22,10 +23,6 @@ import qualified Data.HashMap.Strict as HM
 import Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
-
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Reader
-import Control.Monad.Trans.Writer.CPS
 
 type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
 
@@ -69,16 +66,15 @@ queryBSWithoutMaybe ((l, maybeR):rest) =
     Just valueBS -> (l, valueBS) : queryBSWithoutMaybe rest
     Nothing -> queryBSWithoutMaybe rest
 
-isConstraintCorrect ::
-     Essence DB -> [(String, MyValue)] -> WriterT All (ReaderT Config IO) ()
-isConstraintCorrect _ [] = tell $ All True
-isConstraintCorrect (EssenceDB _ "get" _) _ = tell $ All True
-isConstraintCorrect (EssenceDB _ "delete" _) _ = tell $ All True
+isConstraintCorrect :: Essence DB -> [(String, MyValue)] -> WApp ()
+isConstraintCorrect _ [] = tellWApp $ All True
+isConstraintCorrect (EssenceDB _ "get" _) _ = tellWApp $ All True
+isConstraintCorrect (EssenceDB _ "delete" _) _ = tellWApp $ All True
 isConstraintCorrect EssenceDB {} (("tag_ids", MyIntegers arr):_) = do
   (A.Object pageObj) <-
-    lift $ dbGetArray (EssenceList "tag" "get" [("id", MyIntegers arr)])
+    liftUnderApp $ dbGetArray (EssenceList "tag" "get" [("id", MyIntegers arr)])
   let bool = length (HM.keys pageObj) == length arr
-  tell $ All bool
+  tellWApp $ All bool
 isConstraintCorrect (EssenceDB table action hm) ((field, myValue):rest) =
   case HM.lookup field hm of
     Just description -> do
@@ -88,27 +84,22 @@ isConstraintCorrect (EssenceDB table action hm) ((field, myValue):rest) =
     Nothing -> isConstraintCorrect (EssenceDB table action hm) rest
 
 -- Tell True, if essence with unique value doesn't exist
-isUniqueParams ::
-     T.Text
-  -> (String, MyValue)
-  -> Maybe Constraint
-  -> WriterT All (ReaderT Config IO) ()
+isUniqueParams :: T.Text -> (String, MyValue) -> Maybe Constraint -> WApp ()
 isUniqueParams table pare (Just UNIQUE) = do
   let name = T.unpack table
-  (A.Object obj) <- lift $ dbGetOne (EssenceList name "get" [pare])
-  tell . All $ HM.null obj
+  (A.Object obj) <- liftUnderApp $ dbGetOne (EssenceList name "get" [pare])
+  tellWApp . All $ HM.null obj
 isUniqueParams _ _ _ = return ()
 
 -- Tell True, if essence with dependent value exist
-isRightRelationsParams ::
-     Maybe Relations -> MyValue -> WriterT All (ReaderT Config IO) ()
+isRightRelationsParams :: Maybe Relations -> MyValue -> WApp ()
 isRightRelationsParams Nothing _ = return ()
 isRightRelationsParams (Just (Relations table fieldT)) myValue = do
   let name = T.unpack table
   let field = T.unpack fieldT
   let pare = (field, myValue)
-  (A.Object obj) <- lift $ dbGetOne (EssenceList name "get" [pare])
-  tell . All . not $ HM.null obj
+  (A.Object obj) <- liftUnderApp $ dbGetOne (EssenceList name "get" [pare])
+  tellWApp . All . not $ HM.null obj
 
 isTypeParamsCorrect :: Essence DB -> [(String, MyValue)] -> All
 isTypeParamsCorrect _ [] = All True

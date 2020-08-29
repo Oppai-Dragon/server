@@ -167,5 +167,5 @@ parseOnActionTest =
   TestCase $
   assertEqual
     "for (runParser parseOnAction \"\" \"\" \"ON DELETE CASCADE\")"
-    (Right "delete with parent") $
+    (Right "") $
   runParser parseOnAction "" "" "ON DELETE CASCADE"

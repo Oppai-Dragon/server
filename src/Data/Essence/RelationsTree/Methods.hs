@@ -33,10 +33,6 @@ import qualified Data.HashMap.Strict as HM
 import qualified Data.List as L
 import qualified Data.Text as T
 
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Reader
-import Control.Monad.Trans.State.Strict
-
 type Name = String
 
 type Field = String
@@ -49,10 +45,10 @@ isEssenceRelations essence api =
         Root _ (Branch _ (Leaf _:_)) -> True
         _ -> False
 
-addRelationsFields :: StateT (Essence List) (ReaderT Config IO) A.Object
+addRelationsFields :: SApp A.Object
 addRelationsFields = do
-  (EssenceList name action _) <- get
-  api <- lift . lift $ setApi
+  (EssenceList name action _) <- getSApp
+  api <- liftUnderApp $ liftIO setApi
   case [name, action] of
     ["news", "delete"] -> return $ HM.singleton "result" (A.Number 1)
     _ ->
@@ -60,16 +56,16 @@ addRelationsFields = do
         then relationsHandler name
         else return $ HM.singleton "result" (A.Number 1)
 
-relationsHandler :: Name -> StateT (Essence List) (ReaderT Config IO) A.Object
+relationsHandler :: Name -> SApp A.Object
 relationsHandler name = do
-  api <- lift . lift $ setApi
-  essenceList <- get
+  api <- liftUnderApp $ liftIO setApi
+  essenceList <- getSApp
   let relations = getRelationsTree (T.pack name) api
   case relations of
     Root rEssence trunk@(Trunk tEssence _) -> do
       obj1 <- relationsHandler (beforeUnderscore rEssence)
       (A.Object obj2) <-
-        lift . findEssence tEssence $ getListOfPairFromObj rEssence obj1
+        liftUnderApp . findEssence tEssence $ getListOfPairFromObj rEssence obj1
       iterateRelations trunk obj2
     Root rEssence branch@(Branch _ _) -> do
       obj1 <- relationsHandler (beforeUnderscore rEssence)
@@ -78,52 +74,54 @@ relationsHandler name = do
       case lookup key (elList essenceList) of
         (Just accessKey) -> do
           (A.Object obj) <-
-            lift $ dbGetOne (EssenceList rEssence "get" [(key, accessKey)])
+            liftUnderApp $
+            dbGetOne (EssenceList rEssence "get" [(key, accessKey)])
           return obj
         _ -> return HM.empty
     _ -> return HM.empty
 
-iterateRelations ::
-     RelationsTree
-  -> A.Object
-  -> StateT (Essence List) (ReaderT Config IO) A.Object
+iterateRelations :: RelationsTree -> A.Object -> SApp A.Object
 iterateRelations (Trunk t (Branch b leafs)) objOld = do
-  (EssenceList _ action list) <- get
+  (EssenceList _ action list) <- getSApp
   let listOfPair = checkList t list
   case listOfPair of
     [(_, _)] ->
       case b of
         "news" -> do
           (A.Object objNew) <-
-            lift $ dbGetOne (EssenceList (beforeUnderscore t) "get" listOfPair)
+            liftUnderApp $
+            dbGetOne (EssenceList (beforeUnderscore t) "get" listOfPair)
                 -- Draft have only one "not null" field for creating - "name"
                 -- But news, which copies draft values, need more then just "name"
-          config <- lift ask
-          api <- fromStateT setApi
+          (Config.Handle config _ _) <- liftUnderApp askUnderApp
+          api <- liftUnderApp $ liftIO setApi
           let essenceDB = getEssenceDB (T.pack b) (T.pack action) config api
           let addedFields =
                 unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objNew
           let requiredFields = toFields $ getRequiredFields essenceDB api
           let bool = ifFieldsFill requiredFields addedFields
           if isRightRelations objOld objNew t b && bool
-            then modify (deletePair "id") >> modify (addList addedFields) >>
+            then modifySApp (deletePair "id") >>
+                 modifySApp (addList addedFields) >>
                  return (HM.singleton "result" (A.Number 1))
             else return HM.empty
         _ -> do
-          (A.Object objNew) <- lift $ dbGetOne (EssenceList b "get" listOfPair)
+          (A.Object objNew) <-
+            liftUnderApp $ dbGetOne (EssenceList b "get" listOfPair)
           let addedFields =
                 unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld
           if isRightRelations objOld objNew t b
-            then modify (addList addedFields) >>
+            then modifySApp (addList addedFields) >>
                  return (HM.singleton "result" (A.Number 1))
             else return HM.empty
     _ ->
-      modify
+      modifySApp
         (addList
            (unpackLeafs (parseObjEssence $ beforeUnderscore t) leafs objOld)) >>
       return (HM.singleton "result" (A.Number 1))
 iterateRelations (Trunk t1 trunk@(Trunk t2 _)) objOld = do
-  (A.Object objNew) <- lift $ findEssence t2 (getListOfPairFromObj t1 objOld)
+  (A.Object objNew) <-
+    liftUnderApp $ findEssence t2 (getListOfPairFromObj t1 objOld)
   iterateRelations trunk objNew
 iterateRelations _ _ = return HM.empty
 
@@ -134,7 +132,7 @@ ifFieldsFill (field:rest) arr =
     Just MyValue.MyEmpty -> False
     _ -> ifFieldsFill rest arr
 
-findEssence :: Name -> [(String, MyValue.MyValue)] -> ReaderT Config IO A.Value
+findEssence :: Name -> [(String, MyValue.MyValue)] -> UnderApp A.Value
 findEssence name listOfPair =
   case listOfPair of
     [(_, _)] -> dbGetOne $ EssenceList (beforeUnderscore name) "get" listOfPair
@@ -144,10 +142,7 @@ unpackLeafs ::
      Name -> [RelationsTree] -> A.Object -> [(String, MyValue.MyValue)]
 unpackLeafs _ [] _ = []
 unpackLeafs root (Leaf l:rest) obj =
-  let field =
-        case l of
-          "draft_id" -> "id"
-          _ -> l
+  let field = afterUnderscore l
       fields = map T.pack [root, field]
       value = getValue fields obj
    in (l, MyValue.fromValue value) : unpackLeafs root rest obj
@@ -218,18 +213,19 @@ getIdPairFromObj name obj =
     [(_, value)] -> [("id", value)]
     _ -> []
 
-isNewsExiste :: StateT (Essence List) (ReaderT Config IO) Bool
+isNewsExiste :: SApp Bool
 isNewsExiste = do
-  (EssenceList name _ list) <- get
+  (EssenceList name _ list) <- getSApp
   let isNews = name == "news"
   let isExiste =
         case lookup "draft_id" list of
           Just myValue -> do
             (A.Object obj) <-
-              lift $ dbGetOne (EssenceList name "get" [("draft_id", myValue)])
+              liftUnderApp $
+              dbGetOne (EssenceList name "get" [("draft_id", myValue)])
             let isGet = not $ HM.null obj
             if isGet
-              then put (EssenceList name "edit" list) >> return True
+              then putSApp (EssenceList name "edit" list) >> return True
               else return False
           _ -> return False
   if isNews

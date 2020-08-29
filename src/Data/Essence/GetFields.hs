@@ -54,12 +54,15 @@ instance GetFields (Required [Field]) where
   iterateHMCreate, iterateHMGet, iterateHMEdit, iterateHMDelete ::
        [(Field, Description)] -> [Required [Field]]
   iterateHMCreate [] = []
-  iterateHMCreate (("id", _):rest) = iterateHMCreate rest
-  iterateHMCreate (("date_of_creation", _):rest) = iterateHMCreate rest
   iterateHMCreate ((field, description):rest) =
-    case dValue description of
-      Just (NOT NULL) -> AND [field] : iterateHMCreate rest
-      _ -> iterateHMCreate rest
+    case field of
+      "id" -> iterateHMCreate rest
+      "date_of_creation" -> iterateHMCreate rest
+      "access_key" -> iterateHMCreate rest
+      _ ->
+        case dValue description of
+          Just (NOT NULL) -> AND [field] : iterateHMCreate rest
+          _ -> iterateHMCreate rest
   iterateHMGet _ = []
   iterateHMEdit [] = []
   iterateHMEdit ((field, _):rest) =

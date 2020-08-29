@@ -32,4 +32,4 @@ databaseTests =
               testListGet <>
               testListGetOne <> testListGetArray <> testListDelete
         return tests)
-    testConfig
+    testHandle

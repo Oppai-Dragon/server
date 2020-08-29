@@ -5,6 +5,7 @@ module Config.Internal
   , Config(..)
   , Api(..)
   , Psql(..)
+  , Local(..)
   ) where
 
 import qualified Data.Aeson as A
@@ -18,9 +19,16 @@ type Field = T.Text
 
 newtype Config =
   Config A.Object
+  deriving (Show, Eq)
 
 newtype Api =
   Api A.Object
+  deriving (Show, Eq)
 
 newtype Psql =
   Psql A.Object
+  deriving (Show, Eq)
+
+newtype Local =
+  Local A.Object
+  deriving (Show, Eq)

@@ -34,9 +34,6 @@ import qualified Database.HDBC.PostgreSQL as PSQL
 import qualified Network.HTTP.Types as HTTPTypes
 import qualified Network.Wai as Wai
 
-import Control.Monad.Trans.Reader
-import Control.Monad.Trans.Writer.CPS
-
 type Name = T.Text
 
 type EssenceName = Name
@@ -91,7 +88,7 @@ parseRequest req = do
   return (essence, action, queryMBS, method)
 
 isRequestCorrect ::
-     Wai.Request -> IO (Bool, Wai.Response, HTTPTypes.Query, Config)
+     Wai.Request -> IO (Bool, Wai.Response, QueryMBS, Config.Handle)
 isRequestCorrect req = do
   api <- setApi
   (essence', action, queryMBS, method) <- parseRequest req
@@ -99,7 +96,7 @@ isRequestCorrect req = do
         if action == "publish"
           then "news"
           else essence'
-  config <- chooseConfig essence
+  handle@(Config.Handle config _ _) <- Config.new
   let essenceDB = getEssenceDB essence action config api
   let essenceFields = getEssenceFields essenceDB api
   let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
@@ -108,7 +105,7 @@ isRequestCorrect req = do
         getRequiredFields essenceDB api
   accessArr <- getAccessArr queryMBS
   isConstraintsCorrect <-
-    runReaderT (execWriterT $ isConstraintCorrect essenceDB listOfPairs) config
+    runUnderApp (execWApp $ isConstraintCorrect essenceDB listOfPairs) handle
   let checkingList =
         [ isPathRequestCorrect req api
         , isMethodCorrect method action api
@@ -127,7 +124,7 @@ isRequestCorrect req = do
         , (All True, notFound)
         ]
   let (All x1, x2) = ifElseThen checkingList elseThenList
-  pure (x1, x2, queryMBS, config)
+  pure (x1, x2, queryMBS, handle)
 
 getAccessArr :: QueryMBS -> IO [Access]
 getAccessArr queryMBS =
@@ -137,9 +134,9 @@ getAccessArr queryMBS =
 
 accessCollector :: BS.ByteString -> IO [Access]
 accessCollector accessKeyBS = do
-  config <- setConfig
+  psql <- setPsql
   let accessKeyStr = parseValue $ fromBS accessKeyBS
-  let uriDB = getUri config
+  let uriDB = getUriDB psql
   conn <- PSQL.connectPostgreSQL uriDB
   let userQuery =
         "SELECT id,is_admin FROM person WHERE access_key=" <>

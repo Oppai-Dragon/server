@@ -3,7 +3,7 @@
 module Setup
   ( setup
   , resetup
-  , buildGlobalConfigJson
+  , buildConfigJson
   , createTables
   , collectEssenceJson
   , getEssenceObjects
@@ -18,12 +18,11 @@ import Data.Base
 import Data.Value
 
 import qualified Data.Aeson as A
+import Data.Functor.Identity
 import qualified Data.HashMap.Strict as HM
 import Data.List as L
 import qualified Data.Text as T
 import Debug.Trace
-
-import Control.Monad.Trans.Writer.CPS
 
 import qualified Database.HDBC as HDBC
 import qualified Database.HDBC.PostgreSQL as PSQL
@@ -39,7 +38,7 @@ dropTablesQuery =
 
 setup :: IO ()
 setup = do
-  buildGlobalConfigJson
+  buildConfigJson
   createTables
 
 resetup :: IO ()
@@ -49,8 +48,8 @@ resetup = do
 
 getConnection :: IO PSQL.Connection
 getConnection = do
-  config <- setConfig
-  let uriDB = getUri config
+  psql <- setPsql
+  let uriDB = getUriDB psql
   PSQL.connectPostgreSQL uriDB
 
 dropTables :: IO ()
@@ -61,15 +60,14 @@ dropTables = do
   HDBC.disconnect conn
   traceIO "Database for server is rebuilded, all tables are empty"
 
-buildGlobalConfigJson :: IO ()
-buildGlobalConfigJson = do
-  path <- setGlobalConfigPath
+buildConfigJson :: IO ()
+buildConfigJson = do
+  path <- setConfigPath
   psql <- setPsql
   let uriObj = HM.singleton "uriDB" . A.String . T.pack $ getUriDB psql
-  let configObj = HM.singleton "config" $ A.Object uriObj
   objEssenceList <- collectEssenceJson
   let jsonObj = HM.unions objEssenceList
-  let json = A.Object $ HM.unions [jsonObj, configObj]
+  let json = A.Object $ HM.unions [jsonObj, uriObj]
   A.encodeFile path json
 
 createTables :: IO ()
@@ -111,7 +109,7 @@ getAllQueris = do
   return result
 
 getCreateQuery :: A.Object -> String
-getCreateQuery obj = parseAllQueries . execWriter $ iterateObj obj
+getCreateQuery obj = parseAllQueries . runIdentity . execWApp $ iterateObj obj
 
 parseAllQueries :: String -> String
 parseAllQueries str =
@@ -124,17 +122,19 @@ parseAllQueries str =
                _ -> x2)
    in addingSemicolon . unwords . addingLBracket . words $ str
 
-iterateObj :: A.Object -> Writer String ()
+iterateObj :: A.Object -> W String ()
 iterateObj obj =
-  let helper [] = tell ""
+  let helper [] = tellWApp ""
       helper (a:arr) = do
-        tell $ T.unpack a <> " "
+        tellWApp $ T.unpack a <> " "
         case getValue [a] obj of
-          A.Object x -> (tell . execWriter . iterateObj) x >> helper arr
+          A.Object x ->
+            (tellWApp . runIdentity . execWApp . iterateObj) x >> helper arr
           A.Array vector ->
-            (tell . unwords . map T.unpack . toTextArr) (A.Array vector) >>
-            tell " ," >>
+            (tellWApp . unwords . map T.unpack . toTextArr) (A.Array vector) >>
+            tellWApp " ," >>
             helper arr
-          A.String text -> tell (T.unpack text) >> tell " ," >> helper arr
+          A.String text ->
+            tellWApp (T.unpack text) >> tellWApp " ," >> helper arr
           _ -> helper arr
    in helper $ HM.keys obj

@@ -67,14 +67,14 @@ buildCreateEssenceValueTest =
              "create"
              [("id", MyInteger 2), ("person_id", MyInteger 1)]))
        [])
-    testConfig >>=
+    testHandle >>=
   assertEqual
     ("for (" <>
      "runReaderT" <>
      "(evalStateT" <>
      "(buildEssenceValue testAuthorListCreate)" <>
      "[(\"author\",[(\"id\",MyInteger 2)])" <>
-     ",(\"person\",[(\"id\",MyInteger 1)])]" <> ") testConfig)")
+     ",(\"person\",[(\"id\",MyInteger 1)])]" <> ") testHandle)")
     (A.object
        [ "author1" A..=
          A.object
@@ -88,13 +88,13 @@ buildEditEssenceValueTest =
   TestCase $
   runReaderT
     (evalStateT (buildEssenceValue (EssenceList "author" "edit" [])) [])
-    testConfig >>=
+    testHandle >>=
   assertEqual
     ("for " <>
      "(runReaderT" <>
      "(evalStateT" <>
      "(buildEssenceValue (EssenceList \"author\" \"edit\" []))" <>
-     "[]" <> ") testConfig)")
+     "[]" <> ") testHandle)")
     goodResultValue
 
 buildGetEssenceValueTest =
@@ -103,14 +103,14 @@ buildGetEssenceValueTest =
     (evalStateT
        (buildEssenceValue (EssenceList "author" "get" []))
        [("author", [("id", MyInteger 2)]), ("person", [("id", MyInteger 1)])])
-    testConfig >>=
+    testHandle >>=
   assertEqual
     ("for " <>
      "(runReaderT" <>
      "(evalStateT" <>
      "(buildEssenceValue (EssenceList \"author\" \"get\" []))" <>
      "[(\"author\",[(\"id\",MyInteger 2)])" <>
-     ",(\"person\",[(\"id\",MyInteger 1)])]" <> ") testConfig)")
+     ",(\"person\",[(\"id\",MyInteger 1)])]" <> ") testHandle)")
     (A.object
        [ "author1" A..=
          A.object
@@ -124,13 +124,13 @@ buildDeleteEssenceValueTest =
   TestCase $
   runReaderT
     (evalStateT (buildEssenceValue (EssenceList "author" "edit" [])) [])
-    testConfig >>=
+    testHandle >>=
   assertEqual
     ("for " <>
      "(runReaderT" <>
      "(evalStateT" <>
      "(buildEssenceValue (EssenceList \"author\" \"delete\" []))" <>
-     "[]" <> ") testConfig)")
+     "[]" <> ") testHandle)")
     goodResultValue
 
 getNeededFieldsDraftTest =
@@ -158,7 +158,7 @@ updateDataTest =
   TestCase $
   runReaderT
     (execStateT (updateData "person" (A.Object testPersonObj)) [])
-    (Config HM.empty) >>=
+    testHandle >>=
   assertEqual
     "runReaderT (execStateT (updateData \"person\" testPersonObj) []) (Config HM.empty)"
     [("person", [("id", MyInteger 1)])]

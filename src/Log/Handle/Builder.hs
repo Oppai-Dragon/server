@@ -2,7 +2,7 @@ module Log.Handle.Builder
   ( new
   ) where
 
-import Config
+import Config.Set
 import Log.File
 import Log.Handle
 

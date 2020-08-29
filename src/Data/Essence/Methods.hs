@@ -21,6 +21,7 @@ module Data.Essence.Methods
 
 import Config
 
+import Data.Base hiding (deletePair)
 import Data.Empty
 import Data.Essence
 import Data.Essence.GetFields
@@ -37,9 +38,6 @@ import qualified Data.ByteString.Char8 as BSC8
 import qualified Data.HashMap.Strict as HM
 import qualified Data.List as L
 import qualified Data.Text as T
-
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Reader
 
 type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
 
@@ -134,9 +132,9 @@ parseFieldValue (field:fields) bss =
   let bss' = map (\(l, r) -> (BSC8.unpack l, r)) bss
    in parseBSValue field bss' : parseFieldValue fields bss
 
-toEssenceList :: Essence DB -> QueryMBS -> ReaderT Config IO (Essence List)
+toEssenceList :: Essence DB -> QueryMBS -> UnderApp (Essence List)
 toEssenceList essenceDB@(EssenceDB name action _) queryMBS = do
-  api <- lift setApi
+  api <- liftIO setApi
   let essenceFields = getEssenceFields essenceDB api
   let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
   let nameStr = T.unpack name

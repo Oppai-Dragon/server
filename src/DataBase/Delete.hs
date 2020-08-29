@@ -3,7 +3,7 @@ module Database.Delete
   ) where
 
 import Config
-import Data.Essence
+import Data.Base
 import Data.MyValue
 import Data.SQL.ShowSql
 
@@ -11,19 +11,15 @@ import qualified Data.Aeson as A
 import qualified Database.HDBC as HDBC
 import qualified Database.HDBC.PostgreSQL as PSQL
 
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Reader
-import Control.Monad.Trans.State.Strict
-
-dbDelete :: StateT (Essence List) (ReaderT Config IO) A.Value
+dbDelete :: SApp A.Value
 dbDelete = do
-  essenceList <- get
-  config <- lift ask
+  essenceList <- getSApp
+  (Config.Handle config _ _) <- liftUnderApp askUnderApp
   let deleteQuery = showSql essenceList
   let uriDB = getUri config
-  conn <- lift . lift $ PSQL.connectPostgreSQL uriDB
-  result <- lift . lift $ HDBC.run conn deleteQuery []
-  lift . lift $ HDBC.commit conn
+  conn <- liftUnderApp . liftIO $ PSQL.connectPostgreSQL uriDB
+  result <- liftUnderApp . liftIO $ HDBC.run conn deleteQuery []
+  liftUnderApp . liftIO $ HDBC.commit conn
   let value = A.object ["result" A..= (toValue . MyInteger) result]
-  lift . lift $ HDBC.disconnect conn
+  liftUnderApp . liftIO $ HDBC.disconnect conn
   pure value

@@ -14,6 +14,8 @@ module Data.Essence.Parse.Clause
   , parseSubStr
   ) where
 
+import Config
+
 import Data.Base
 import Data.Empty
 import Data.Essence
@@ -22,18 +24,16 @@ import Data.SQL
 
 import Data.List
 
-import Control.Monad.Trans.Writer.CPS
-
 type EssenceName = String
 
 type Field = String
 
-toEssenceClause :: Essence List -> Writer (Essence (Clause String)) ()
+toEssenceClause :: Essence List -> W (Essence (Clause String)) ()
 toEssenceClause (EssenceList _ _ []) = return ()
 toEssenceClause (EssenceList name _ ((field, myValue):rest)) =
   let tableList = pickTableName field
       clauseArr = pickClause name (field, myValue)
-   in tell (EssenceClause tableList clauseArr) >>
+   in tellWApp (EssenceClause tableList clauseArr) >>
       toEssenceClause (EssenceList name "" rest)
 
 pickTableName :: Field -> [EssenceName]

@@ -5,6 +5,7 @@ module Database.Create
   ) where
 
 import Config
+import Data.Base
 import Data.Essence
 import Data.Essence.Methods
 import Data.Essence.Parse.Clause
@@ -17,34 +18,31 @@ import qualified Data.Aeson as A
 import qualified Database.HDBC as HDBC
 import qualified Database.HDBC.PostgreSQL as PSQL
 
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Reader
-import Control.Monad.Trans.State.Strict
-
-dbCreate :: StateT (Essence List) (ReaderT Config IO) A.Value
+dbCreate :: SApp A.Value
 dbCreate = do
-  config <- lift ask
+  (Config.Handle config _ _) <- liftUnderApp askUnderApp
   addingDefault
-  essenceList@(EssenceList name _ _) <- get
+  essenceList@(EssenceList name _ _) <- getSApp
   let createQuery = showSql essenceList
   let uriDB = getUri config
-  conn <- lift . lift $ PSQL.connectPostgreSQL uriDB
-  _ <- lift . lift $ HDBC.run conn createQuery []
-  lift . lift $ HDBC.commit conn
+  conn <- liftUnderApp . liftIO $ PSQL.connectPostgreSQL uriDB
+  _ <- liftUnderApp . liftIO $ HDBC.run conn createQuery []
+  liftUnderApp . liftIO $ HDBC.commit conn
   let getQueryId = "SELECT currval('" <> name <> "_id_seq');"
-  [[HDBC.SqlInteger num]] <- lift . lift $ HDBC.quickQuery' conn getQueryId []
+  [[HDBC.SqlInteger num]] <-
+    liftUnderApp . liftIO $ HDBC.quickQuery' conn getQueryId []
   let getQueryEssence =
         showSql . Get name $ pickClause name ("id", MyInteger num)
-  sqlValues <- lift . lift $ HDBC.quickQuery' conn getQueryEssence []
+  sqlValues <- liftUnderApp . liftIO $ HDBC.quickQuery' conn getQueryEssence []
   let value = sqlValuesArrToValue essenceList sqlValues config
-  lift . lift $ HDBC.disconnect conn
+  liftUnderApp . liftIO $ HDBC.disconnect conn
   pure value
 
-addingDefault :: StateT (Essence List) (ReaderT Config IO) ()
+addingDefault :: SApp ()
 addingDefault = addId
 
-addId :: StateT (Essence List) (ReaderT Config IO) ()
+addId :: SApp ()
 addId = do
-  (EssenceList name _ _) <- get
+  (EssenceList name _ _) <- getSApp
   let idValue = "nextval('" <> name <> "_id_seq')"
-  modify $ addList [("id", MyNextval idValue)]
+  modifySApp $ addList [("id", MyNextval idValue)]

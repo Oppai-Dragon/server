@@ -6,10 +6,10 @@ import Config
 
 import Tests.Base
 import Tests.Config
-import Tests.Database
-import Tests.Database.Create
-import Tests.Database.Get
-import Tests.Database.Test
+--import Tests.Database
+--import Tests.Database.Create
+--import Tests.Database.Get
+--import Tests.Database.Test
 import Tests.Empty
 import Tests.Essence.GetFields
 import Tests.Essence.Methods
@@ -38,7 +38,6 @@ import Test.HUnit
 testList :: Test
 testList =
   TestList $
-  [] <>
   baseTests <>
   configTests <>
   emptyTests <>
@@ -55,14 +54,12 @@ testList =
   requestHandlingTests <>
   requestMethodMethodsTests <>
   requestParamsMethodsTests <>
-  valueTests <>
-  showSqlTests <>
-  sqlToValueTests <>
-  databaseCreateTests <> databaseGetTests <> databaseTestTests <> databaseTests
+  valueTests <> showSqlTests <> sqlToValueTests <> []
+  --databaseCreateTests <> databaseGetTests <> databaseTestTests <> databaseTests
 
 runTest :: IO ()
 runTest = do
-  (Config config) <- setConfig
+  (Config.Handle (Config config) _ _) <- Config.new
   if HM.null config
     then runTestTT (TestList setupTests) >>
          traceIO "Can't find Config.json" --- Need different look

@@ -228,7 +228,7 @@ testPersonDBFields = zip testPersonDBFieldsName testPersonDBDescription
 
 testPersonDBFieldsName :: [String]
 testPersonDBFieldsName =
-  ["id", "avatar", "date_of_creation", "is_admin", "last_name", "first_name", "access_key"]
+  ["id", "avatar", "date_of_creation", "is_admin", "last_name", "first_name"]
 
 testPersonDBDescription :: [Description]
 testPersonDBDescription =
@@ -236,7 +236,6 @@ testPersonDBDescription =
   , Description (MyString "") (Just NULL) Nothing Nothing
   , Description (MyDate "") (Just NULL) Nothing Nothing
   , Description (MyBool False) (Just NULL) Nothing Nothing
-  , Description (MyString "") (Just $ NOT NULL) Nothing Nothing
   , Description (MyString "") (Just $ NOT NULL) Nothing Nothing
   , Description (MyString "") (Just $ NOT NULL) Nothing Nothing
   ]

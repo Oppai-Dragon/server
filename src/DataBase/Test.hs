@@ -37,10 +37,6 @@ import Data.Maybe as Maybe
 import qualified Data.Text as T
 import Debug.Trace
 
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Reader
-import Control.Monad.Trans.State.Strict
-
 import Tests.Essence
 
 import qualified Test.HUnit as Test
@@ -68,15 +64,15 @@ getDefaultValues (field:rest) =
     Nothing -> (T.pack field, A.Null) : getDefaultValues rest
 
 buildEssenceValue ::
-     Essence List -> StateT EssenceData (ReaderT Config IO) A.Value
+     Essence List -> S EssenceData UnderApp A.Value
 buildEssenceValue (EssenceList _ "edit" _) = pure goodResultValue
 buildEssenceValue (EssenceList _ "delete" _) = pure goodResultValue
 buildEssenceValue (EssenceList name action _) = do
-  currentData <- get
+  currentData <- getSApp
   let list = handleDraftCase name $ getRelatedFields name currentData
-  fromStateT . traceIO $ show list
-  api <- fromStateT setApi
-  config <- lift ask
+  liftUnderApp . liftIO . traceIO $ show list
+  api <- liftUnderApp $ liftIO setApi
+  (Config.Handle config _ _) <- liftUnderApp askUnderApp
   let (EssenceDB essence _ hashMap) =
         getEssenceDB (T.pack name) (T.pack action) config api
   let fields = HM.keys hashMap L.\\ map fst list
@@ -89,24 +85,24 @@ getTest ::
      Essence List
   -> String
   -> A.Value
-  -> StateT EssenceData (ReaderT Config IO) Test.Test
+  -> S EssenceData UnderApp Test.Test
 getTest essenceList funcName got = do
   expected <- buildEssenceValue essenceList
   let test = testAction funcName (elName essenceList) expected got
   pure test
 
 createEssenceTest ::
-     [Essence List] -> StateT EssenceData (ReaderT Config IO) [Test.Test]
+     [Essence List] -> S EssenceData UnderApp [Test.Test]
 createEssenceTest ((EssenceList name "create" list):rest) = do
-  currentData <- get
-  fromStateT $ traceIO "CURRENT DATA "
-  fromStateT . traceIO $ show currentData
+  currentData <- getSApp
+  liftUnderApp . liftIO $ traceIO "CURRENT DATA "
+  liftUnderApp . liftIO . traceIO $ show currentData
   let fields = handleDraftCase name $ getRelatedFields name currentData
-  uniqueList <- fromStateT $ handleUniqueName name list
+  uniqueList <- liftUnderApp . liftIO $ handleUniqueName name list
   let essenceList = EssenceList name "create" (uniqueList <> fields)
-  fromStateT . traceIO $ show essenceList
-  essenceValue <- lift $ evalStateT dbCreate essenceList
-  fromStateT . print $ "CREATED " <> name
+  liftUnderApp . liftIO . traceIO $ show essenceList
+  essenceValue <- liftUnderApp $ evalSApp dbCreate essenceList
+  liftUnderApp . liftIO . traceIO $ "CREATED " <> name
   updateData (T.pack name) essenceValue
   let funcName = "dbCreate"
   test <- getTest essenceList funcName essenceValue
@@ -114,33 +110,33 @@ createEssenceTest ((EssenceList name "create" list):rest) = do
   (Test.TestLabel label test :) <$> createEssenceTest rest
 createEssenceTest _ = return []
 
-editEssenceTest :: [String] -> EssenceData -> ReaderT Config IO [Test.Test]
+editEssenceTest :: [String] -> EssenceData -> UnderApp [Test.Test]
 editEssenceTest [] _ = return []
 editEssenceTest (essence:rest) listData = do
   let fields = fromJust (lookup essence listData)
-  resultValue <- evalStateT dbEdit (EssenceList essence "edit" fields)
+  resultValue <- evalSApp dbEdit (EssenceList essence "edit" fields)
   let funcName = "dbEdit"
   test <-
-    evalStateT
+    evalSApp
       (getTest (EssenceList essence "edit" []) funcName resultValue)
       listData
   let label = funcName <> "_" <> essence <> "_Test"
   (Test.TestLabel label test :) <$> editEssenceTest rest listData
 
-getEssenceTest :: [String] -> EssenceData -> ReaderT Config IO [Test.Test]
+getEssenceTest :: [String] -> EssenceData -> UnderApp [Test.Test]
 getEssenceTest [] _ = return []
 getEssenceTest (essence:rest) listData = do
   let fields = fromJust (lookup essence listData)
-  essenceValue <- evalStateT dbGet (EssenceList essence "get" fields)
+  essenceValue <- evalSApp dbGet (EssenceList essence "get" fields)
   let funcName = "dbGet"
   test <-
-    evalStateT
+    evalSApp
       (getTest (EssenceList essence "get" fields) funcName essenceValue)
       listData
   let label = funcName <> "_" <> essence <> "_Test"
   (Test.TestLabel label test :) <$> getEssenceTest rest listData
 
-getOneTest :: EssenceData -> ReaderT Config IO [Test.Test]
+getOneTest :: EssenceData -> UnderApp [Test.Test]
 getOneTest listData = do
   let essence = "author"
   let pare =
@@ -150,11 +146,11 @@ getOneTest listData = do
   let essenceList = EssenceList essence "get" [pare]
   essenceValue <- dbGetOne essenceList
   let funcName = "dbGetOne"
-  test <- evalStateT (getTest essenceList funcName essenceValue) listData
+  test <- evalSApp (getTest essenceList funcName essenceValue) listData
   let label = funcName <> "_" <> essence <> "_Test"
   return [Test.TestLabel label test]
 
-getArrayTest :: EssenceData -> ReaderT Config IO [Test.Test]
+getArrayTest :: EssenceData -> UnderApp [Test.Test]
 getArrayTest listData = do
   let essence = "tag"
   let pare =
@@ -164,18 +160,18 @@ getArrayTest listData = do
   let essenceList = EssenceList essence "get" [pare]
   essenceValue <- dbGetArray essenceList
   let funcName = "dbGetArray"
-  test <- evalStateT (getTest essenceList "dbGetArray" essenceValue) listData
+  test <- evalSApp (getTest essenceList "dbGetArray" essenceValue) listData
   let label = funcName <> "_" <> essence <> "_Test"
   return [Test.TestLabel label test]
 
-deleteEssenceTest :: [String] -> EssenceData -> ReaderT Config IO [Test.Test]
+deleteEssenceTest :: [String] -> EssenceData -> UnderApp [Test.Test]
 deleteEssenceTest [] _ = return []
 deleteEssenceTest (essence:rest) listData = do
   let fields = fromJust (lookup essence listData)
-  resultValue <- evalStateT dbDelete (EssenceList essence "delete" fields)
+  resultValue <- evalSApp dbDelete (EssenceList essence "delete" fields)
   let funcName = "dbDelete"
   test <-
-    evalStateT
+    evalSApp
       (getTest (EssenceList essence "delete" []) funcName resultValue)
       listData
   let label = funcName <> "_" <> essence <> "_Test"
@@ -194,14 +190,14 @@ getNeededFields essence obj =
     value -> [("id", fromValue value)]
 
 updateData ::
-     EssenceName -> A.Value -> StateT EssenceData (ReaderT Config IO) ()
+     EssenceName -> A.Value -> S EssenceData UnderApp ()
 updateData essence value = do
   let essenceObj =
         case value of
           A.Object obj -> obj
           _ -> HM.empty
   let fieldsData = getNeededFields essence essenceObj
-  modify $ (:) (T.unpack essence, fieldsData)
+  modifySApp $ (:) (T.unpack essence, fieldsData)
 
 chooseNameForAdding :: String -> [String]
 chooseNameForAdding name =

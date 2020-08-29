@@ -24,9 +24,9 @@ addingDefaultTest, addIdTest :: Test
 addingDefaultTest =
   TestCase $ do
     result <-
-      runReaderT (execStateT addingDefault testPersonListCreate) testConfig
+      runReaderT (execStateT addingDefault testPersonListCreate) testHandle
     assertEqual
-      "runReaderT (execStateT addingDefault testPersonListCreate) testConfig"
+      "runReaderT (execStateT addingDefault testPersonListCreate) testHandle"
       (EssenceList
          "person"
          "create"
@@ -41,9 +41,9 @@ addingDefaultTest =
 
 addIdTest =
   TestCase $
-  runReaderT (execStateT addId testPersonListCreate) testConfig >>=
+  runReaderT (execStateT addId testPersonListCreate) testHandle >>=
   assertEqual
-    "runReaderT (execStateT addId testPersonListCreate) testConfig"
+    "runReaderT (execStateT addId testPersonListCreate) testHandle"
     (EssenceList
        "person"
        "create"

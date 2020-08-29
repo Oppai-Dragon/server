@@ -26,9 +26,9 @@ getEssenceListTest, addAccessKeyTest, setEssenceListTest, deleteAccessKeyTest ::
      Test
 getEssenceListTest =
   TestCase $
-  runReaderT (getEssenceList testPersonCreateReq) testConfig >>=
+  runReaderT (getEssenceList testPersonCreateReq) testHandle >>=
   assertEqual
-    "for (runReaderT (getEssenceList testPersonCreateReq) testConfig)"
+    "for (runReaderT (getEssenceList testPersonCreateReq) testHandle)"
     (EssenceList
        "person"
        "create"
@@ -40,16 +40,16 @@ addAccessKeyTest =
     (execStateT
        (addAccessKey testAuthorCreateReq)
        (EssenceList "author" "create" []))
-    testConfig >>=
+    testHandle >>=
   assertEqual
-    "for (runReaderT (execStateT (addAccessKey testAuthorCreateReq) (EssenceList \"author\" \"create\" [])) testConfig)"
+    "for (runReaderT (execStateT (addAccessKey testAuthorCreateReq) (EssenceList \"author\" \"create\" [])) testHandle)"
     (EssenceList "author" "create" [("access_key", MyString "key")])
 
 setEssenceListTest =
   TestCase $
-  runReaderT (execStateT (setEssenceList testPersonCreateReq) mempty) testConfig >>=
+  runReaderT (execStateT (setEssenceList testPersonCreateReq) mempty) testHandle >>=
   assertEqual
-    "for (runReaderT (setEssenceList testPersonCreateReq) testConfig)"
+    "for (runReaderT (setEssenceList testPersonCreateReq) testHandle)"
     (EssenceList
        "person"
        "create"
@@ -61,7 +61,7 @@ deleteAccessKeyTest =
     (execStateT
        deleteAccessKey
        (EssenceList "author" "create" [("access_key", MyString "key")]))
-    testConfig >>=
+       testHandle >>=
   assertEqual
-    "for (runReaderT (execStateT deleteAccessKey (EssenceList \"author\" \"create\" [(\"access_key\",MyString \"key\")])) testConfig)"
+    "for (runReaderT (execStateT deleteAccessKey (EssenceList \"author\" \"create\" [(\"access_key\",MyString \"key\")])) testHandle)"
     (EssenceList "author" "create" [])

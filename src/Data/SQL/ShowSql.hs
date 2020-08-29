@@ -15,9 +15,8 @@ import Data.Essence.Parse.Clause
 import Data.MyValue
 import Data.SQL
 
+import Data.Functor.Identity
 import Data.Maybe
-
-import Control.Monad.Trans.Writer.CPS
 
 import Data.List
 
@@ -118,8 +117,8 @@ instance ShowSQL (Essence List) where
      in showSql (Edit name setPart whereС)
   showSql essenceList@(EssenceList name "get" _) =
     let (EssenceClause names clauseArr) =
-          execWriter $
-          tell (EssenceClause [name] []) >> toEssenceClause essenceList
+          runIdentity . execWApp $
+          tellWApp (EssenceClause [name] []) >> toEssenceClause essenceList
         uniqueNames = nub names
         getName = intercalate "," uniqueNames
         matchingClauses =
