@@ -1,6 +1,7 @@
 .stack-work/
 .vscode
 .VSCodeCounter/
+logs
 .history
 Config.json
 *~
