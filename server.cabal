@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 90b28a8a78271cdde0aafdc94cd2c2f3c2bac9e1433fc4ffecd84b33e451ee56
+-- hash: e3e9137c492b053cea4417228f5897774d9ecf295dd1ff3fcce14f5b349097f1
 
 name:           server
 version:        0.1.0.0
@@ -58,6 +58,7 @@ library
       Database.Create
       Database.Delete
       Database.Edit
+      Database.Exception
       Database.Get
       Database.Test
       Log

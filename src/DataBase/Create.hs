@@ -13,6 +13,8 @@ import Data.MyValue
 import Data.SQL
 import Data.SQL.ShowSql
 import Data.SQL.ToValue
+import Database.Exception
+import Log
 
 import qualified Data.Aeson as A
 import qualified Database.HDBC as HDBC
@@ -20,23 +22,34 @@ import qualified Database.HDBC.PostgreSQL as PSQL
 
 dbCreate :: SApp A.Value
 dbCreate = do
-  (Config.Handle config _ _) <- liftUnderApp askUnderApp
+  (Config.Handle config _ logHandle) <- liftUnderApp askUnderApp
+  liftUnderApp . liftIO $ debugM logHandle "Start dbCreate"
   addingDefault
   essenceList@(EssenceList name _ _) <- getSApp
   let createQuery = showSql essenceList
   let uriDB = getUri config
-  conn <- liftUnderApp . liftIO $ PSQL.connectPostgreSQL uriDB
-  _ <- liftUnderApp . liftIO $ HDBC.run conn createQuery []
-  liftUnderApp . liftIO $ HDBC.commit conn
-  let getQueryId = "SELECT currval('" <> name <> "_id_seq');"
-  [[HDBC.SqlInteger num]] <-
-    liftUnderApp . liftIO $ HDBC.quickQuery' conn getQueryId []
-  let getQueryEssence =
-        showSql . Get name $ pickClause name ("id", MyInteger num)
-  sqlValues <- liftUnderApp . liftIO $ HDBC.quickQuery' conn getQueryEssence []
-  let value = sqlValuesArrToValue essenceList sqlValues config
-  liftUnderApp . liftIO $ HDBC.disconnect conn
-  pure value
+  maybeConn <- liftUnderApp . tryConnect $ PSQL.connectPostgreSQL uriDB
+  case maybeConn of
+    Nothing ->
+      liftIO (debugM logHandle "Essence not created in database") >>
+      return A.Null
+    Just conn -> do
+      _ <- liftUnderApp . tryRun $ HDBC.run conn createQuery []
+      liftUnderApp . liftIO $ HDBC.commit conn
+      let getQueryId = "SELECT currval('" <> name <> "_id_seq');"
+      idSqlValues <-
+        liftUnderApp . tryQuickQuery $ HDBC.quickQuery' conn getQueryId []
+      let getQueryEssence =
+            case idSqlValues of
+              [[HDBC.SqlInteger num]] ->
+                showSql . Get name $ pickClause name ("id", MyInteger num)
+              _ -> "Essence was not created"
+      sqlValues <-
+        liftUnderApp . tryQuickQuery $ HDBC.quickQuery' conn getQueryEssence []
+      let value = sqlValuesArrToValue essenceList sqlValues config
+      liftUnderApp . liftIO $ HDBC.disconnect conn
+      liftUnderApp . liftIO $ debugM logHandle "End dbCreate"
+      pure value
 
 addingDefault :: SApp ()
 addingDefault = addId

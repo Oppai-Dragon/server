@@ -11,8 +11,8 @@ import qualified Data.Aeson.Types as AT
 
 new :: IO Handle
 new = do
-  (Config config) <- setConfig
+  (Local local) <- setLocal
   logPath <- setLogPath
   let maybeLevel =
-        AT.parseMaybe (\x -> x A..: "logLevel" >>= A.parseJSON) config
+        AT.parseMaybe (\x -> x A..: "logLevel" >>= A.parseJSON) local
   return $ Handle logPath maybeLevel

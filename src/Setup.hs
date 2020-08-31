@@ -96,7 +96,7 @@ getEssenceObjects = do
   let createStrList = "extension" : map T.unpack essences
   let createObjList =
         map
-          (\x -> unsafePerformIO . set . setPath $ "\\Setup\\" <> x <> ".json")
+          (\x -> unsafePerformIO $ set =<< setPath ("\\Setup\\" <> x <> ".json"))
           createStrList
   return createObjList
 

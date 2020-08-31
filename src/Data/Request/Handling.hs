@@ -21,35 +21,42 @@ import Database.Create
 import Database.Delete
 import Database.Edit
 import Database.Get
+import Log
 
 import Control.Monad
 
 import qualified Data.Aeson as A
+import qualified Data.ByteString.Builder as BSB
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Text as T
 
 import qualified Network.Wai as Wai
+import qualified Network.Wai.Internal as Wai
 
 import qualified Network.HTTP.Types as HTTPTypes
 
 pathHandler :: Wai.Request -> IO Wai.Response
 pathHandler req = do
-  (isValidRequest, response, query, configHandle) <- isRequestCorrect req
+  (isValidRequest, response@(Wai.ResponseBuilder _ _ textBuilder), query, configHandle@(Config.Handle _ _ logHandle)) <-
+    isRequestCorrect req
   let req' = req {Wai.queryString = query}
+  let responseMsg = show $ BSB.toLazyByteString textBuilder
   if isValidRequest
     then runUnderApp (evalSApp (essenceResponse req') mempty) configHandle
-    else pure response
+    else debugM logHandle responseMsg >> pure response
 
 getEssenceList :: Wai.Request -> UnderApp (Essence List)
 getEssenceList req = do
-  (Config.Handle config _ _) <- askUnderApp
+  (Config.Handle config _ logHandle) <- askUnderApp
   api <- liftIO setApi
   let [essence', action] = Wai.pathInfo req
   let essence =
         if action == "publish"
           then "news"
           else essence'
+  liftIO . debugM logHandle $ T.unpack action <> " " <> T.unpack essence
   let queryMBS = Wai.queryString req
+  liftIO . debugM logHandle $ "Query of request: " <> show queryMBS
   let essenceDB = getEssenceDB essence action config api
   toEssenceList essenceDB queryMBS
 

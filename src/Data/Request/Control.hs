@@ -23,10 +23,9 @@ import Data.SQL
 import Data.SQL.ShowSql
 
 import qualified Data.ByteString as BS
-import qualified Data.ByteString.Builder.Internal as BSBuilder
-import qualified Data.ByteString.Char8 as BS8
 import qualified Data.HashMap.Strict as HM
 import Data.Monoid
+import Data.String
 import qualified Data.Text as T
 import qualified Database.HDBC as HDBC
 import qualified Database.HDBC.PostgreSQL as PSQL
@@ -100,9 +99,7 @@ isRequestCorrect req = do
   let essenceDB = getEssenceDB essence action config api
   let essenceFields = getEssenceFields essenceDB api
   let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
-  let paramsMsg =
-        BSBuilder.byteStringCopy . BS8.pack . show $
-        getRequiredFields essenceDB api
+  let paramsMsg = fromString . show $ getRequiredFields essenceDB api
   accessArr <- getAccessArr queryMBS
   isConstraintsCorrect <-
     runUnderApp (execWApp $ isConstraintCorrect essenceDB listOfPairs) handle

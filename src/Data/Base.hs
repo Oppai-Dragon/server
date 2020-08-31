@@ -3,7 +3,6 @@
 module Data.Base
   ( notFoundWith
   , notFound
-  , set
   , setPath
   , parsePath
   , getRepDir
@@ -45,8 +44,6 @@ module Data.Base
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as AT
 import qualified Data.ByteString.Builder.Internal as BSBuilder
-import qualified Data.ByteString.Lazy as BSL
-import qualified Data.HashMap.Strict as HM
 import qualified Data.List as L
 import Data.Maybe
 import qualified Data.Scientific as Scientific
@@ -70,9 +67,6 @@ notFoundWith = Wai.responseBuilder HTTPTypes.status404 []
 
 notFound :: Wai.Response
 notFound = notFoundWith "Not found"
-
-set :: IO FilePath -> IO A.Object
-set = fmap (fromMaybe HM.empty . A.decode) . (>>= BSL.readFile)
 
 setPath :: FilePath -> IO FilePath
 setPath path = fmap (flip (<>) $ "\\src\\" <> path) getRepDir
