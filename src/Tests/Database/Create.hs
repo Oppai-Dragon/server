@@ -32,6 +32,7 @@ addingDefaultTest =
          "create"
          [ ("first_name", MyString testFirstName)
          , ("last_name", MyString testLastName)
+         , ("date_of_creation", MyDate testDate)
          , ("avatar", MyString testAvatar)
          , ("access_key", MyString testAccessKey)
          , ("is_admin", MyBool True)
@@ -49,6 +50,7 @@ addIdTest =
        "create"
        [ ("first_name", MyString testFirstName)
        , ("last_name", MyString testLastName)
+       , ("date_of_creation", MyDate testDate)
        , ("avatar", MyString testAvatar)
        , ("access_key", MyString testAccessKey)
        , ("is_admin", MyBool True)

@@ -8,10 +8,13 @@ import Config
 import Data.Base
 import Log
 
+import GHC.Stack
+
 import qualified Database.HDBC as HDBC
 import qualified Database.HDBC.PostgreSQL as PSQL
 
-tryConnect :: IO PSQL.Connection -> UnderApp (Maybe PSQL.Connection)
+tryConnect ::
+     HasCallStack => IO PSQL.Connection -> UnderApp (Maybe PSQL.Connection)
 tryConnect connectIO = do
   (Config.Handle _ _ logHandle) <- askUnderApp
   result <- liftIO $ tryM connectIO
@@ -24,7 +27,7 @@ tryConnect connectIO = do
       liftIO (errorM logHandle $ show err) >>
       return Nothing
 
-tryRun :: IO Integer -> UnderApp Integer
+tryRun :: HasCallStack => IO Integer -> UnderApp Integer
 tryRun run = do
   (Config.Handle _ _ logHandle) <- askUnderApp
   result <- liftIO $ tryM run
@@ -36,7 +39,8 @@ tryRun run = do
       liftIO (errorM logHandle $ show err) >>
       return 0
 
-tryQuickQuery :: IO [[HDBC.SqlValue]] -> UnderApp [[HDBC.SqlValue]]
+tryQuickQuery ::
+     HasCallStack => IO [[HDBC.SqlValue]] -> UnderApp [[HDBC.SqlValue]]
 tryQuickQuery quickQuery' = do
   (Config.Handle _ _ logHandle) <- askUnderApp
   result <- liftIO $ tryM quickQuery'

@@ -42,8 +42,9 @@ pathHandler req = do
   let req' = req {Wai.queryString = query}
   let responseMsg = show $ BSB.toLazyByteString textBuilder
   if isValidRequest
-    then runUnderApp (evalSApp (essenceResponse req') mempty) configHandle
-    else debugM logHandle responseMsg >> pure response
+    then runUnderApp (evalSApp (essenceResponse req') mempty) configHandle >>= \x ->
+           endM logHandle >> pure x
+    else debugM logHandle responseMsg >> endM logHandle >> pure response
 
 getEssenceList :: Wai.Request -> UnderApp (Essence List)
 getEssenceList req = do
@@ -54,7 +55,8 @@ getEssenceList req = do
         if action == "publish"
           then "news"
           else essence'
-  liftIO . debugM logHandle $ T.unpack action <> " " <> T.unpack essence
+  liftIO . debugM logHandle $
+    "Path of request: " <> T.unpack action <> "/" <> T.unpack essence
   let queryMBS = Wai.queryString req
   liftIO . debugM logHandle $ "Query of request: " <> show queryMBS
   let essenceDB = getEssenceDB essence action config api

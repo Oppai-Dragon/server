@@ -93,7 +93,7 @@ iterateHashMapDBList ((field, list):rest) =
 
 setDescription :: [(String, String)] -> Description
 setDescription list =
-  let valueExpect = getMyValue $ fromJust $ lookup "type" list
+  let valueExpect = getMyValue . fromJust $ lookup "type" list
       value = getMaybeDataField $ lookup "value" list
       relations = getMaybeDataField $ lookup "relations" list
       constraint = getMaybeDataField $ lookup "constraint" list

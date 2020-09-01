@@ -34,7 +34,10 @@ dbCreate = do
       liftIO (debugM logHandle "Essence not created in database") >>
       return A.Null
     Just conn -> do
-      _ <- liftUnderApp . tryRun $ HDBC.run conn createQuery []
+      result <- liftUnderApp . tryRun $ HDBC.run conn createQuery []
+      case result of
+        0 -> liftUnderApp . liftIO . infoM logHandle $ name <> " wasn't created"
+        _ -> liftUnderApp . liftIO . infoM logHandle $ name <> " was created"
       liftUnderApp . liftIO $ HDBC.commit conn
       let getQueryId = "SELECT currval('" <> name <> "_id_seq');"
       idSqlValues <-
@@ -43,7 +46,7 @@ dbCreate = do
             case idSqlValues of
               [[HDBC.SqlInteger num]] ->
                 showSql . Get name $ pickClause name ("id", MyInteger num)
-              _ -> "Essence was not created"
+              _ -> ""
       sqlValues <-
         liftUnderApp . tryQuickQuery $ HDBC.quickQuery' conn getQueryEssence []
       let value = sqlValuesArrToValue essenceList sqlValues config

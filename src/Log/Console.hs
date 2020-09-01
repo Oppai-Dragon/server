@@ -5,8 +5,11 @@ module Log.Console
   , warningM
   , errorM
   , tryM
+  , endM
   , prettyLog
-  , prettyFileLog
+  , myPrettyCallStack
+  , myPrettyCallStackLines
+  , myPrettySrcLoc
   ) where
 
 import Data.Base
@@ -16,6 +19,7 @@ import Log.Level
 
 import Control.Exception
 import Control.Monad
+import Data.List
 import Debug.Trace
 import GHC.Stack
 
@@ -30,7 +34,7 @@ logM -- Log a message using the given logger at a given level
   -> IO ()
 logM (Handle path maybeLevel) level text = do
   time <- getTime
-  let prettyLoc = prettyFileLog callStack
+  let prettyLoc = myPrettySrcLoc . snd . last $ getCallStack callStack
   let msg = time <> "-" <> prettyLog level text <> "\n\t" <> prettyLoc <> "\n"
   case maybeLevel of
     Just currentLevel -> when (currentLevel <= level) $ writeLog path msg
@@ -46,25 +50,36 @@ infoM = (`logM` INFO)
 warningM logHandle msg = do
   logM logHandle WARNING msg
   traceIO $ prettyLog WARNING msg
-  traceIO $ prettyFileLog callStack
+  traceIO $ myPrettyCallStack callStack
 
 errorM logHandle msg = do
   logM logHandle ERROR msg
   traceIO $ prettyLog ERROR msg
-  traceIO $ prettyFileLog callStack
+  traceIO $ myPrettyCallStack callStack
 
 tryM :: IO a -> IO (Either SomeException a)
 tryM = try
+
+endM :: Handle -> IO ()
+endM (Handle path _) = writeLog path "\n\n\n"
 
 -------------------------------------------------------------------------------
 -- * Readables
 prettyLog :: Level -> String -> String
 prettyLog level text = "[" <> show level <> "] " <> text
 
-prettyFileLog :: CallStack -> String
-prettyFileLog stack =
-  let srcLoc = snd . last $ getCallStack stack
-      fileLoc = srcLocFile srcLoc
+myPrettyCallStack :: CallStack -> String
+myPrettyCallStack = intercalate "\n" . myPrettyCallStackLines
+
+myPrettyCallStackLines :: CallStack -> [String]
+myPrettyCallStackLines stack =
+  case getCallStack stack of
+    [] -> []
+    arr -> map (\(_, srcLoc) -> '\t' : myPrettySrcLoc srcLoc) arr
+
+myPrettySrcLoc :: SrcLoc -> String
+myPrettySrcLoc srcLoc =
+  let fileLoc = srcLocFile srcLoc
       startLine = show $ srcLocStartLine srcLoc
       startColumn = show $ srcLocStartCol srcLoc
       endLine = show $ srcLocEndLine srcLoc

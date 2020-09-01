@@ -7,8 +7,6 @@ import Data.Essence
 import Data.MyValue
 import Database.Get
 
-import qualified Data.HashMap.Strict as HM
-
 import Control.Monad.Trans.Reader
 import Control.Monad.Trans.State.Strict
 
@@ -20,7 +18,7 @@ databaseGetTests = [TestLabel "addOffsetLimitTest" addOffsetLimitTest]
 addOffsetLimitTest :: Test
 addOffsetLimitTest =
   TestCase $
-  runReaderT (execStateT addOffsetLimit mempty) (Config.Handle (Config HM.empty) undefined undefined) >>=
+  runReaderT (execStateT addOffsetLimit mempty) testHandle >>=
   assertEqual
     "for (runReaderT (runStateT addOffsetLimit mempty) (Config HM.empty))"
     (EssenceList "" "" [("page", MyString "OFFSET 0 LIMIT 10")])

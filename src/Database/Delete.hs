@@ -4,6 +4,7 @@ module Database.Delete
 
 import Config
 import Data.Base
+import Data.Essence
 import Data.MyValue
 import Data.SQL.ShowSql
 import Database.Exception
@@ -15,7 +16,7 @@ import qualified Database.HDBC.PostgreSQL as PSQL
 
 dbDelete :: SApp A.Value
 dbDelete = do
-  essenceList <- getSApp
+  essenceList@(EssenceList name _ _) <- getSApp
   (Config.Handle config _ logHandle) <- liftUnderApp askUnderApp
   liftUnderApp . liftIO $ debugM logHandle "Start dbDelete"
   let deleteQuery = showSql essenceList
@@ -26,8 +27,8 @@ dbDelete = do
     Just conn -> do
       result <- liftUnderApp . tryRun $ HDBC.run conn deleteQuery []
       case result of
-        0 -> liftUnderApp . liftIO $ infoM logHandle "Essence was not deleted"
-        _ -> liftUnderApp . liftIO $ infoM logHandle "Essence was deleted"
+        0 -> liftUnderApp . liftIO . infoM logHandle $ name <> " was not deleted"
+        _ -> liftUnderApp . liftIO . infoM logHandle $ name <> " was deleted"
       liftUnderApp . liftIO $ HDBC.commit conn
       let value = A.object ["result" A..= (toValue . MyInteger) result]
       liftUnderApp . liftIO $ HDBC.disconnect conn

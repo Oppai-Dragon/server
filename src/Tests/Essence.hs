@@ -7,6 +7,7 @@ import qualified Data.Aeson as A
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Text as T
 
+--import qualified Data.Vector as V
 --------------------------------------------------------------------------------------------
 -----------------------------------Default Setting
 defaultFirstName, defaultLastName, defaultDate, defaultAvatar, defaultAccessKey, defaultName, defaultContent ::
@@ -126,7 +127,7 @@ testNewsListCreate :: Essence List
 testNewsListCreate = EssenceList "news" "create" testNewsListCreateFields
 
 testNewsListCreateFields :: List
-testNewsListCreateFields = [("date_of_creation", MyDate testDate)]
+testNewsListCreateFields = []
 
 -- For functions without access to database
 testNewsCreateFields :: List

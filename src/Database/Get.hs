@@ -35,7 +35,7 @@ dbGet = do
   (Config.Handle config _ logHandle) <- liftUnderApp askUnderApp
   liftUnderApp . liftIO $ debugM logHandle "Start dbGet"
   addOffsetLimit
-  essenceList <- getSApp
+  essenceList@(EssenceList name _ _) <- getSApp
   let getQuery = showSql essenceList
   let uriDB = getUri config
   maybeConn <- liftUnderApp . tryConnect $ PSQL.connectPostgreSQL uriDB
@@ -44,16 +44,20 @@ dbGet = do
     Just conn -> do
       sqlValues <-
         liftUnderApp . tryQuickQuery $ HDBC.quickQuery' conn getQuery []
-      let pageObj =
-            case sqlValuesArrToValue essenceList sqlValues config of
-              A.Object obj -> obj
-              _ -> HM.empty
+      pageObj <- liftUnderApp . liftIO $
+        case sqlValuesArrToValue essenceList sqlValues config of
+          A.Object obj -> do
+            infoM logHandle $ name <> " was getted"
+            return obj
+          _ -> do
+            infoM logHandle $ name <> " wasn't getted"
+            return HM.empty
       liftUnderApp . liftIO $ HDBC.disconnect conn
       let endFunc = liftUnderApp . liftIO $ debugM logHandle "End dbGet"
-      case elName essenceList of
+      case name of
         "news" ->
           (liftUnderApp . liftIO)
-            (debugM logHandle "Other enssencies are nested in the enssence") >>
+            (debugM logHandle $ "Other enssencies are nested in the " <> name) >>
           (liftUnderApp . nesteEssences) pageObj >>= \value ->
             endFunc >> pure value
         _ -> endFunc >> pure (A.Object pageObj)

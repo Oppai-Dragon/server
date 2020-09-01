@@ -26,6 +26,8 @@ databaseTestTests =
   , TestLabel "buildEditEssenceValueTest" buildEditEssenceValueTest
   , TestLabel "buildGetEssenceValueTest" buildGetEssenceValueTest
   , TestLabel "buildDeleteEssenceValueTest" buildDeleteEssenceValueTest
+  , TestLabel "updateHmListTest" updateHmListTest
+  , TestLabel "updateEssenceListTest" updateEssenceListTest
   , TestLabel "getNeededFieldsDraftTest" getNeededFieldsDraftTest
   , TestLabel "getNeededFieldsPersonTest" getNeededFieldsPersonTest
   , TestLabel "updateDataTest" updateDataTest
@@ -35,7 +37,7 @@ databaseTestTests =
   ] <>
   chooseNameForAddingTests
 
-getDefaultValuesTest, buildCreateEssenceValueTest, buildEditEssenceValueTest, buildGetEssenceValueTest, buildDeleteEssenceValueTest, getNeededFieldsDraftTest, getNeededFieldsPersonTest, updateDataTest, getNewsRelatedFieldsTest, getOtherRelatedFieldsTest, handleDraftCaseTest ::
+getDefaultValuesTest, buildCreateEssenceValueTest, buildEditEssenceValueTest, buildGetEssenceValueTest, buildDeleteEssenceValueTest, updateHmListTest, updateEssenceListTest, getNeededFieldsDraftTest, getNeededFieldsPersonTest, updateDataTest, getNewsRelatedFieldsTest, getOtherRelatedFieldsTest, handleDraftCaseTest ::
      Test
 getDefaultValuesTest =
   TestCase $
@@ -59,79 +61,55 @@ getDefaultValuesTest =
 
 buildCreateEssenceValueTest =
   TestCase $
-  runReaderT
-    (evalStateT
-       (buildEssenceValue
-          (EssenceList
-             "author"
-             "create"
-             [("id", MyInteger 2), ("person_id", MyInteger 1)]))
-       [])
-    testHandle >>=
   assertEqual
-    ("for (" <>
-     "runReaderT" <>
-     "(evalStateT" <>
-     "(buildEssenceValue testAuthorListCreate)" <>
-     "[(\"author\",[(\"id\",MyInteger 2)])" <>
-     ",(\"person\",[(\"id\",MyInteger 1)])]" <> ") testHandle)")
-    (A.object
-       [ "author1" A..=
-         A.object
-           [ "id" A..= A.Number 2
-           , "person_id" A..= A.Number 1
-           , "description" A..= A.Null
-           ]
-       ])
+    "for (buildEssenceValue (EssenceList \"author\" \"create\" []))"
+    (A.object ["author1" A..= A.Null]) $
+  buildEssenceValue (EssenceList "author" "create" [])
 
 buildEditEssenceValueTest =
   TestCase $
-  runReaderT
-    (evalStateT (buildEssenceValue (EssenceList "author" "edit" [])) [])
-    testHandle >>=
   assertEqual
-    ("for " <>
-     "(runReaderT" <>
-     "(evalStateT" <>
-     "(buildEssenceValue (EssenceList \"author\" \"edit\" []))" <>
-     "[]" <> ") testHandle)")
-    goodResultValue
+    "for (buildEssenceValue (EssenceList \"author\" \"edit\" []))"
+    goodResultValue $
+  buildEssenceValue (EssenceList "author" "edit" [])
 
 buildGetEssenceValueTest =
   TestCase $
-  runReaderT
-    (evalStateT
-       (buildEssenceValue (EssenceList "author" "get" []))
-       [("author", [("id", MyInteger 2)]), ("person", [("id", MyInteger 1)])])
-    testHandle >>=
   assertEqual
-    ("for " <>
-     "(runReaderT" <>
-     "(evalStateT" <>
-     "(buildEssenceValue (EssenceList \"author\" \"get\" []))" <>
-     "[(\"author\",[(\"id\",MyInteger 2)])" <>
-     ",(\"person\",[(\"id\",MyInteger 1)])]" <> ") testHandle)")
-    (A.object
-       [ "author1" A..=
-         A.object
-           [ "id" A..= A.Number 2
-           , "person_id" A..= A.Number 1
-           , "description" A..= A.Null
-           ]
-       ])
+    "for (buildEssenceValue (EssenceList \"author\" \"get\" []))"
+    (A.object ["author1" A..= A.Null]) $
+  buildEssenceValue (EssenceList "author" "get" [])
 
 buildDeleteEssenceValueTest =
   TestCase $
-  runReaderT
-    (evalStateT (buildEssenceValue (EssenceList "author" "edit" [])) [])
-    testHandle >>=
   assertEqual
-    ("for " <>
-     "(runReaderT" <>
-     "(evalStateT" <>
-     "(buildEssenceValue (EssenceList \"author\" \"delete\" []))" <>
-     "[]" <> ") testHandle)")
-    goodResultValue
+    "for (buildEssenceValue (EssenceList \"author\" \"delete\" []))"
+    goodResultValue $
+  buildEssenceValue (EssenceList "author" "edit" [])
+
+updateHmListTest =
+  TestCase $
+  assertEqual
+    "for (updateHmList \"author\" [(\"person_id\",Number 1.0),(\"author_id\",Number 1.0),(\"description\",Null)])"
+    [("person_id", A.Number 1), ("id", A.Number 1), ("description", A.Null)] $
+  updateHmList
+    "author"
+    [ ("person_id", A.Number 1)
+    , ("author_id", A.Number 1)
+    , ("description", A.Null)
+    ]
+
+updateEssenceListTest =
+  TestCase $
+  assertEqual
+    "for (updateEssenceList \"author\" [(\"person_id\",MyInteger 1),(\"author_id\",MyInteger 1),(\"description\",MyEmpty)])"
+    [("person_id", MyInteger 1), ("id", MyInteger 1), ("description", MyEmpty)] $
+  updateEssenceList
+    "author"
+    [ ("person_id", MyInteger 1)
+    , ("author_id", MyInteger 1)
+    , ("description", MyEmpty)
+    ]
 
 getNeededFieldsDraftTest =
   TestCase $
