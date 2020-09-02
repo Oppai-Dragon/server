@@ -29,8 +29,6 @@ import qualified Database.HDBC.PostgreSQL as PSQL
 
 import System.IO.Unsafe (unsafePerformIO)
 
--- For changing settings in SQL Shell (psql)
--- SET lc_messages = 'en_US.UTF8'; SET client_encoding = 'UTF8';
 -- For deleting all tables
 dropTablesQuery :: String
 dropTablesQuery =
@@ -50,7 +48,9 @@ getConnection :: IO PSQL.Connection
 getConnection = do
   psql <- setPsql
   let uriDB = getUriDB psql
-  PSQL.connectPostgreSQL uriDB
+  conn <- PSQL.connectPostgreSQL uriDB
+  HDBC.runRaw conn setEng
+  return conn
 
 dropTables :: IO ()
 dropTables = do

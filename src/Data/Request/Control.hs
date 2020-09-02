@@ -21,6 +21,7 @@ import Data.Request.Method.Methods (isMethodCorrect)
 import Data.Request.Params.Methods
 import Data.SQL
 import Data.SQL.ShowSql
+import Log
 
 import qualified Data.ByteString as BS
 import qualified Data.HashMap.Strict as HM
@@ -89,13 +90,12 @@ parseRequest req = do
 isRequestCorrect ::
      Wai.Request -> IO (Bool, Wai.Response, QueryMBS, Config.Handle)
 isRequestCorrect req = do
-  api <- setApi
   (essence', action, queryMBS, method) <- parseRequest req
   let essence =
         if action == "publish"
           then "news"
           else essence'
-  handle@(Config.Handle config _ _) <- Config.new
+  handle@(Config.Handle config api _ logHandle) <- Config.new
   let essenceDB = getEssenceDB essence action config api
   let essenceFields = getEssenceFields essenceDB api
   let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
@@ -112,7 +112,7 @@ isRequestCorrect req = do
         , getAll isConstraintsCorrect
         ]
   let elseThenList =
-        [ (All False, notFound)
+        [ (All False, notFoundWith "Incorrect request path")
         , (All False, notFoundWith "Incorrect request method")
         , (All False, notFound)
         , (All False, notFoundWith paramsMsg)
@@ -120,6 +120,7 @@ isRequestCorrect req = do
         , (All False, notFoundWith "Bad values")
         , (All True, notFound)
         ]
+  debugM logHandle $ "Accesses of request " <> show accessArr
   let (All x1, x2) = ifElseThen checkingList elseThenList
   pure (x1, x2, queryMBS, handle)
 
@@ -135,6 +136,7 @@ accessCollector accessKeyBS = do
   let accessKeyStr = parseValue $ fromBS accessKeyBS
   let uriDB = getUriDB psql
   conn <- PSQL.connectPostgreSQL uriDB
+  HDBC.runRaw conn setEng
   let userQuery =
         "SELECT id,is_admin FROM person WHERE access_key=" <>
         accessKeyStr <> ";"

@@ -16,7 +16,7 @@ import qualified Database.HDBC.PostgreSQL as PSQL
 tryConnect ::
      HasCallStack => IO PSQL.Connection -> UnderApp (Maybe PSQL.Connection)
 tryConnect connectIO = do
-  (Config.Handle _ _ logHandle) <- askUnderApp
+  (Config.Handle _ _ _ logHandle) <- askUnderApp
   result <- liftIO $ tryM connectIO
   case result of
     Right conn ->
@@ -29,7 +29,7 @@ tryConnect connectIO = do
 
 tryRun :: HasCallStack => IO Integer -> UnderApp Integer
 tryRun run = do
-  (Config.Handle _ _ logHandle) <- askUnderApp
+  (Config.Handle _ _ _ logHandle) <- askUnderApp
   result <- liftIO $ tryM run
   case result of
     Right num ->
@@ -42,7 +42,7 @@ tryRun run = do
 tryQuickQuery ::
      HasCallStack => IO [[HDBC.SqlValue]] -> UnderApp [[HDBC.SqlValue]]
 tryQuickQuery quickQuery' = do
-  (Config.Handle _ _ logHandle) <- askUnderApp
+  (Config.Handle _ _ _ logHandle) <- askUnderApp
   result <- liftIO $ tryM quickQuery'
   case result of
     Right arr ->
@@ -50,6 +50,6 @@ tryQuickQuery quickQuery' = do
         (debugM logHandle "Query with getting values was runned in database") >>
       return arr
     Left err ->
-      liftIO (warningM logHandle "Can't get essence from database") >>
+      liftIO (warningM logHandle "Can't get query from database") >>
       liftIO (errorM logHandle $ show err) >>
       return []

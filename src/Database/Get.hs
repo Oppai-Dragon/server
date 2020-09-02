@@ -32,7 +32,7 @@ type FuncName = String
 
 dbGet :: SApp A.Value
 dbGet = do
-  (Config.Handle config _ logHandle) <- liftUnderApp askUnderApp
+  (Config.Handle config _ _ logHandle) <- liftUnderApp askUnderApp
   liftUnderApp . liftIO $ debugM logHandle "Start dbGet"
   addOffsetLimit
   essenceList@(EssenceList name _ _) <- getSApp
@@ -42,9 +42,11 @@ dbGet = do
   case maybeConn of
     Nothing -> return A.Null
     Just conn -> do
+      liftUnderApp . liftIO $ HDBC.runRaw conn setEng
       sqlValues <-
         liftUnderApp . tryQuickQuery $ HDBC.quickQuery' conn getQuery []
-      pageObj <- liftUnderApp . liftIO $
+      pageObj <-
+        liftUnderApp . liftIO $
         case sqlValuesArrToValue essenceList sqlValues config of
           A.Object obj -> do
             infoM logHandle $ name <> " was getted"
@@ -54,6 +56,7 @@ dbGet = do
             return HM.empty
       liftUnderApp . liftIO $ HDBC.disconnect conn
       let endFunc = liftUnderApp . liftIO $ debugM logHandle "End dbGet"
+      liftUnderApp . liftIO . debugM logHandle $ "Get " <> show pageObj
       case name of
         "news" ->
           (liftUnderApp . liftIO)
@@ -64,14 +67,14 @@ dbGet = do
 
 getBadArgumants :: FuncName -> UnderApp A.Value
 getBadArgumants funcName = do
-  (Config.Handle _ _ logHandle) <- askUnderApp
+  (Config.Handle _ _ _ logHandle) <- askUnderApp
   liftIO . debugM logHandle $ funcName <> " bad argumants"
   return $ A.Object HM.empty
 
 dbGetOne :: Essence List -> UnderApp A.Value
 dbGetOne (EssenceList _ _ [(_, MyEmpty)]) = getBadArgumants "dbGetOne"
 dbGetOne (EssenceList table action [pair]) = do
-  (Config.Handle config _ logHandle) <- askUnderApp
+  (Config.Handle config _ _ logHandle) <- askUnderApp
   liftIO $ debugM logHandle "Start dbGetOne"
   let uriDB = getUri config
   let getQuery = showSql $ Get table [Where pair]
@@ -79,6 +82,7 @@ dbGetOne (EssenceList table action [pair]) = do
   case maybeConn of
     Nothing -> return A.Null
     Just conn -> do
+      liftIO $ HDBC.runRaw conn setEng
       sqlValuesArr <- tryQuickQuery $ HDBC.quickQuery' conn getQuery []
       let value =
             sqlValuesArrToValue
@@ -86,13 +90,14 @@ dbGetOne (EssenceList table action [pair]) = do
               sqlValuesArr
               config
       liftIO $ HDBC.disconnect conn
+      liftIO . debugM logHandle $ "Get " <> show value
       liftIO $ debugM logHandle "End dbGetOne"
       pure value
 dbGetOne _ = getBadArgumants "dbGetOne"
 
 dbGetArray :: Essence [(String, MyValue)] -> UnderApp A.Value
 dbGetArray (EssenceList table action [(field, MyIntegers arr)]) = do
-  (Config.Handle config _ logHandle) <- askUnderApp
+  (Config.Handle config _ _ logHandle) <- askUnderApp
   liftIO $ debugM logHandle "Start dbGetArray"
   let uri = getUri config
   let myStrArray = map show arr
@@ -100,6 +105,7 @@ dbGetArray (EssenceList table action [(field, MyIntegers arr)]) = do
   case maybeConn of
     Nothing -> return A.Null
     Just conn -> do
+      liftIO $ HDBC.runRaw conn setEng
       let wherePart =
             L.intercalate " OR " $ map (\x -> field <> "=" <> x) myStrArray
       let getQuery = showSql . Get table $ [Filter wherePart]
@@ -110,13 +116,14 @@ dbGetArray (EssenceList table action [(field, MyIntegers arr)]) = do
               (EssenceList table action [])
               sqlValuesArr
               config
+      liftIO . debugM logHandle $ "Get " <> show value
       liftIO $ debugM logHandle "End dbGetArray"
       pure value
 dbGetArray _ = getBadArgumants "dbGetArray"
 
 addOffsetLimit :: SApp ()
 addOffsetLimit = do
-  (Config.Handle _ _ logHandle) <- liftUnderApp askUnderApp
+  (Config.Handle _ _ _ logHandle) <- liftUnderApp askUnderApp
   psql <- liftUnderApp $ liftIO setPsql
   essenceList <- getSApp
   let pageCounter =
@@ -130,7 +137,7 @@ addOffsetLimit = do
 
 nesteEssences :: A.Object -> UnderApp A.Value
 nesteEssences pageObj = do
-  (Config.Handle _ _ logHandle) <- askUnderApp
+  (Config.Handle _ _ _ logHandle) <- askUnderApp
   liftIO $ debugM logHandle "Start nesteEssences"
   let essences = HM.keys pageObj
   liftIO $ debugM logHandle $ "iterateObj " <> show essences
@@ -141,8 +148,7 @@ nesteEssences pageObj = do
 iterateObj :: [T.Text] -> A.Object -> UnderApp [A.Object]
 iterateObj [] _ = return []
 iterateObj (essence:rest) pageObj = do
-  (Config.Handle config _ logHandle) <- askUnderApp
-  api <- liftIO setApi
+  (Config.Handle config api _ logHandle) <- askUnderApp
   let name = T.pack . takeWhile (not . isDigit) $ T.unpack essence
   let relationsFields =
         map (\(field, descr) -> (field, fromJust $ dRelations descr)) .

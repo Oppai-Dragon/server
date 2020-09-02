@@ -22,7 +22,7 @@ import qualified Database.HDBC.PostgreSQL as PSQL
 
 dbCreate :: SApp A.Value
 dbCreate = do
-  (Config.Handle config _ logHandle) <- liftUnderApp askUnderApp
+  (Config.Handle config _ _ logHandle) <- liftUnderApp askUnderApp
   liftUnderApp . liftIO $ debugM logHandle "Start dbCreate"
   addingDefault
   essenceList@(EssenceList name _ _) <- getSApp
@@ -34,6 +34,7 @@ dbCreate = do
       liftIO (debugM logHandle "Essence not created in database") >>
       return A.Null
     Just conn -> do
+      liftUnderApp . liftIO $ HDBC.runRaw conn setEng
       result <- liftUnderApp . tryRun $ HDBC.run conn createQuery []
       case result of
         0 -> liftUnderApp . liftIO . infoM logHandle $ name <> " wasn't created"

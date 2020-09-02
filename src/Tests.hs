@@ -62,7 +62,7 @@ testList =
 
 runTest :: IO ()
 runTest = do
-  (Config.Handle (Config config) _ _) <- Config.new
+  (Config.Handle (Config config) _ _ _) <- Config.new
   if HM.null config
     then runTestTT (TestList setupTests) >>
          traceIO "Can't find Config.json" --- Need different look

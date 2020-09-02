@@ -37,7 +37,7 @@ import qualified Network.HTTP.Types as HTTPTypes
 
 pathHandler :: Wai.Request -> IO Wai.Response
 pathHandler req = do
-  (isValidRequest, response@(Wai.ResponseBuilder _ _ textBuilder), query, configHandle@(Config.Handle _ _ logHandle)) <-
+  (isValidRequest, response@(Wai.ResponseBuilder _ _ textBuilder), query, configHandle@(Config.Handle _ _ _ logHandle)) <-
     isRequestCorrect req
   let req' = req {Wai.queryString = query}
   let responseMsg = show $ BSB.toLazyByteString textBuilder
@@ -48,23 +48,25 @@ pathHandler req = do
 
 getEssenceList :: Wai.Request -> UnderApp (Essence List)
 getEssenceList req = do
-  (Config.Handle config _ logHandle) <- askUnderApp
-  api <- liftIO setApi
+  (Config.Handle config api _ logHandle) <- askUnderApp
   let [essence', action] = Wai.pathInfo req
+  liftIO . debugM logHandle $
+    "Path of request: " <> T.unpack essence' <> "/" <> T.unpack action
   let essence =
         if action == "publish"
           then "news"
           else essence'
-  liftIO . debugM logHandle $
-    "Path of request: " <> T.unpack action <> "/" <> T.unpack essence
   let queryMBS = Wai.queryString req
   liftIO . debugM logHandle $ "Query of request: " <> show queryMBS
-  let essenceDB = getEssenceDB essence action config api
+  let essenceDB@(EssenceDB nameT actionT _) =
+        getEssenceDB essence action config api
+  liftIO . debugM logHandle $
+    "Essence - " <> T.unpack nameT <> ", Action - " <> T.unpack actionT
   toEssenceList essenceDB queryMBS
 
 addAccessKey :: Wai.Request -> SApp ()
 addAccessKey req = do
-  api <- liftUnderApp $ liftIO setApi
+  (Config.Handle _ api _ _) <- liftUnderApp askUnderApp
   (EssenceList name action list) <- getSApp
   let queryMBS = Wai.queryString req
   let access = getAccess (T.pack name) (T.pack action) api

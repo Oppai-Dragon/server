@@ -134,8 +134,8 @@ parseFieldValue (field:fields) bss =
 
 toEssenceList :: Essence DB -> QueryMBS -> UnderApp (Essence List)
 toEssenceList essenceDB@(EssenceDB name action _) queryMBS = do
-  api <- liftIO setApi
-  let essenceFields = getEssenceFields essenceDB api
+  configHandle <- askUnderApp
+  let essenceFields = getEssenceFields essenceDB $ hApi configHandle
   let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
   let nameStr = T.unpack name
   let actioStr = T.unpack action

@@ -10,6 +10,7 @@ module Config
   , WApp
   , W
   , Config.Handle(..)
+  , setEng
   , Config.new
   , testHandle
   , testApi
@@ -43,16 +44,22 @@ type W a b = Writer a b
 data Handle =
   Handle
     { hConfig :: Config
+    , hApi :: Api
     , hLocal :: Local
     , hLog :: Log.Handle
     }
   deriving (Show, Eq)
 
+-- For changing settings in SQL Shell (psql)
+setEng :: String
+setEng = "SET lc_messages = 'en_US.UTF8'; SET client_encoding = 'UTF8';"
+
 new :: IO Config.Handle
 new = do
   config <- setConfig
+  api <- setApi
   loc <- setLocal
-  Config.Handle config loc <$> Log.new
+  Config.Handle config api loc <$> Log.new
 
 testHandle :: Config.Handle
 {-# NOINLINE testHandle #-}

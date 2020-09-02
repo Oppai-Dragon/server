@@ -17,7 +17,7 @@ import qualified Database.HDBC.PostgreSQL as PSQL
 dbEdit :: SApp A.Value
 dbEdit = do
   essenceList@(EssenceList name _ _) <- getSApp
-  (Config.Handle config _ logHandle) <- liftUnderApp askUnderApp
+  (Config.Handle config _ _ logHandle) <- liftUnderApp askUnderApp
   liftUnderApp . liftIO $ debugM logHandle "Start dbEdit"
   let editQuery = showSql essenceList
   let uriDB = getUri config
@@ -25,6 +25,7 @@ dbEdit = do
   case maybeConn of
     Nothing -> return A.Null
     Just conn -> do
+      liftUnderApp . liftIO $ HDBC.runRaw conn setEng
       result <- liftUnderApp . tryRun $ HDBC.run conn editQuery []
       case result of
         0 ->
