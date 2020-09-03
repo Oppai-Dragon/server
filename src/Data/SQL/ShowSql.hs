@@ -14,6 +14,7 @@ import Data.Essence.Methods
 import Data.Essence.Parse.Clause
 import Data.MyValue
 import Data.SQL
+import Log
 
 import Data.Functor.Identity
 import Data.Maybe
@@ -63,7 +64,7 @@ instance ShowSQL (Clause String) where
 instance ShowSQL [Clause String] where
   showSql = showSql . map clauseSequenceA . groupSql . sort
   parseList = show . map parseList
-  unpack = show . map unpack
+  unpack = show . map (read . unpack :: Clause String -> (String, String))
 
 instance ShowSQL (Clause [String]) where
   showSql = parseList
@@ -140,12 +141,11 @@ clauseSequenceA clauseArr =
     [] -> WhereList []
     arr@(x:_) ->
       case x of
-        Set _ -> SetList $ map (read . unpack) arr
-        Where _ -> WhereList $ map (read . unpack) arr
-        Filter _ -> FilterList $ map (read . unpack) arr
-        OrderBy _ -> OrderByList $ map (read . unpack) arr
-        OffsetLimit _ -> OffsetLimitList $ map (read . unpack) arr
-
+        Set _ -> SetList . read $ unpack arr
+        Where _ -> WhereList . read $ unpack arr
+        Filter _ -> FilterList . read $ unpack arr
+        OrderBy _ -> OrderByList . read $ unpack arr
+        OffsetLimit _ -> OffsetLimitList . read $ unpack arr
 --Replaces redundant "WHERE" with "AND"
 withoutManyWhere :: [String] -> [String]
 withoutManyWhere arr =

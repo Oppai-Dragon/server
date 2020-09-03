@@ -26,6 +26,7 @@ dbEdit = do
     Nothing -> return A.Null
     Just conn -> do
       liftUnderApp . liftIO $ HDBC.runRaw conn setEng
+      liftUnderApp . liftIO . debugM logHandle $ "PSQL request: " <> editQuery
       result <- liftUnderApp . tryRun $ HDBC.run conn editQuery []
       case result of
         0 ->

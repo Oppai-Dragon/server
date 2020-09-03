@@ -23,7 +23,7 @@ import Data.Base
 import Data.Aeson
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC8
-import qualified Data.Char as C
+import Data.Char
 import qualified Data.HashMap.Strict as HM
 import Data.Scientific
 import qualified Data.Text as T
@@ -77,8 +77,8 @@ parseStrings (x:xs) =
 
 parseBool :: String -> String
 parseBool str =
-  let letter = C.toUpper $ head str
-      word = map C.toLower $ tail str
+  let letter = toUpper $ head str
+      word = map toLower $ tail str
    in letter : word
 
 myInteger, myString, myBool, myIntegers, myStrings, myDate, myNextval ::
@@ -87,13 +87,34 @@ myInteger = MyInteger . read
 
 myString = MyString
 
-myBool = MyBool . read . parseBool
+myBool str =
+  MyBool $
+  case parseBool str of
+    "False" -> False
+    "True" -> True
+    _ -> False
 
 myDate = MyDate
 
-myIntegers = MyIntegers . read . parseIntegers
+myIntegers str =
+  let parsedStr = parseIntegers str
+   in MyIntegers $
+      case parsedStr of
+        '[':rest ->
+          if all (\x -> x == ',' || isDigit x) $ init rest
+            then read parsedStr
+            else []
+        _ -> []
 
-myStrings = MyStrings . read . parseStrings
+myStrings str =
+  let parsedStr = parseStrings str
+   in MyStrings $
+      case parsedStr of
+        '[':rest ->
+          case last rest of
+            ']' -> read parsedStr
+            _ -> []
+        _ -> []
 
 myNextval = MyNextval
 
@@ -101,11 +122,11 @@ chooseMyValue :: String -> (String -> MyValue)
 chooseMyValue str =
   case str of
     '[':x:_ ->
-      if C.isDigit x
+      if isDigit x
         then myIntegers
         else myStrings
     '{':x:_ ->
-      if C.isDigit x
+      if isDigit x
         then myIntegers
         else myStrings
     "FALSE" -> myBool
@@ -115,13 +136,13 @@ chooseMyValue str =
     'N':'E':'X':'T':'V':'A':'L':'(':_ -> myNextval
     [] -> const MyEmpty
     arr ->
-      if all C.isDigit arr
+      if all isDigit arr
         then myInteger
         else myString
 
 fromBS :: BS.ByteString -> MyValue
 fromBS valueBS =
-  let valueStr = map C.toUpper $ BSC8.unpack valueBS
+  let valueStr = map toUpper $ BSC8.unpack valueBS
    in chooseMyValue valueStr (BSC8.unpack valueBS)
 
 fromValue :: Value -> MyValue
@@ -145,7 +166,7 @@ fromValue value =
 
 fromStr :: String -> MyValue
 fromStr str =
-  let valueStr = map C.toUpper str
+  let valueStr = map toUpper str
    in chooseMyValue valueStr str
 
 toStr :: MyValue -> String

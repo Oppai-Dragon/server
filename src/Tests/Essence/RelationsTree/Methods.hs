@@ -10,6 +10,7 @@ import Data.MyValue
 
 import qualified Data.Aeson as A
 import qualified Data.HashMap.Strict as HM
+import qualified Data.Vector as V
 
 import Test.HUnit
 
@@ -17,18 +18,18 @@ essenceRelationsTreeMethodsTests :: [Test]
 essenceRelationsTreeMethodsTests =
   [ TestLabel "isEssenceRelationsTest" isEssenceRelationsTest
   , TestLabel "ifFieldsFillTest" ifFieldsFillTest
+  , TestLabel "getAddedFieldsTest" getAddedFieldsTest
   , TestLabel "unpackLeafsTest" unpackLeafsTest
   , TestLabel "beforeUnderscoreTest" beforeUnderscoreTest
   , TestLabel "parseObjEssenceTest" parseObjEssenceTest
   , TestLabel "afterUnderscoreTest" afterUnderscoreTest
   , TestLabel "getListOfPairFromObjTest" getListOfPairFromObjTest
-  , TestLabel "checkListTest" checkListTest
   , TestLabel "getNextFieldTest" getNextFieldTest
   , TestLabel "isRightRelationsTest" isRightRelationsTest
   , TestLabel "getIdPairFromObjTest" getIdPairFromObjTest
   ]
 
-isEssenceRelationsTest, ifFieldsFillTest, unpackLeafsTest, beforeUnderscoreTest, parseObjEssenceTest, afterUnderscoreTest, getListOfPairFromObjTest, checkListTest, getNextFieldTest, isRightRelationsTest, getIdPairFromObjTest ::
+isEssenceRelationsTest, ifFieldsFillTest, getAddedFieldsTest, unpackLeafsTest, beforeUnderscoreTest, parseObjEssenceTest, afterUnderscoreTest, getListOfPairFromObjTest, getNextFieldTest, isRightRelationsTest, getIdPairFromObjTest ::
      Test
 isEssenceRelationsTest =
   TestCase $
@@ -44,12 +45,56 @@ ifFieldsFillTest =
     ["name", "category_id"]
     [("name", MyString ""), ("category", MyInteger 0)]
 
+getAddedFieldsTest =
+  TestCase $
+  assertEqual
+    "for (getAddedFields \"draft\"[Leaf \"draft_id\",Leaf \"author_id\",Leaf \"category_id\",Leaf \"main_photo\",Leaf \"content\",Leaf \"name\",Leaf \"tag_ids\",Leaf \"optional_photos\"] (A.Object testDraftFiedlsObj))"
+    [ ("draft_id", MyInteger 24)
+    , ("author_id", MyInteger 24)
+    , ("category_id", MyInteger 24)
+    , ("main_photo", MyEmpty)
+    , ("content", MyString "testContent")
+    , ("name", MyString "testDraft")
+    , ("tag_ids", MyIntegers [24])
+    , ("optional_photos", MyEmpty)
+    ] $
+  getAddedFields
+    "draft"
+    [ Leaf "draft_id"
+    , Leaf "author_id"
+    , Leaf "category_id"
+    , Leaf "main_photo"
+    , Leaf "content"
+    , Leaf "name"
+    , Leaf "tag_ids"
+    , Leaf "optional_photos"
+    ]
+    testDraftObj
+
 unpackLeafsTest =
   TestCase $
   assertEqual
-    "for (unpackLeafs \"person1\" [Leaf \"person_id\"] testObj)"
-    [("person_id", MyInteger 1)] $
-  unpackLeafs "person1" [Leaf "person_id"] testObj
+    "for (unpackLeafs [Leaf \"draft_id\",Leaf \"author_id\",Leaf \"category_id\",Leaf \"main_photo\",Leaf \"content\",Leaf \"name\",Leaf \"tag_ids\",Leaf \"optional_photos\"] HM.insert \"draft_id\" (A.Number 24) testDraftFiedlsObj)"
+    [ ("draft_id", MyInteger 24)
+    , ("author_id", MyInteger 24)
+    , ("category_id", MyInteger 24)
+    , ("main_photo", MyEmpty)
+    , ("content", MyString "testContent")
+    , ("name", MyString "testDraft")
+    , ("tag_ids", MyIntegers [24])
+    , ("optional_photos", MyEmpty)
+    ] .
+  unpackLeafs
+    [ Leaf "draft_id"
+    , Leaf "author_id"
+    , Leaf "category_id"
+    , Leaf "main_photo"
+    , Leaf "content"
+    , Leaf "name"
+    , Leaf "tag_ids"
+    , Leaf "optional_photos"
+    ] $
+  HM.insert "draft_id" (A.Number 24) testDraftFiedlsObj
 
 beforeUnderscoreTest =
   TestCase $
@@ -73,13 +118,6 @@ getListOfPairFromObjTest =
     [("person_id", MyInteger 1)] $
   getListOfPairFromObj "person_id" testObj
 
-checkListTest =
-  TestCase $
-  assertEqual
-    "for (checkList \"person_id\" [(\"id\",\"1\")])"
-    [("id", MyInteger 1)] $
-  checkList "person_id" [("id", MyInteger 1)]
-
 getNextFieldTest =
   TestCase $
   assertEqual "for (getNextField (Trunk \"kuk\" (Branch \"kek\" [])))" "kek" $
@@ -97,11 +135,26 @@ getIdPairFromObjTest =
   assertEqual "for (getIdPairFromObj \"draft\" bTestObj)" [("id", MyInteger 1)] $
   getIdPairFromObj "draft" bTestObj
 
-rTestObj, bTestObj, testObj :: A.Object
+rTestObj, bTestObj, testDraftObj, testDraftFiedlsObj, testObj :: A.Object
 rTestObj = HM.fromList [("author1", A.object ["id" A..= A.Number 1])]
 
 bTestObj =
   HM.fromList
     [("draft1", A.object ["author_id" A..= A.Number 2, "id" A..= A.Number 1])]
+
+testDraftObj = HM.singleton "draft1" $ A.Object testDraftFiedlsObj
+
+testDraftFiedlsObj =
+  HM.fromList
+    [ ("author_id", A.Number 24.0)
+    , ("category_id", A.Number 24.0)
+    , ("main_photo", A.Null)
+    , ("content", A.String "testContent")
+    , ("date_of_creation", A.String "2020-09-02")
+    , ("name", A.String "testDraft")
+    , ("id", A.Number 24.0)
+    , ("tag_ids", A.Array $ V.fromList [A.Number 24.0])
+    , ("optional_photos", A.Null)
+    ]
 
 testObj = HM.fromList [("person1", A.object ["id" A..= A.Number 1])]

@@ -26,6 +26,7 @@ dbDelete = do
     Nothing -> return A.Null
     Just conn -> do
       liftUnderApp . liftIO $ HDBC.runRaw conn setEng
+      liftUnderApp . liftIO . debugM logHandle $ "PSQL request: " <> deleteQuery
       result <- liftUnderApp . tryRun $ HDBC.run conn deleteQuery []
       case result of
         0 ->

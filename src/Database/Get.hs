@@ -28,8 +28,6 @@ import qualified Data.Text as T
 import qualified Database.HDBC as HDBC
 import qualified Database.HDBC.PostgreSQL as PSQL
 
-type FuncName = String
-
 dbGet :: SApp A.Value
 dbGet = do
   (Config.Handle config _ _ logHandle) <- liftUnderApp askUnderApp
@@ -43,6 +41,7 @@ dbGet = do
     Nothing -> return A.Null
     Just conn -> do
       liftUnderApp . liftIO $ HDBC.runRaw conn setEng
+      liftUnderApp . liftIO . debugM logHandle $ "PSQL request: " <> getQuery
       sqlValues <-
         liftUnderApp . tryQuickQuery $ HDBC.quickQuery' conn getQuery []
       pageObj <-
@@ -65,14 +64,7 @@ dbGet = do
             endFunc >> pure value
         _ -> endFunc >> pure (A.Object pageObj)
 
-getBadArgumants :: FuncName -> UnderApp A.Value
-getBadArgumants funcName = do
-  (Config.Handle _ _ _ logHandle) <- askUnderApp
-  liftIO . debugM logHandle $ funcName <> " bad argumants"
-  return $ A.Object HM.empty
-
 dbGetOne :: Essence List -> UnderApp A.Value
-dbGetOne (EssenceList _ _ [(_, MyEmpty)]) = getBadArgumants "dbGetOne"
 dbGetOne (EssenceList table action [pair]) = do
   (Config.Handle config _ _ logHandle) <- askUnderApp
   liftIO $ debugM logHandle "Start dbGetOne"
@@ -83,6 +75,7 @@ dbGetOne (EssenceList table action [pair]) = do
     Nothing -> return A.Null
     Just conn -> do
       liftIO $ HDBC.runRaw conn setEng
+      liftIO . debugM logHandle $ "PSQL request: " <> getQuery
       sqlValuesArr <- tryQuickQuery $ HDBC.quickQuery' conn getQuery []
       let value =
             sqlValuesArrToValue
@@ -93,9 +86,12 @@ dbGetOne (EssenceList table action [pair]) = do
       liftIO . debugM logHandle $ "Get " <> show value
       liftIO $ debugM logHandle "End dbGetOne"
       pure value
-dbGetOne _ = getBadArgumants "dbGetOne"
+dbGetOne (EssenceList _ _ list) = do
+  (Config.Handle _ _ _ logHandle) <- askUnderApp
+  liftIO . warningM logHandle $ "dbGetOne takes bad argumants : " <> show list
+  return $ A.Object HM.empty
 
-dbGetArray :: Essence [(String, MyValue)] -> UnderApp A.Value
+dbGetArray :: Essence List -> UnderApp A.Value
 dbGetArray (EssenceList table action [(field, MyIntegers arr)]) = do
   (Config.Handle config _ _ logHandle) <- askUnderApp
   liftIO $ debugM logHandle "Start dbGetArray"
@@ -109,6 +105,7 @@ dbGetArray (EssenceList table action [(field, MyIntegers arr)]) = do
       let wherePart =
             L.intercalate " OR " $ map (\x -> field <> "=" <> x) myStrArray
       let getQuery = showSql . Get table $ [Filter wherePart]
+      liftIO . debugM logHandle $ "PSQL request: " <> getQuery
       sqlValuesArr <- tryQuickQuery $ HDBC.quickQuery' conn getQuery []
       liftIO $ HDBC.disconnect conn
       let value =
@@ -119,7 +116,10 @@ dbGetArray (EssenceList table action [(field, MyIntegers arr)]) = do
       liftIO . debugM logHandle $ "Get " <> show value
       liftIO $ debugM logHandle "End dbGetArray"
       pure value
-dbGetArray _ = getBadArgumants "dbGetArray"
+dbGetArray (EssenceList _ _ list) = do
+  (Config.Handle _ _ _ logHandle) <- askUnderApp
+  liftIO . warningM logHandle $ "dbGetArray takes bad argumants : " <> show list
+  return $ A.Object HM.empty
 
 addOffsetLimit :: SApp ()
 addOffsetLimit = do

@@ -35,6 +35,7 @@ dbCreate = do
       return A.Null
     Just conn -> do
       liftUnderApp . liftIO $ HDBC.runRaw conn setEng
+      liftUnderApp . liftIO . debugM logHandle $ "PSQL request: " <> createQuery
       result <- liftUnderApp . tryRun $ HDBC.run conn createQuery []
       case result of
         0 -> liftUnderApp . liftIO . infoM logHandle $ name <> " wasn't created"

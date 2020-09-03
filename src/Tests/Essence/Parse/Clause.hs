@@ -85,9 +85,9 @@ addEssenceNameTest =
 parseTagsInTest =
   TestCase $
   assertEqual
-    "for (parseTagsIn \"[1,2,3]\")"
+    "for (parseTagsIn $ MyIntegers [1,2,3])"
     "1=ANY(tag_ids) OR 2=ANY(tag_ids) OR 3=ANY(tag_ids)" $
-  parseTagsIn "[1,2,3]"
+  parseTagsIn $ MyIntegers [1,2,3]
 
 parseAuthorNameTest =
   TestCase $

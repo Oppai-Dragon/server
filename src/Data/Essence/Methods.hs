@@ -28,6 +28,7 @@ import Data.Essence.GetFields
 import Data.Essence.Parse
 import Data.MyValue
 import Data.Value
+import Log
 
 import Data.Maybe (fromJust)
 
@@ -101,7 +102,7 @@ setDescription list =
 
 getMaybeDataField :: Read a => Maybe String -> Maybe a
 getMaybeDataField Nothing = Nothing
-getMaybeDataField (Just value) = Just $ read value
+getMaybeDataField (Just value) = trace value . Just $ read value
 
 getMyValue :: String -> MyValue
 getMyValue = read

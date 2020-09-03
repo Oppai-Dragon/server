@@ -77,7 +77,7 @@ pickClause name (field, myValue) =
             "created_before" -> Filter $ name +. "date_of_creation<" <> value
             "category_id" -> Where (name +. "category_id", myValue)
             "tag_id" -> Filter $ value <> "=ANY(" <> name +. "tag_ids)"
-            "tags_in" -> Filter $ parseTagsIn valueStr
+            "tags_in" -> Filter $ parseTagsIn myValue
             "tags_all" -> Where (name +. "tag_ids", myValue)
             "name" ->
               Filter $
@@ -138,9 +138,9 @@ addEssenceName, (+.) :: EssenceName -> Field -> Field
 
 addEssenceName name field = name <> "." <> field
 
-parseTagsIn :: String -> String
+parseTagsIn :: MyValue -> String
 parseTagsIn value =
-  let tagArr = read value :: [Int]
+  let tagArr = case value of {MyIntegers arr -> arr; _ -> []}
    in intercalate " OR " $ map (\tag -> show tag <> "=ANY(tag_ids)") tagArr
 
 parseAuthorName :: String -> String -> String

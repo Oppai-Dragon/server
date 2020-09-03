@@ -1,0 +1,16 @@
+{
+  "news1": {
+    "draft_id": 28,
+    "author_id": 24,
+    "category_id": 24,
+    "main_photo": null,
+    "content": "testContent",
+    "date_of_creation": "2020-09-03",
+    "name": "testDraft",
+    "id": 10,
+    "tag_ids": [
+      24
+    ],
+    "optional_photos": null
+  }
+}

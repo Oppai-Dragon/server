@@ -7,6 +7,7 @@ module Log.Console
   , tryM
   , endM
   , prettyLog
+  , lastPrettyCallStack
   , myPrettyCallStack
   , myPrettyCallStackLines
   , myPrettySrcLoc
@@ -34,7 +35,7 @@ logM -- Log a message using the given logger at a given level
   -> IO ()
 logM (Handle path maybeLevel) level text = do
   time <- getTime
-  let prettyLoc = myPrettySrcLoc . snd . last $ getCallStack callStack
+  let prettyLoc = lastPrettyCallStack callStack
   let msg = time <> "-" <> prettyLog level text <> "\n\t" <> prettyLoc <> "\n"
   case maybeLevel of
     Just currentLevel -> when (currentLevel <= level) $ writeLog path msg
@@ -50,12 +51,12 @@ infoM = (`logM` INFO)
 warningM logHandle msg = do
   logM logHandle WARNING msg
   traceIO $ prettyLog WARNING msg
-  traceIO $ myPrettyCallStack callStack
+  traceIO $ lastPrettyCallStack callStack
 
 errorM logHandle msg = do
   logM logHandle ERROR msg
   traceIO $ prettyLog ERROR msg
-  traceIO $ myPrettyCallStack callStack
+  traceIO $ lastPrettyCallStack callStack
 
 tryM :: IO a -> IO (Either SomeException a)
 tryM = try
@@ -67,6 +68,9 @@ endM (Handle path _) = writeLog path "\n\n\n"
 -- * Readables
 prettyLog :: Level -> String -> String
 prettyLog level text = "[" <> show level <> "] " <> text
+
+lastPrettyCallStack :: CallStack -> String
+lastPrettyCallStack = myPrettySrcLoc . snd . last . getCallStack
 
 myPrettyCallStack :: CallStack -> String
 myPrettyCallStack = intercalate "\n" . myPrettyCallStackLines

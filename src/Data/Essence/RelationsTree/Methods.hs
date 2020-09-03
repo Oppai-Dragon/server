@@ -5,12 +5,12 @@ module Data.Essence.RelationsTree.Methods
   , iterateRelations
   , ifFieldsFill
   , findEssence
+  , getAddedFields
   , unpackLeafs
   , beforeUnderscore
   , parseObjEssence
   , afterUnderscore
   , getListOfPairFromObj
-  , checkList
   , getNextField
   , isRightRelations
   , getIdPairFromObj
@@ -38,6 +38,9 @@ type Name = String
 
 type Field = String
 
+goodResult :: A.Object
+goodResult = HM.singleton "result" $ A.Number 1
+
 isEssenceRelations :: Name -> Api -> Bool
 isEssenceRelations essence api =
   let relations = getRelationsTree (T.pack essence) api
@@ -51,13 +54,14 @@ addRelationsFields = do
   (Config.Handle _ api _ logHandle) <- liftUnderApp askUnderApp
   (EssenceList name action _) <- getSApp
   case [name, action] of
-    ["news", "delete"] -> return $ HM.singleton "result" (A.Number 1)
+    ["news", "delete"] -> return goodResult
+    ["news", "get"] -> return goodResult
     _ ->
       if isEssenceRelations name api
         then (liftUnderApp . liftIO)
                (debugM logHandle "Will be added relations fields") >>
              relationsHandler name
-        else return $ HM.singleton "result" (A.Number 1)
+        else return goodResult
 
 relationsHandler :: Name -> SApp A.Object
 relationsHandler name = do
@@ -70,7 +74,8 @@ relationsHandler name = do
     Root rEssence trunk@(Trunk tEssence _) -> do
       obj1 <- relationsHandler (beforeUnderscore rEssence)
       (A.Object obj2) <-
-        liftUnderApp . findEssence (beforeUnderscore tEssence) $ getListOfPairFromObj rEssence obj1
+        liftUnderApp . findEssence (beforeUnderscore tEssence) $
+        getListOfPairFromObj rEssence obj1
       iterateRelations trunk obj2
     Root rEssence branch@(Branch _ _) -> do
       obj1 <- relationsHandler (beforeUnderscore rEssence)
@@ -78,6 +83,8 @@ relationsHandler name = do
     Root rEssence (Leaf key) ->
       case lookup key (elList essenceList) of
         (Just accessKey) -> do
+          liftUnderApp . liftIO . debugM logHandle $
+            "Find " <> rEssence <> " by " <> key <> " from queryString"
           (A.Object obj) <-
             liftUnderApp $
             dbGetOne (EssenceList rEssence "get" [(key, accessKey)])
@@ -90,42 +97,55 @@ iterateRelations (Trunk t (Branch b leafs)) objOld = do
   (Config.Handle config api _ logHandle) <- liftUnderApp askUnderApp
   (EssenceList _ action list) <- getSApp
   let name = beforeUnderscore t
-  let listOfPair = checkList t list
-  case listOfPair of
-    [(_, _)] ->
+  let field = afterUnderscore t
+  case lookup field list of
+    Just value ->
       case b of
         "news" -> do
+          liftUnderApp . liftIO . debugM logHandle $
+            "Find " <> name <> " by " <> field <> " from queryString"
           (A.Object objNew) <-
-            liftUnderApp $ dbGetOne (EssenceList name "get" listOfPair)
+            liftUnderApp $ dbGetOne (EssenceList name "get" [(field, value)])
                 -- Draft have only one "not null" field for creating - "name"
                 -- But news, which copies draft values, need more then just "name"
           let essenceDB = getEssenceDB (T.pack b) (T.pack action) config api
-          let addedFields = unpackLeafs (parseObjEssence name) leafs objNew
+          let addedFields = getAddedFields name leafs objNew
           let requiredFields = toFields $ getRequiredFields essenceDB api
-          let bool = ifFieldsFill requiredFields addedFields
-          if isRightRelations objOld objNew t b && bool
-            then modifySApp (deletePair "id") >>
-                 modifySApp (addList addedFields) >>
-                 return (HM.singleton "result" (A.Number 1))
+          let bool1 = isRightRelations objOld objNew t b
+          let bool2 = ifFieldsFill requiredFields addedFields
+          liftUnderApp . liftIO . debugM logHandle $
+            "isRightRelations - " <>
+            show bool1 <> ", isFieldsFill -  " <> show bool2
+          if bool1 && bool2
+            then do
+              liftUnderApp . liftIO . debugM logHandle $
+                "Add these fields " <> show leafs <> " from " <> name
+              -- Need delete "id" from Essence List, because it was needed only
+              -- for getting from database, and now it'll be crush PSQL request
+              modifySApp $ deletePair "id"
+              modifySApp $ addList addedFields
+              return goodResult
             else return HM.empty
         _ -> do
+          liftUnderApp . liftIO . debugM logHandle $
+            "Find " <> b <> " by " <> field <> " from queryString"
           (A.Object objNew) <-
-            liftUnderApp $ dbGetOne (EssenceList b "get" listOfPair)
-          let addedFields = unpackLeafs (parseObjEssence name) leafs objOld
-          if isRightRelations objOld objNew t b
-            then modifySApp (addList addedFields) >>
-                 return (HM.singleton "result" (A.Number 1))
+            liftUnderApp $ dbGetOne (EssenceList b "get" [(field, value)])
+          let addedFields = getAddedFields name leafs objOld
+          let bool = isRightRelations objOld objNew t b
+          liftUnderApp . liftIO . debugM logHandle $
+            "isRightRelations - " <> show bool
+          if bool
+            then modifySApp (addList addedFields) >> return goodResult
             else return HM.empty
-    _ -> do
+    Nothing -> do
       liftUnderApp . liftIO . debugM logHandle $
         "Add these fields " <> show leafs <> " from " <> name
-      modifySApp . addList $ unpackLeafs (parseObjEssence name) leafs objOld
-      return (HM.singleton "result" (A.Number 1))
+      let addedFields = getAddedFields name leafs objOld
+      modifySApp $ addList addedFields
+      return goodResult
 iterateRelations (Trunk t1 trunk@(Trunk t2 _)) objOld = do
   let findName = beforeUnderscore t2
-  let byName = beforeUnderscore t1
-  (Config.Handle _ _ _ logHandle) <- liftUnderApp askUnderApp
-  liftIO . debugM logHandle $ "Find " <> findName <> " by " <> byName
   (A.Object objNew) <-
     liftUnderApp $ findEssence findName (getListOfPairFromObj t1 objOld)
   iterateRelations trunk objNew
@@ -141,18 +161,29 @@ ifFieldsFill (field:rest) arr =
 findEssence :: Name -> [(String, MyValue.MyValue)] -> UnderApp A.Value
 findEssence name listOfPair =
   case listOfPair of
-    [(_, _)] -> dbGetOne $ EssenceList name "get" listOfPair
+    [(field, _)] -> do
+      (Config.Handle _ _ _ logHandle) <- askUnderApp
+      liftIO . debugM logHandle $ "Find " <> name <> " by " <> field
+      dbGetOne $ EssenceList name "get" listOfPair
     _ -> return . A.Object . HM.singleton "result" $ A.Number 0
 
-unpackLeafs ::
+getAddedFields ::
      Name -> [RelationsTree] -> A.Object -> [(String, MyValue.MyValue)]
-unpackLeafs _ [] _ = []
-unpackLeafs root (Leaf l:rest) obj =
-  let field = afterUnderscore l
-      fields = map T.pack [root, field]
-      value = getValue fields obj
-   in (l, MyValue.fromValue value) : unpackLeafs root rest obj
-unpackLeafs _ _ _ = []
+getAddedFields name leafs essenceObj =
+  let objName = parseObjEssence name
+      fieldsObj =
+        case getValue [T.pack objName] essenceObj of
+          A.Object obj -> obj
+          _ -> HM.empty
+      idValue = getValue ["id"] fieldsObj
+   in unpackLeafs leafs $ HM.insert (T.pack $ name <> "_id") idValue fieldsObj
+
+unpackLeafs :: [RelationsTree] -> A.Object -> [(String, MyValue.MyValue)]
+unpackLeafs [] _ = []
+unpackLeafs (Leaf l:rest) fieldsObj =
+  let value = getValue [T.pack l] fieldsObj
+   in (l, MyValue.fromValue value) : unpackLeafs rest fieldsObj
+unpackLeafs _ _ = []
 
 beforeUnderscore :: Name -> Name
 beforeUnderscore = L.takeWhile (/= '_')
@@ -171,13 +202,6 @@ getListOfPairFromObj field obj =
       value = getValue fields obj
    in [(field, MyValue.fromValue value)]
 
-checkList :: Field -> [(String, MyValue.MyValue)] -> [(String, MyValue.MyValue)]
-checkList field listOfPair =
-  let key = afterUnderscore field
-   in case lookup key listOfPair of
-        (Just value) -> [(key, value)]
-        Nothing -> []
-
 getNextField :: RelationsTree -> String
 getNextField relations =
   case relations of
@@ -194,15 +218,13 @@ isRightRelations rootObj branchObj rootEssence "news" =
       k2 = afterUnderscore rootEssence
       parseFunc :: Int -> A.Object -> A.Value
       parseFunc n = getValue (map T.pack [k1 <> show n, k2])
-      iterateObjs obj n = parseFunc n obj : iterateObjs obj (n + 1)
+      iterateObjs obj n lim
+        | n <= lim = parseFunc n obj : iterateObjs obj (n + 1) lim
+        | otherwise = []
         --List of drafts for specific author
-      rootArrValue = iterateObjs rootObj 1
+      rootArrValue = iterateObjs rootObj 1 (length $ HM.keys rootObj)
         --Specific draft, getting by id from queryString
-      branchValue =
-        case iterateObjs branchObj 1 of
-          [x] -> x
-          (x:_) -> x
-          _ -> A.Null
+      branchValue = parseFunc 1 branchObj
    in elem branchValue rootArrValue
 isRightRelations rootObj branchObj rootEssence branchEssence =
   let rKey1 = T.pack . parseObjEssence $ beforeUnderscore rootEssence
