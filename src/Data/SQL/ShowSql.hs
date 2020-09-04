@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Data.SQL.ShowSql
-  ( ShowSQL(..)
+  ( ShowSql(..)
   , clauseSequenceA
   , withoutManyWhere
   ) where
@@ -14,7 +14,7 @@ import Data.Essence.Methods
 import Data.Essence.Parse.Clause
 import Data.MyValue
 import Data.SQL
-import Log
+import Data.SQL.ReadSql
 
 import Data.Functor.Identity
 import Data.Maybe
@@ -23,14 +23,14 @@ import Data.List
 
 type SqlRequest = String
 
-class ShowSQL a where
+class ShowSql a where
   groupSql :: Ord a => [a] -> [[a]]
   groupSql = groupBy ((ordToBool .) . compare)
   showSql :: a -> SqlRequest
   parseList :: a -> String
   unpack :: a -> String
 
-instance ShowSQL SqlQuery where
+instance ShowSql SqlQuery where
   showSql (Insert table fields values) =
     "INSERT INTO " <>
     table <>
@@ -46,7 +46,7 @@ instance ShowSQL SqlQuery where
   parseList = showSql
   unpack = showSql
 
-instance ShowSQL (Clause String) where
+instance ShowSql (Clause String) where
   showSql = parseList
   parseList (Set (field, myValue)) =
     parseList $ SetList [(field, parseValue myValue)]
@@ -61,12 +61,12 @@ instance ShowSQL (Clause String) where
   unpack (OrderBy x) = show x
   unpack (OffsetLimit x) = show x
 
-instance ShowSQL [Clause String] where
+instance ShowSql [Clause String] where
   showSql = showSql . map clauseSequenceA . groupSql . sort
   parseList = show . map parseList
-  unpack = show . map (read . unpack :: Clause String -> (String, String))
+  unpack = show . map (\x -> readSql $ unpack x :: Maybe (String, String))
 
-instance ShowSQL (Clause [String]) where
+instance ShowSql (Clause [String]) where
   showSql = parseList
   parseList (SetList []) = []
   parseList (SetList list) =
@@ -87,14 +87,14 @@ instance ShowSQL (Clause [String]) where
   unpack (OrderByList x) = show x
   unpack (OffsetLimitList x) = show x
 
-instance ShowSQL [Clause [String]] where
+instance ShowSql [Clause [String]] where
   showSql =
     unwords .
     reverse . withoutManyWhere . reverse . words . unwords . map showSql . sort
   parseList = show . map parseList
   unpack = show . map unpack
 
-instance ShowSQL (Essence List) where
+instance ShowSql (Essence List) where
   showSql (EssenceList name "create" listOfPairs) =
     let fields = parseOnlyFields listOfPairs
         values = parseOnlyValues listOfPairs
@@ -123,9 +123,9 @@ instance ShowSQL (Essence List) where
         uniqueNames = nub names
         getName = intercalate "," uniqueNames
         matchingClauses =
-          if length uniqueNames == 1
-            then []
-            else matchEssence uniqueNames
+          case length uniqueNames of
+            1 -> []
+            _ -> matchEssence uniqueNames
      in showSql (Get getName (matchingClauses <> clauseArr))
   showSql (EssenceList name "delete" listOfPairs) =
     let whereC = [Where ("id", fromJust $ lookup "id" listOfPairs)]
@@ -134,6 +134,14 @@ instance ShowSQL (Essence List) where
   parseList (EssenceList _ _ list) = show list
   unpack = parseList
 
+elseCase :: String -> a
+  tryRead :: String -> a
+  tryRead str =
+    case runParser readSql "" "Sql data type" str of
+      Right x -> x
+      Left err -> elseCase $ show err
+  readSql :: Parsec String String a
+
 -- Apply only to homogeneous list of Clause String
 clauseSequenceA :: [Clause String] -> Clause [String]
 clauseSequenceA clauseArr =
@@ -141,11 +149,12 @@ clauseSequenceA clauseArr =
     [] -> WhereList []
     arr@(x:_) ->
       case x of
-        Set _ -> SetList . read $ unpack arr
-        Where _ -> WhereList . read $ unpack arr
-        Filter _ -> FilterList . read $ unpack arr
-        OrderBy _ -> OrderByList . read $ unpack arr
-        OffsetLimit _ -> OffsetLimitList . read $ unpack arr
+        Set _ -> SetList . readSql $ unpack arr
+        Where _ -> WhereList . readSql $ unpack arr
+        Filter _ -> FilterList . readSql $ unpack arr
+        OrderBy _ -> OrderByList . readSql $ unpack arr
+        OffsetLimit _ -> OffsetLimitList . readSql $ unpack arr
+
 --Replaces redundant "WHERE" with "AND"
 withoutManyWhere :: [String] -> [String]
 withoutManyWhere arr =

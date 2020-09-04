@@ -63,7 +63,6 @@ tryM = try
 
 endM :: Handle -> IO ()
 endM (Handle path _) = writeLog path "\n\n\n"
-
 -------------------------------------------------------------------------------
 -- * Readables
 prettyLog :: Level -> String -> String

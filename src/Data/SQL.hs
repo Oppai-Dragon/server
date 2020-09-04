@@ -27,6 +27,7 @@ data SqlQuery
       { deleteTable :: String
       , deleteWherePart :: [Clause String]
       }
+  deriving (Show, Eq)
 
 data family Clause a
 

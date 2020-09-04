@@ -34,6 +34,7 @@ dbGet = do
   liftUnderApp . liftIO $ debugM logHandle "Start dbGet"
   addOffsetLimit
   essenceList@(EssenceList name _ _) <- getSApp
+  liftUnderApp . liftIO . debugM logHandle $ "Essence List: " <> show essenceList
   let getQuery = showSql essenceList
   let uriDB = getUri config
   maybeConn <- liftUnderApp . tryConnect $ PSQL.connectPostgreSQL uriDB

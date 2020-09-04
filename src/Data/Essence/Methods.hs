@@ -102,7 +102,7 @@ setDescription list =
 
 getMaybeDataField :: Read a => Maybe String -> Maybe a
 getMaybeDataField Nothing = Nothing
-getMaybeDataField (Just value) = trace value . Just $ read value
+getMaybeDataField (Just value) = tryRead value
 
 getMyValue :: String -> MyValue
 getMyValue = read
