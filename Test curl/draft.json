@@ -1,14 +1,14 @@
 {
   "draft1": {
-    "author_id": 24,
-    "category_id": 24,
+    "author_id": 2,
+    "category_id": 2,
     "main_photo": null,
     "content": "testContent",
-    "date_of_creation": "2020-09-03",
+    "date_of_creation": "2020-09-05",
     "name": "testDraft",
-    "id": 28,
+    "id": 2,
     "tag_ids": [
-      24
+      2
     ],
     "optional_photos": null
   }

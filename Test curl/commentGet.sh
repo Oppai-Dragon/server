@@ -1,19 +1,11 @@
 #!/bin/bash
-essence="news"
+essence="comment"
 action="get"
-filter=$1
-filterValue=$2
-search=$3
-searchValue=$4
-sort=$5
-sortValue=$6
+news_id=$(jq .news1.id news.json)
 generate_post_data()
 {
 cat <<EOF
-{ "page": 1
-, "filter_$filter": "$filterValue"
-, "search_$search": "$searchValue"
-, "sort_$sort": $sortValue
+{ "news_id": $news_id
 }
 EOF
 }

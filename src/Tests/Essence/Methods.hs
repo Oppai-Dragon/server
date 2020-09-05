@@ -26,7 +26,6 @@ essenceMethodsTests =
   , TestLabel "iterateHashMapDBListTest" iterateHashMapDBListTest
   , TestLabel "setDescriptionTest" setDescriptionTest
   , TestLabel "getMaybeDataFieldTest" getMaybeDataFieldTest
-  , TestLabel "getMyValueTest" getMyValueTest
   , TestLabel "parseOnlyValuesTest" parseOnlyValuesTest
   , TestLabel "parseOnlyFieldsTest" parseOnlyFieldsTest
   , TestLabel "withoutEmptyTest" withoutEmptyTest
@@ -36,7 +35,7 @@ essenceMethodsTests =
   , TestLabel "toEssenceListTest" toEssenceListTest
   ]
 
-addListTest, deletePairTest, getEssenceFieldsTest, getEssenceDBTest, getEssenceDatabaseTest, getHashMapDescriptionTest, iterateHashMapDBListTest, setDescriptionTest, getMaybeDataFieldTest, getMyValueTest, parseOnlyValuesTest, parseOnlyFieldsTest, withoutEmptyTest, parseJustBSValueTest, parseNothingBSValueTest, parseFieldValueTest, toEssenceListTest ::
+addListTest, deletePairTest, getEssenceFieldsTest, getEssenceDBTest, getEssenceDatabaseTest, getHashMapDescriptionTest, iterateHashMapDBListTest, setDescriptionTest, getMaybeDataFieldTest, parseOnlyValuesTest, parseOnlyFieldsTest, withoutEmptyTest, parseJustBSValueTest, parseNothingBSValueTest, parseFieldValueTest, toEssenceListTest ::
      Test
 addListTest =
   TestCase $
@@ -116,10 +115,6 @@ getMaybeDataFieldTest =
   TestCase $
   assertEqual "for (getMaybeDataField (Just \"null\"))" (Just NULL) $
   getMaybeDataField (Just "null")
-
-getMyValueTest =
-  TestCase $
-  assertEqual "for (getMyValue \"int\")" (MyInteger 0) $ getMyValue "int"
 
 parseOnlyValuesTest =
   TestCase $

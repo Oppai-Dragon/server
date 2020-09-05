@@ -1,0 +1,9 @@
+{
+  "comment1": {
+    "content": "testContent",
+    "date_of_creation": "2020-09-05",
+    "person_id": 3,
+    "news_id": 2,
+    "id": 2
+  }
+}

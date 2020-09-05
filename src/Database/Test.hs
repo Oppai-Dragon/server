@@ -35,7 +35,6 @@ import qualified Data.HashMap.Strict as HM
 import Data.Maybe as Maybe
 import qualified Data.Text as T
 
---import Debug.Trace
 import Tests.Essence
 
 import qualified Test.HUnit as Test
@@ -95,13 +94,17 @@ getTest _ _ _ = Test.TestCase $ Test.assertBool "getTest take only " False
 createEssenceTest :: [Essence List] -> S EssenceData UnderApp [Test.Test]
 createEssenceTest ((EssenceList name "create" list):rest) = do
   currentData <- getSApp
-  --liftUnderApp . liftIO $ traceIO "CURRENT DATA "
-  --liftUnderApp . liftIO . traceIO $ show currentData
+  randomInt <- liftUnderApp $ liftIO getRandomInteger
   let fields = handleDraftCase name $ getRelatedFields name currentData
-  let essenceList = EssenceList name "create" (list <> fields)
-  --liftUnderApp . liftIO . traceIO $ show essenceList
+  let randomPair = ("name", MyString $ testName <> show randomInt)
+  let finishList = list <> fields
+  let essenceList =
+        EssenceList name "create" $
+        case name of
+          "tag" -> randomPair : finishList
+          "category" -> randomPair : finishList
+          _ -> finishList
   essenceValue <- liftUnderApp $ evalSApp dbCreate essenceList
-  --liftUnderApp . liftIO . traceIO $ "CREATED " <> name
   updateData (T.pack name) essenceValue
   let funcName = "createEssenceTest"
   let test = getTest essenceList funcName essenceValue

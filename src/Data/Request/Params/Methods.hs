@@ -117,4 +117,6 @@ compareValueType (MyIntegers _) (MyIntegers _) = True
 compareValueType (MyStrings _) (MyStrings _) = True
 compareValueType (MyBool _) (MyBool _) = True
 compareValueType (MyDate _) (MyDate _) = True
+compareValueType (MyNextval _) (MyNextval _) = True
+compareValueType MyEmpty MyEmpty = True
 compareValueType _ _ = False

@@ -81,7 +81,7 @@ instance Read VALUE where
     case input of
       "null" -> [(NULL, "")]
       "not null" -> [(NOT NULL, "")]
-      _ -> [(NOT NULL, "")]
+      _ -> []
 
 data Relations =
   Relations
@@ -95,7 +95,9 @@ instance Read Relations where
     let valueArr = words input
         table = T.pack $ valueArr !! 1
         field = T.pack $ valueArr !! 3
-     in [(Relations table field, "")]
+     in if length valueArr == 4
+          then [(Relations table field, "")]
+          else []
 
 data Constraint
   = UNIQUE

@@ -71,5 +71,7 @@ instance Empty MyValue where
   parseValue (MyIntegers value) = parseValue value
   parseValue (MyBool value) = parseValue value
   parseValue (MyDate value) = parseValue value
-  parseValue (MyNextval value) = value
+  parseValue (MyNextval value) = case value of
+    'n':'e':'x':'t':'v':'a':'l':_ -> value
+    _ -> parseValue value
   parseValue MyEmpty = "null"

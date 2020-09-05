@@ -102,14 +102,14 @@ testCategoryListCreate =
   EssenceList "category" "create" testCategoryListCreateFields
 
 testCategoryListCreateFields :: List
-testCategoryListCreateFields = [("name", MyString testName)]
+testCategoryListCreateFields = []
 
 -- | Tag
 testTagListCreate :: Essence List
 testTagListCreate = EssenceList "tag" "create" testTagListCreateFields
 
 testTagListCreateFields :: List
-testTagListCreateFields = [("name", MyString testName)]
+testTagListCreateFields = []
 
 -- | Draft
 testDraftListCreate :: Essence List

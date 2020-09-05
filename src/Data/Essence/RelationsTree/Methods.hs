@@ -56,6 +56,7 @@ addRelationsFields = do
   case [name, action] of
     ["news", "delete"] -> return goodResult
     ["news", "get"] -> return goodResult
+    ["comment", "get"] -> return goodResult
     _ ->
       if isEssenceRelations name api
         then (liftUnderApp . liftIO)

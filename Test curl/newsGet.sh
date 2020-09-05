@@ -1,13 +1,10 @@
 #!/bin/bash
-essence="comment"
+essence="news"
 action="get"
-news_id=$(jq .news1.id news.json)
-access_key=$(jq .person1.access_key person.json)
 generate_post_data()
 {
 cat <<EOF
-{ "news_id": $news_id
-, "access_key": $access_key
+{ "page": 1
 }
 EOF
 }
