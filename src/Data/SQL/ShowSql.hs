@@ -17,8 +17,8 @@ import Data.MyValue
 import Data.SQL
 
 import Data.Functor.Identity
-
 import Data.List
+import Data.Maybe
 
 type SqlRequest = String
 
@@ -101,10 +101,7 @@ instance ShowSql (Essence List) where
             _ -> matchEssence uniqueNames
      in showSql . Get getName $ matchingClauses <> clauseArr
   showSql (EssenceList name "delete" listOfPairs) =
-    let myId =
-          case lookup "id" listOfPairs of
-            Just myNum -> myNum
-            Nothing -> MyEmpty
+    let myId = fromMaybe MyEmpty $ lookup "id" listOfPairs
         whereC = [Where ("id", myId)]
      in showSql $ Delete name whereC
   showSql x = show x

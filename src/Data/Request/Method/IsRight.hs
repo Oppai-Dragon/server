@@ -1,4 +1,4 @@
-module Data.Request.Method.Methods
+module Data.Request.Method.IsRight
   ( isMethodCorrect
   ) where
 

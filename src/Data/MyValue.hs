@@ -57,7 +57,7 @@ parseInteger, parseString, parseBool, parseIntegers, parseStrings, parseDate, pa
 parseInteger = do
   field <- many1 digit
   return . MyInteger $
-    case readsPrec 0 field of
+    case reads field of
       [(l, _)] -> l
       _ -> 0
 
@@ -78,36 +78,12 @@ parseBool = do
       _ -> False
 
 parseDate = do
-  let case1 = do
-        num1 <- digit
-        num2 <- digit
-        sep1 <- char '-'
-        num3 <- digit
-        num4 <- digit
-        sep2 <- char '-'
-        num5 <- digit
-        num6 <- digit
-        num7 <- digit
-        num8 <- digit
-        return $
-          num1 :
-          num2 : sep1 : num3 : num4 : sep2 : num5 : num6 : num7 : num8 : []
-  let case2 = do
-        num1 <- digit
-        num2 <- digit
-        num3 <- digit
-        num4 <- digit
-        sep1 <- char '-'
-        num5 <- digit
-        num6 <- digit
-        sep2 <- char '-'
-        num7 <- digit
-        num8 <- digit
-        return $
-          num1 :
-          num2 : num3 : num4 : sep1 : num5 : num6 : sep2 : num7 : num8 : []
-  field <- try case1 <|> case2
-  return $ MyDate field
+  num1 <- try (count 4 digit) <|> count 2 digit
+  sep1 <- char '-'
+  num2 <- count 2 digit
+  sep2 <- char '-'
+  num3 <- try (count 4 digit) <|> count 2 digit
+  return . MyDate $ num1 <> (sep1 : num2) <> (sep2 : num3)
 
 parseIntegers = do
   _ <- char '[' <|> char '{'
@@ -115,7 +91,7 @@ parseIntegers = do
   _ <- char ']' <|> char '}'
   let arr = '[' : integers <> "]"
   return . MyIntegers $
-    case readsPrec 0 arr :: [([Integer], String)] of
+    case reads arr :: [([Integer], String)] of
       [(l, _)] -> l
       _ -> []
 

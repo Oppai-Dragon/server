@@ -92,7 +92,7 @@ iterateHashMapDBList ((field, list):rest) =
 
 setDescription :: [(String, String)] -> Description
 setDescription list =
-  let valueExpect = fst . last . readsPrec 0 . fromJust $ lookup "type" list
+  let valueExpect = fst . last . reads . fromJust $ lookup "type" list
       value = getMaybeDataField $ lookup "value" list
       relations = getMaybeDataField $ lookup "relations" list
       constraint = getMaybeDataField $ lookup "constraint" list
@@ -101,7 +101,7 @@ setDescription list =
 getMaybeDataField :: Read a => Maybe String -> Maybe a
 getMaybeDataField Nothing = Nothing
 getMaybeDataField (Just value) =
-  case readsPrec 0 value of
+  case reads value of
     [(l, _)] -> Just l
     _ -> Nothing
 

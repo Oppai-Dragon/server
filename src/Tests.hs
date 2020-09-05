@@ -19,10 +19,10 @@ import Tests.Essence.Parse.Clause
 import Tests.Essence.RelationsTree.Methods
 import Tests.MyValue
 import Tests.Request
-import Tests.Request.Access.Methods
+import Tests.Request.Access.IsRight
 import Tests.Request.Control
 import Tests.Request.Handling
-import Tests.Request.Method.Methods
+import Tests.Request.Method.IsRight
 import Tests.Request.Params.Methods
 import Tests.Required.Methods
 import Tests.SQL.ShowSql

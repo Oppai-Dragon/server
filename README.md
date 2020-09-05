@@ -63,7 +63,12 @@ If problems arise at this or subsequent stages. I left my contacts it the end of
 
 ### Step 3 - explanation of work
 
-#### src/Local.json.
+#### Request
+
+Request looks like that: http://<localhost>:<port>/<essence>/<action>?<params>
+Port writing in App/Main.hs after Wai.run. For creating person: http://localhost:8000/person/create?first_name=firstName&last_name=lastName
+
+#### src/Local.json
 
 ```json
 { "logLevel":"debug"
@@ -78,6 +83,64 @@ If problems arise at this or subsequent stages. I left my contacts it the end of
    - warning - warns of possible errors.
    - error - indicates a critical error, which prevents further execution.
 debug < infog < warning < error. Thus, by entering a certain level of logging into the value of the "logLevel" field, the application will send logs whose level is either equal to or higher than the specified level.
+
+#### src/Api.json
+
+```json
+{ "api":
+    { "create":"create"
+    ...
+    }
+, "method":
+    { "POST":
+        [ "create"
+        ...
+        ]
+    , "GET":
+        [ "get"
+        ]
+    }
+, "essences":
+    [ "person"
+    ...
+    ]
+, "relations":
+    { "person":"access_key"
+    , "author":
+        { "person_id": []
+        }
+    , "draft":
+        { "author_id":
+            [ "author_id"
+            ]
+        }
+    ...
+    }
+, "access":
+    { "person":
+        { "create": "Everyone"
+        , "get": "Everyone"
+        , "delete": "Admin"
+        }
+    ...
+    }
+, "news":
+    { "filter_created_in":["DATE"]
+    ...
+    }
+}
+```
+
+##### Details of Api.json
+
+1. api: request takes field, and it's will translate into value.
+{ "publish":"create" } - "publish" => "create". The database can only create, edit, delete and get.
+2. method: each request method has only one possible essence method.
+{ "GET": "get" }
+3. essences: all essences.
+4. relations: for example, if a draft is created, I do not write my id as an author in the request parameters, this is the field that should be added in accordance with the logic written in src / Data.Essence.RelationsTree.Methods.hs. For person: {"person": "access_key"}. Everything ends with person - through the access_key, which is passed in the request, the person from the request is found and then the author_id is found and returned, and then added to the Essence List.
+5. access: each essence has its own methods, and each method has its own access.
+6. news: for news, there are additional fields that can be filled in when received as a value. For example, {"filter_created_in": ["DATE"]} the query might look like this: http://localhost:8000/news/get?Filter_created_in=20-20-2020.
 
 ## Run
 
@@ -149,7 +212,6 @@ Basically it is ReaderT Config IO = UnderApp. Then StateT s UnderApp appears on 
     - /Empty.hs - class Empty for parsing value to correct format for database and instances.
     - /MyValue.hs - data MyValue with instances and functions for converting from string, to string, from Value, to Value and others.
     - /Value.hs - Functions for unpacking Value from aeson package.
-
 
 ### Adding new essences
 
