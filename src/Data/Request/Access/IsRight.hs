@@ -1,4 +1,4 @@
-module Data.Request.Access.Methods
+module Data.Request.Access.IsRight
   ( isAccess
   ) where
 

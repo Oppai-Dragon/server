@@ -1,7 +1,6 @@
 module Data.Base.Aeson
   ( getValue
   , scientificToInteger
-  , findText
   ) where
 
 import qualified Data.Aeson as A
@@ -20,10 +19,3 @@ getValue (field:rest) objOld =
 
 scientificToInteger :: Scientific.Scientific -> Integer
 scientificToInteger = fromMaybe 0 . AT.parseMaybe A.parseJSON . A.Number
-
-findText :: T.Text -> [T.Text] -> Maybe T.Text
-findText _ [] = Nothing
-findText text (textX:rest) =
-  if text == textX
-    then Just textX
-    else findText text rest

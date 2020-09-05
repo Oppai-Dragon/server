@@ -1,14 +1,14 @@
-module Tests.Request.Method.Methods
-  ( requestMethodMethodsTests
+module Tests.Request.Method.IsRight
+  ( requestMethodIsRightTests
   ) where
 
 import Config
-import Data.Request.Method.Methods
+import Data.Request.Method.IsRight
 
 import Test.HUnit
 
-requestMethodMethodsTests :: [Test]
-requestMethodMethodsTests =
+requestMethodIsRightTests :: [Test]
+requestMethodIsRightTests =
   [TestLabel "isMethodCorrectTest" isMethodCorrectTest]
 
 isMethodCorrectTest :: Test

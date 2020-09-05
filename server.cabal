@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 60bfb220dda2d046b61f5809dbccdd8e267546a7ade9248192d74954b1d45eed
+-- hash: 1f067020e4adb4db208ddd01395252488f7e5104f828403c40858dd227b9f901
 
 name:           server
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
       Data.Base.Prelude
       Data.Base.Random
       Data.Base.Response
+      Data.Base.Text
       Data.Base.Time
       Data.Empty
       Data.Essence
@@ -52,10 +53,10 @@ library
       Data.MyValue
       Data.Request
       Data.Request.Access
-      Data.Request.Access.Methods
+      Data.Request.Access.IsRight
       Data.Request.Control
       Data.Request.Handling
-      Data.Request.Method.Methods
+      Data.Request.Method.IsRight
       Data.Request.Params.Methods
       Data.Required
       Data.Required.Methods
@@ -115,25 +116,18 @@ library
     , aeson
     , base >=4.7 && <5
     , bytestring
-    , bytestring-lexing
-    , containers
-    , convertible
     , directory
     , http-types
-    , network
     , parsec
     , random
     , scientific
-    , stm
     , text
     , time
     , transformers
     , unordered-containers
     , vector
     , wai
-    , wai-conduit
     , wai-extra
-    , wai-websockets
     , warp
   default-language: Haskell2010
 
@@ -152,26 +146,19 @@ executable server-build
     , aeson
     , base >=4.7 && <5
     , bytestring
-    , bytestring-lexing
-    , containers
-    , convertible
     , directory
     , http-types
-    , network
     , parsec
     , random
     , scientific
     , server
-    , stm
     , text
     , time
     , transformers
     , unordered-containers
     , vector
     , wai
-    , wai-conduit
     , wai-extra
-    , wai-websockets
     , warp
   default-language: Haskell2010
 
@@ -190,26 +177,19 @@ executable server-exe
     , aeson
     , base >=4.7 && <5
     , bytestring
-    , bytestring-lexing
-    , containers
-    , convertible
     , directory
     , http-types
-    , network
     , parsec
     , random
     , scientific
     , server
-    , stm
     , text
     , time
     , transformers
     , unordered-containers
     , vector
     , wai
-    , wai-conduit
     , wai-extra
-    , wai-websockets
     , warp
   default-language: Haskell2010
 
@@ -228,26 +208,19 @@ executable server-rebuild
     , aeson
     , base >=4.7 && <5
     , bytestring
-    , bytestring-lexing
-    , containers
-    , convertible
     , directory
     , http-types
-    , network
     , parsec
     , random
     , scientific
     , server
-    , stm
     , text
     , time
     , transformers
     , unordered-containers
     , vector
     , wai
-    , wai-conduit
     , wai-extra
-    , wai-websockets
     , warp
   default-language: Haskell2010
 
@@ -267,25 +240,18 @@ test-suite server-test
     , aeson
     , base >=4.7 && <5
     , bytestring
-    , bytestring-lexing
-    , containers
-    , convertible
     , directory
     , http-types
-    , network
     , parsec
     , random
     , scientific
     , server
-    , stm
     , text
     , time
     , transformers
     , unordered-containers
     , vector
     , wai
-    , wai-conduit
     , wai-extra
-    , wai-websockets
     , warp
   default-language: Haskell2010

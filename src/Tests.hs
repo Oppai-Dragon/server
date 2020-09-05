@@ -51,9 +51,9 @@ testList =
   requiredMethodsTests <>
   requestTests <>
   requestControlTests <>
-  requestAccessMethodsTests <>
+  requestAccessIsRightTests <>
   requestHandlingTests <>
-  requestMethodMethodsTests <>
+  requestMethodIsRightTests <>
   requestParamsMethodsTests <>
   valueTests <>
   showSqlTests <>
