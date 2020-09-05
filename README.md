@@ -46,11 +46,20 @@ For rebuilding tables, it's deleting all tables with data.
 ```git
 $ stack exec server-rebuild
 ```
-This way you will do a little check.
+This way you will do a little check functions and it also checks the basic functionality for accessing the database, so you need check after it logs/.
 ```git
 $ stack test
 ```
-If problems arise at this or subsequent stages. I left my contacts it the end README.
+To quickly check the server operation in Test curl/ there are .sh scripts, but they must be used in a specific order. First, you always need to create a person - personCreate.sh, He will be with admin rights, so then you need to create an author - authorCreate.sh, a tag and a category - tagCreate.sh, categoryCreate.sh.
+Then you can create a draft - draftCreate.sh and publish it, at the first publication - draftFirstPublish.sh, for subsequent ones, if you want to change it - draftNextPublish.sh. And now you can create a comment for the news - commentCreate.sh.
+
+After creating the entities, you may want to change them - <essence>Edit.sh, if there is no suitable script, you cannot change only person and news, to change news, you need to change the draft and publish it - draftNextPublish.sh.
+
+Also, after creation, you can get a list of entities - <essence> Get.sh.
+
+When you want to test deleting entities, you need to do it in the reverse order of entity creation. Namely - commentDelete.sh -> newsDelete.sh -> draftDelete.sh -> authorDelete.sh/tagDelete.sh/categoryDelete.sh -> personDelete.sh.
+
+If problems arise at this or subsequent stages. I left my contacts it the end of README.
 
 ### Step 3 - explanation of work
 

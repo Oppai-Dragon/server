@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e3e9137c492b053cea4417228f5897774d9ecf295dd1ff3fcce14f5b349097f1
+-- hash: 60bfb220dda2d046b61f5809dbccdd8e267546a7ade9248192d74954b1d45eed
 
 name:           server
 version:        0.1.0.0
@@ -33,6 +33,14 @@ library
       Config.Internal
       Config.Set
       Data.Base
+      Data.Base.Aeson
+      Data.Base.Interface
+      Data.Base.Lift
+      Data.Base.Path
+      Data.Base.Prelude
+      Data.Base.Random
+      Data.Base.Response
+      Data.Base.Time
       Data.Empty
       Data.Essence
       Data.Essence.GetFields
