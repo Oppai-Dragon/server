@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9d06b5cbb9981ab4769eda5760c0d17ac39e58b739b1bb5b5384bd442389ae75
+-- hash: 377a5d2881ed2ecb3ef073d84b723cc71a420281595469d48bc7308afdda7b8d
 
 name:           server
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
   exposed-modules:
       App
       Config
+      Config.Exception
       Config.Get
       Config.Internal
       Config.Set
@@ -70,6 +71,7 @@ library
       Database.Exception
       Database.Get
       Database.Test
+      Database.Update
       Log
       Log.Console
       Log.File
@@ -138,7 +140,7 @@ executable server-build
   hs-source-dirs:
       build
   default-extensions: OverloadedStrings
-  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror
   build-depends:
       HDBC
     , HDBC-postgresql
@@ -200,7 +202,38 @@ executable server-rebuild
   hs-source-dirs:
       rebuild
   default-extensions: OverloadedStrings
-  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Werror
+  build-depends:
+      HDBC
+    , HDBC-postgresql
+    , HUnit
+    , aeson
+    , base >=4.7 && <5
+    , bytestring
+    , directory
+    , http-types
+    , parsec
+    , random
+    , scientific
+    , server
+    , text
+    , time
+    , transformers
+    , unordered-containers
+    , vector
+    , wai
+    , wai-extra
+    , warp
+  default-language: Haskell2010
+
+executable server-update
+  main-is: Update.hs
+  other-modules:
+      Paths_server
+  hs-source-dirs:
+      update
+  default-extensions: OverloadedStrings
+  ghc-options: -Wall -Werror
   build-depends:
       HDBC
     , HDBC-postgresql

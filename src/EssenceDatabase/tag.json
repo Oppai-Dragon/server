@@ -1,0 +1,1 @@
+{"TABLE":{"tag":{"name":["VARCHAR(35)","NOT NULL","UNIQUE"],"id":["BIGSERIAL","PRIMARY KEY"]}}}

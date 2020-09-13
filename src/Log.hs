@@ -4,6 +4,7 @@ module Log
   , module Log.Handle
   , module Log.Level
   , module Log.Handle.Builder
+  , HasCallStack
   , trace
   ) where
 
@@ -13,3 +14,5 @@ import Log.File
 import Log.Handle
 import Log.Handle.Builder
 import Log.Level
+
+import GHC.Stack

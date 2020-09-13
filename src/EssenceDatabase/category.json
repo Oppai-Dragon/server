@@ -1,0 +1,1 @@
+{"TABLE":{"category":{"name":["VARCHAR(35)","NOT NULL","UNIQUE"],"child_category":["INT","REFERENCES category (id)","ON DELETE SET NULL"],"id":["BIGSERIAL","PRIMARY KEY"]}}}

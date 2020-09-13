@@ -63,19 +63,16 @@ executables:
   server-build:
     main:                Build.hs
     source-dirs:         build
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
     dependencies:
     - server
   server-rebuild:
     main:                Rebuild.hs
     source-dirs:         rebuild
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
+    dependencies:
+    - server
+  server-update:
+    main:                Update.hs
+    source-dirs:         update
     dependencies:
     - server
 
