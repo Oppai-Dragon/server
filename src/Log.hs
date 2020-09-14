@@ -6,6 +6,7 @@ module Log
   , module Log.Handle.Builder
   , HasCallStack
   , trace
+  , traceIO
   ) where
 
 import Debug.Trace

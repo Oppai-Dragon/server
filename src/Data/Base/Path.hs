@@ -1,13 +1,17 @@
 {-# LANGUAGE LambdaCase #-}
 
 module Data.Base.Path
-  ( setPath
+  ( getEssenceArr
+  , setPath
   , parsePath
   , getRepDir
   ) where
 
 import Data.List
 import qualified System.Directory as Dir
+
+getEssenceArr :: FilePath -> IO [FilePath]
+getEssenceArr = (=<<) (fmap (map $ takeWhile (/= '.')) . Dir.listDirectory) . setPath
 
 setPath :: FilePath -> IO FilePath
 setPath path = fmap (flip (<>) $ "\\src\\" <> path) getRepDir
