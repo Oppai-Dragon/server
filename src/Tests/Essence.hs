@@ -191,13 +191,13 @@ testPersonDatabaseDescription =
   ]
 
 --------------------------------------------------------------------------------------------
------------------------------------Essence DB
+-----------------------------------Essence Description
 --------------------------------------------------------------------------------------------
 -- | Author
-testAuthorGetDB :: Essence DB
-testAuthorGetDB = EssenceDB "author" "get" testAuthorHMDescription
+testAuthorGetDB :: Essence Description
+testAuthorGetDB = EssenceDescription "author" "get" testAuthorHMDescription
 
-testAuthorHMDescription :: DB
+testAuthorHMDescription :: HM.HashMap String Description
 testAuthorHMDescription = HM.fromList testAuthorDBFields
 
 testAuthorDBFields :: [(String, Description)]
@@ -218,10 +218,10 @@ testAuthorDBDescription =
   ]
 
 -- | Person
-testPersonCreateDB :: Essence DB
-testPersonCreateDB = EssenceDB "person" "create" testPersonHMDescription
+testPersonCreateDB :: Essence Description
+testPersonCreateDB = EssenceDescription "person" "create" testPersonHMDescription
 
-testPersonHMDescription :: DB
+testPersonHMDescription :: HM.HashMap String Description
 testPersonHMDescription = HM.fromList testPersonDBFields
 
 testPersonDBFields :: [(String, Description)]

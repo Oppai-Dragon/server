@@ -24,7 +24,7 @@ getCreateQueryTest =
   TestCase $
   assertEqual
     "for (getCreateQuery testSetupObj)"
-    ("TABLE person " <>
+    ("CREATE TABLE person " <>
      "( first_name VARCHAR(50) NOT NULL" <>
      " ,access_key UUID DEFAULT gen_random_uuid()" <>
      " ,date_of_creation DATE DEFAULT CURRENT_DATE" <>

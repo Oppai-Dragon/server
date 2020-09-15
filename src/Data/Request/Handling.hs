@@ -58,11 +58,11 @@ getEssenceList req = do
           else essence'
   let queryMBS = Wai.queryString req
   liftIO . debugM logHandle $ "Query of request: " <> show queryMBS
-  let essenceDB@(EssenceDB nameT actionT _) =
-        getEssenceDB essence action config api
+  let essenceDescription@(EssenceDescription nameT actionT _) =
+        getEssenceDescription essence action config api
   liftIO . debugM logHandle $
     "Essence - " <> T.unpack nameT <> ", Action - " <> T.unpack actionT
-  toEssenceList essenceDB queryMBS
+  toEssenceList essenceDescription queryMBS
 
 addAccessKey :: Wai.Request -> SApp ()
 addAccessKey req = do

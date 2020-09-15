@@ -6,6 +6,7 @@ module Log.Console
   , errorM
   , tryM
   , endM
+  , infoIO
   , prettyLog
   , lastPrettyCallStack
   , myPrettyCallStack
@@ -63,6 +64,11 @@ tryM = try
 
 endM :: Handle -> IO ()
 endM (Handle path _) = writeLog path "\n\n\n"
+
+infoIO :: HasCallStack => String -> IO ()
+infoIO msg = do
+  traceIO $ prettyLog INFO msg
+  traceIO $ lastPrettyCallStack callStack
 -------------------------------------------------------------------------------
 -- * Readables
 prettyLog :: Level -> String -> String

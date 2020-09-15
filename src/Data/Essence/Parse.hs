@@ -35,8 +35,8 @@ parsePsqlExpr =
   parseType <|> parseValue <|> try parseRelations <|> parseConstraint
 
 parseType =
-  fmap ("type", ) $ try parseDate <|> try parseBool <|> try parseUuid <|>
-  try parseIntArr <|>
+  fmap ("type", ) $
+  try parseDate <|> try parseBool <|> try parseUuid <|> try parseIntArr <|>
   try parseInt <|>
   try parseStrArr <|>
   try parseStr
@@ -84,8 +84,8 @@ parseRelations = do
   return ("relations", "with " <> essence <> " by " <> field)
 
 parseConstraint =
-  fmap ("constraint", ) $ try parsePrimaryKey <|> try parseUnique <|>
-  try parseOnAction
+  fmap ("constraint", ) $
+  try parsePrimaryKey <|> try parseUnique <|> try parseOnAction
 
 parsePrimaryKey, parseUnique, parseOnAction :: Parsec String String String
 parsePrimaryKey = string "PRIMARY KEY" >> return "primary key"

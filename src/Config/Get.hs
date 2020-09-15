@@ -78,13 +78,15 @@ getRelationFields relationsTree =
     Leaf key -> [key]
     _ -> []
 
-getRequiredFields :: Essence DB -> Api -> Required [String]
-getRequiredFields (EssenceDB "comment" "get" _) _ = Required [AND ["news_id"]]
-getRequiredFields newsDB@(EssenceDB "news" "create" _) _ = getFields newsDB
-getRequiredFields essenceDB api =
-  let relationsTree = getRelationsTree (edbName essenceDB) api
+getRequiredFields :: Essence Description -> Api -> Required [String]
+getRequiredFields (EssenceDescription "comment" "get" _) _ =
+  Required [AND ["news_id"]]
+getRequiredFields newsDB@(EssenceDescription "news" "create" _) _ =
+  getFields newsDB
+getRequiredFields essenceDescription api =
+  let relationsTree = getRelationsTree (edbName essenceDescription) api
       relationFields = getRelationFields relationsTree
-   in (L.\\ relationFields) <$> getFields essenceDB
+   in (L.\\ relationFields) <$> getFields essenceDescription
 
 getRelationsTree :: EssenceName -> Api -> RelationsTree
 getRelationsTree essence = getRelationsTree' essence 0 essence

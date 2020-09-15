@@ -56,26 +56,26 @@ isPathRequestCorrect req api
               Nothing -> False
           Nothing -> False
 
-ifEveryoneUpdate :: Essence DB -> Access -> Essence DB
-ifEveryoneUpdate essenceDB access =
+ifEveryoneUpdate :: Essence Description -> Access -> Essence Description
+ifEveryoneUpdate essenceDescription access =
   if access > Everyone
-    then EssenceDB (edbName essenceDB) (edbAction essenceDB) $
+    then EssenceDescription (edbName essenceDescription) (edbAction essenceDescription) $
          HM.insert
            "access_key"
            (Description (MyString empty) (Just $ NOT NULL) Nothing Nothing)
-           (edbHashmap essenceDB)
-    else essenceDB
+           (edbHashmap essenceDescription)
+    else essenceDescription
 
-ifGetUpdate :: Essence DB -> Essence DB
-ifGetUpdate essenceDB =
-  case edbAction essenceDB of
+ifGetUpdate :: Essence Description -> Essence Description
+ifGetUpdate essenceDescription =
+  case edbAction essenceDescription of
     "get" ->
-      EssenceDB (edbName essenceDB) (edbAction essenceDB) $
+      EssenceDescription (edbName essenceDescription) (edbAction essenceDescription) $
       HM.insert
         "page"
         (Description (MyInteger empty) Nothing Nothing Nothing)
-        (edbHashmap essenceDB)
-    _ -> essenceDB
+        (edbHashmap essenceDescription)
+    _ -> essenceDescription
 
 parseRequest ::
      Wai.Request -> IO (EssenceName, Action, QueryMBS, HTTPTypes.Method)
@@ -96,19 +96,19 @@ isRequestCorrect req = do
           then "news"
           else essence'
   handle@(Config.Handle config api _ logHandle) <- Config.new
-  let essenceDB = getEssenceDB essence action config api
-  let essenceFields = getEssenceFields essenceDB api
+  let essenceDescription = getEssenceDescription essence action config api
+  let essenceFields = getEssenceFields essenceDescription api
   let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
-  let paramsMsg = fromString . show $ getRequiredFields essenceDB api
+  let paramsMsg = fromString . show $ getRequiredFields essenceDescription api
   accessArr <- getAccessArr queryMBS
   isConstraintsCorrect <-
-    runUnderApp (execWApp $ isConstraintCorrect essenceDB listOfPairs) handle
+    runUnderApp (execWApp $ isConstraintCorrect essenceDescription listOfPairs) handle
   let checkingList =
         [ isPathRequestCorrect req api
         , isMethodCorrect method action api
         , isAccess essence action accessArr api
-        , isRequiredParams essenceDB queryMBS api
-        , getAll $ isTypeParamsCorrect essenceDB listOfPairs
+        , isRequiredParams essenceDescription queryMBS api
+        , getAll $ isTypeParamsCorrect essenceDescription listOfPairs
         , getAll isConstraintsCorrect
         ]
   let elseThenList =

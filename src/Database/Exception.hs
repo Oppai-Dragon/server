@@ -28,13 +28,13 @@ tryConnect connectIO = do
       liftIO (errorM logHandle $ show err) >>
       return Nothing
 
-tryRun :: HasCallStack => IO Integer -> UnderApp Integer
+tryRun :: HasCallStack => IO a -> UnderApp Integer
 tryRun run = do
   (Config.Handle _ _ _ logHandle) <- askUnderApp
   result <- liftIO $ tryM run
   case result of
-    Right num ->
-      liftIO (debugM logHandle "Query was runned in database") >> return num
+    Right _ ->
+      liftIO (debugM logHandle "Query was runned in database") >> return 1
     Left err ->
       liftIO (warningM logHandle "Can't run query in database") >>
       liftIO (errorM logHandle $ show err) >>
@@ -67,12 +67,12 @@ tryConnectIO connectIO = do
       errorM logHandle (show err) >>
       return Nothing
 
-tryRunIO :: HasCallStack => IO Integer -> IO Integer
+tryRunIO :: HasCallStack => IO a -> IO Integer
 tryRunIO run = do
   logHandle <- Log.new
   result <- tryM run
   case result of
-    Right num -> debugM logHandle "Query was runned in database" >> return num
+    Right _ -> debugM logHandle "Query was runned in database" >> return 1
     Left err ->
       warningM logHandle "Can't run query in database" >>
       errorM logHandle (show err) >>

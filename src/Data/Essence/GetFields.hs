@@ -18,14 +18,14 @@ type Action = T.Text
 type Field = String
 
 class GetFields a where
-  getFields :: Essence DB -> a
+  getFields :: Essence Description -> a
   iterateHM :: [(Field, Description)] -> Action -> [a]
   iterateHMCreate, iterateHMGet, iterateHMEdit, iterateHMDelete ::
        [(Field, Description)] -> [a]
 
 instance GetFields (Required [Field]) where
-  getFields :: Essence DB -> Required [Field]
-  getFields (EssenceDB _ action hashMap) =
+  getFields :: Essence Description -> Required [Field]
+  getFields (EssenceDescription _ action hashMap) =
     let arr = iterateHM (HM.toList hashMap) action
         andFields =
           requiredSequenceA $
@@ -79,8 +79,8 @@ instance GetFields (Required [Field]) where
       _ -> iterateHMDelete rest
 
 instance GetFields [Field] where
-  getFields :: Essence DB -> [Field]
-  getFields (EssenceDB _ action hashMap) =
+  getFields :: Essence Description -> [Field]
+  getFields (EssenceDescription _ action hashMap) =
     let arr = iterateHM (HM.toList hashMap) action
      in concat arr
   iterateHM :: [(Field, Description)] -> Action -> [[Field]]

@@ -38,7 +38,7 @@ ifEveryoneUpdateTest =
   TestCase $
   assertEqual
     "for (ifEveryoneUpdate testAuthorGetDB Author)"
-    (EssenceDB "author" "get" $
+    (EssenceDescription "author" "get" $
      HM.fromList
        [ ("id", Description (MyInteger 0) Nothing Nothing (Just PRIMARY))
        , ( "person_id"
@@ -57,7 +57,7 @@ ifGetUpdateTest =
   TestCase $
   assertEqual
     "for (ifGetUpdate testAuthorGetDB)"
-    (EssenceDB "author" "get" $
+    (EssenceDescription "author" "get" $
      HM.fromList
        [ ("id", Description (MyInteger 0) Nothing Nothing (Just PRIMARY))
        , ("page", Description (MyInteger empty) Nothing Nothing Nothing)

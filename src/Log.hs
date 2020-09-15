@@ -5,11 +5,8 @@ module Log
   , module Log.Level
   , module Log.Handle.Builder
   , HasCallStack
-  , trace
-  , traceIO
   ) where
 
-import Debug.Trace
 import Log.Console
 import Log.File
 import Log.Handle

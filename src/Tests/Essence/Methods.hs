@@ -20,7 +20,7 @@ essenceMethodsTests =
   [ TestLabel "addListTest" addListTest
   , TestLabel "deletePairTest" deletePairTest
   , TestLabel "getEssenceFieldsTest" getEssenceFieldsTest
-  , TestLabel "getEssenceDBTest" getEssenceDBTest
+  , TestLabel "getEssenceDescriptionTest" getEssenceDescriptionTest
   , TestLabel "getEssenceDatabaseTest" getEssenceDatabaseTest
   , TestLabel "getHashMapDescriptionTest" getHashMapDescriptionTest
   , TestLabel "iterateHashMapDBListTest" iterateHashMapDBListTest
@@ -35,7 +35,7 @@ essenceMethodsTests =
   , TestLabel "toEssenceListTest" toEssenceListTest
   ]
 
-addListTest, deletePairTest, getEssenceFieldsTest, getEssenceDBTest, getEssenceDatabaseTest, getHashMapDescriptionTest, iterateHashMapDBListTest, setDescriptionTest, getMaybeDataFieldTest, parseOnlyValuesTest, parseOnlyFieldsTest, withoutEmptyTest, parseJustBSValueTest, parseNothingBSValueTest, parseFieldValueTest, toEssenceListTest ::
+addListTest, deletePairTest, getEssenceFieldsTest, getEssenceDescriptionTest, getEssenceDatabaseTest, getHashMapDescriptionTest, iterateHashMapDBListTest, setDescriptionTest, getMaybeDataFieldTest, parseOnlyValuesTest, parseOnlyFieldsTest, withoutEmptyTest, parseJustBSValueTest, parseNothingBSValueTest, parseFieldValueTest, toEssenceListTest ::
      Test
 addListTest =
   TestCase $
@@ -76,12 +76,12 @@ getEssenceFieldsTest =
     ["avatar", "is_admin", "last_name", "first_name"] $
   getEssenceFields testPersonCreateDB testApi
 
-getEssenceDBTest =
+getEssenceDescriptionTest =
   TestCase $
   assertEqual
-    "for (getEssenceDB \"person\" \"create\" testConfig testApi)"
+    "for (getEssenceDescription \"person\" \"create\" testConfig testApi)"
     testPersonCreateDB $
-  getEssenceDB "person" "create" testConfig testApi
+  getEssenceDescription "person" "create" testConfig testApi
 
 getEssenceDatabaseTest =
   TestCase $

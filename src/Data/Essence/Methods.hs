@@ -4,7 +4,7 @@ module Data.Essence.Methods
   ( addList
   , deletePair
   , getEssenceFields
-  , getEssenceDB
+  , getEssenceDescription
   , getEssenceDatabase
   , getHashMapDescription
   , iterateHashMapDBList
@@ -51,19 +51,20 @@ deletePair field (EssenceList name action list) =
   EssenceList name action $
   L.deleteBy (\(l1, _) (l2, _) -> l1 == l2) (field, MyEmpty) list
 
-getEssenceFields :: Essence DB -> Api -> [Field]
-getEssenceFields (EssenceDB "news" "create" _) _ = ["id"]
-getEssenceFields essenceDB api =
-  let relationsTree = getRelationsTree (edbName essenceDB) api
+getEssenceFields :: Essence Description -> Api -> [Field]
+getEssenceFields (EssenceDescription "news" "create" _) _ = ["id"]
+getEssenceFields essenceDescription api =
+  let relationsTree = getRelationsTree (edbName essenceDescription) api
       relationFields = getRelationFields relationsTree
-   in getFields essenceDB L.\\ relationFields
+   in getFields essenceDescription L.\\ relationFields
 
-getEssenceDB :: T.Text -> T.Text -> Config -> Api -> Essence DB
-getEssenceDB essence apiAction conf api =
+getEssenceDescription ::
+     T.Text -> T.Text -> Config -> Api -> Essence Description
+getEssenceDescription essence apiAction conf api =
   let dbAction = getApiDBMethod apiAction api
    in case getEssenceDatabase essence conf api of
         EssenceDatabase name hashMapDB ->
-          EssenceDB name dbAction $ getHashMapDescription hashMapDB
+          EssenceDescription name dbAction $ getHashMapDescription hashMapDB
 
 getEssenceDatabase :: T.Text -> Config -> Api -> Essence Database
 getEssenceDatabase essence (Config conf) (Api api) =
@@ -80,7 +81,7 @@ getEssenceDatabase essence (Config conf) (Api api) =
             _ -> EssenceDatabase essence . HM.fromList $ unpackObj objFromConf
         _ -> EssenceDatabase "" HM.empty
 
-getHashMapDescription :: Database -> DB
+getHashMapDescription :: Database -> HM.HashMap String Description
 getHashMapDescription = HM.fromList . iterateHashMapDBList . HM.toList
 
 iterateHashMapDBList ::
@@ -131,10 +132,10 @@ parseFieldValue (field:fields) bss =
   let bss' = map (\(l, r) -> (BSC8.unpack l, r)) bss
    in parseBSValue field bss' : parseFieldValue fields bss
 
-toEssenceList :: Essence DB -> QueryMBS -> UnderApp (Essence List)
-toEssenceList essenceDB@(EssenceDB name action _) queryMBS = do
+toEssenceList :: Essence Description -> QueryMBS -> UnderApp (Essence List)
+toEssenceList essenceDescription@(EssenceDescription name action _) queryMBS = do
   configHandle <- askUnderApp
-  let essenceFields = getEssenceFields essenceDB $ hApi configHandle
+  let essenceFields = getEssenceFields essenceDescription $ hApi configHandle
   let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
   let nameStr = T.unpack name
   let actioStr = T.unpack action

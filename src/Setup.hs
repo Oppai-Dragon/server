@@ -9,9 +9,9 @@ module Setup
   , createTables
   , replaceEssenceJson
   , collectEssenceJson
-  , getEssenceDBObjectArr
+  , getEssenceDescriptionObjectArr
   , getEssenceLocalObjectArr
-  , getEssenceDBObject
+  , getEssenceDescriptionObject
   , getEssenceLocalObject
   , getAllQueris
   , getCreateQuery
@@ -24,6 +24,7 @@ import Config.Exception
 import Data.Base
 import Data.Value
 import Database.Exception
+import Log
 
 import Control.Monad
 import qualified Data.Aeson as A
@@ -33,7 +34,6 @@ import Data.List
 import qualified Data.Text as T
 import qualified Database.HDBC as HDBC
 import qualified Database.HDBC.PostgreSQL as PSQL
-import Debug.Trace
 import qualified System.Directory as Dir
 
 type EssenceArr = [String]
@@ -71,11 +71,15 @@ dropTables essences = do
     Nothing -> return ()
     Just conn -> do
       let dropQuery = getDropTablesQuery essences
-      deleteEssenceJson essences
-      _ <- tryRunIO $ HDBC.run conn dropQuery []
-      HDBC.commit conn
-      HDBC.disconnect conn
-      traceIO $ "Tables: " <> intercalate "," essences <> " are deleted"
+      result <- tryRunIO $ HDBC.run conn dropQuery []
+      case result of
+        1 -> do
+          deleteEssenceJson essences
+          HDBC.commit conn
+          HDBC.disconnect conn
+          infoIO $ "Tables: " <> intercalate "," essences <> " are deleted"
+        _ -> HDBC.disconnect conn >> return ()
+
 
 buildConfigJson :: IO ()
 buildConfigJson = do
@@ -103,10 +107,10 @@ createTables essences = do
           HDBC.commit conn
           replaceEssenceJson tables
           HDBC.disconnect conn
-          traceIO $ "Tables: " <> intercalate "," essences <> " are created"
+          infoIO $ "Tables: " <> intercalate "," essences <> " are created"
         else do
           HDBC.disconnect conn
-          traceIO $ "Tables: " <> intercalate "," essences <> " aren't created"
+          infoIO $ "Tables: " <> intercalate "," essences <> " aren't created"
 
 replaceEssenceJson :: EssenceArr -> IO ()
 replaceEssenceJson [] = return ()
@@ -129,7 +133,7 @@ collectEssenceJson :: IO [A.Object]
 collectEssenceJson = do
   api <- setApi
   let essences = getEssences api
-  objList <- getEssenceDBObjectArr $ map T.unpack essences
+  objList <- getEssenceDescriptionObjectArr $ map T.unpack essences
   return [obj | obj <- [parseOnlyTable o | o <- objList], not $ null obj]
 
 parseOnlyTable :: A.Object -> A.Object
@@ -138,18 +142,18 @@ parseOnlyTable obj =
     A.Object o -> o
     _ -> HM.empty
 
-getEssenceDBObjectArr :: EssenceArr -> IO [A.Object]
-getEssenceDBObjectArr [] = return []
-getEssenceDBObjectArr (essence:rest) =
-  (:) <$> getEssenceDBObject essence <*> getEssenceDBObjectArr rest
+getEssenceDescriptionObjectArr :: EssenceArr -> IO [A.Object]
+getEssenceDescriptionObjectArr [] = return []
+getEssenceDescriptionObjectArr (essence:rest) =
+  (:) <$> getEssenceDescriptionObject essence <*> getEssenceDescriptionObjectArr rest
 
 getEssenceLocalObjectArr :: EssenceArr -> IO [A.Object]
 getEssenceLocalObjectArr [] = return []
 getEssenceLocalObjectArr (essence:rest) =
   (:) <$> getEssenceLocalObject essence <*> getEssenceLocalObjectArr rest
 
-getEssenceDBObject :: String -> IO A.Object
-getEssenceDBObject essence = do
+getEssenceDescriptionObject :: String -> IO A.Object
+getEssenceDescriptionObject essence = do
   path <- setPath ("EssenceDatabase\\" <> essence <> ".json")
   obj <- trySetIO $ set path
   return obj

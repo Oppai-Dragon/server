@@ -109,9 +109,9 @@ iterateRelations (Trunk t (Branch b leafs)) objOld = do
             liftUnderApp $ dbGetOne (EssenceList name "get" [(field, value)])
                 -- Draft have only one "not null" field for creating - "name"
                 -- But news, which copies draft values, need more then just "name"
-          let essenceDB = getEssenceDB (T.pack b) (T.pack action) config api
+          let essenceDescription = getEssenceDescription (T.pack b) (T.pack action) config api
           let addedFields = getAddedFields name leafs objNew
-          let requiredFields = toFields $ getRequiredFields essenceDB api
+          let requiredFields = toFields $ getRequiredFields essenceDescription api
           let bool1 = isRightRelations objOld objNew t b
           let bool2 = ifFieldsFill requiredFields addedFields
           liftUnderApp . liftIO . debugM logHandle $

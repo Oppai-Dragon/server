@@ -4,7 +4,6 @@
 module Data.Essence
   ( Essence(..)
   , Database
-  , DB
   , List
   , Description(..)
   , VALUE(..)
@@ -26,8 +25,6 @@ type List = [(Field, MyValue)]
 
 type Database = HM.HashMap Field [(Field, Value)]
 
-type DB = HM.HashMap Field Description
-
 data family Essence a
 
 data instance  Essence (Clause String) = EssenceClause{ecName ::
@@ -38,9 +35,11 @@ data instance  Essence (Clause String) = EssenceClause{ecName ::
 data instance  Essence Database = EssenceDatabase T.Text Database
                                     deriving (Show, Eq)
 
-data instance  Essence DB = EssenceDB{edbName :: T.Text,
-                                      edbAction :: T.Text, edbHashmap :: DB}
-                              deriving (Show, Eq)
+data instance  Essence Description = EssenceDescription{edbName ::
+                                                        T.Text,
+                                                        edbAction :: T.Text,
+                                                        edbHashmap :: HM.HashMap Field Description}
+                                       deriving (Show, Eq)
 
 data instance  Essence List = EssenceList{elName :: Field,
                                           elAction :: Field, elList :: List}
