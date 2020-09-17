@@ -1,17 +1,20 @@
-module Tests.Value
-  ( valueTests
+module Tests.Base.Aeson
+  ( aesonBaseTests
   ) where
 
-import Data.Value
+import Data.Base.Aeson
 
 import qualified Data.Aeson as A
 
 import Test.HUnit
 
-valueTests, isValueTests, toStrTests :: [Test]
-valueTests = isValueTests <> toStrTests
+valueTests, valueTests, toStrTests :: [Test]
+aesonBaseTests = valueTests <> toStrTests
 
-isValueTests = [TestLabel "isNullTest" isNullTest]
+valueTests =
+  [ TestLabel "isNullTest" isNullTest
+  , TestLabel "scientificToIntegerTest" scientificToIntegerTest
+  ]
 
 isNullTest :: Test
 isNullTest = TestCase $ assertEqual "for (isNull Null)" True (isNull A.Null)

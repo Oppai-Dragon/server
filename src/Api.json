@@ -24,6 +24,7 @@
     , "draft"
     , "news"
     , "comment"
+    , "test"
     ]
 , "relations":
     { "person":"access_key"

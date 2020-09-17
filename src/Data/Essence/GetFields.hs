@@ -59,6 +59,7 @@ instance GetFields (Required [Field]) where
       "id" -> iterateHMCreate rest
       "date_of_creation" -> iterateHMCreate rest
       "access_key" -> iterateHMCreate rest
+      "is_admin" -> iterateHMCreate rest
       _ ->
         case dValue description of
           Just (NOT NULL) -> AND [field] : iterateHMCreate rest
@@ -99,6 +100,7 @@ instance GetFields [Field] where
     case field of
       "id" -> iterateHMCreate rest
       "date_of_creation" -> iterateHMCreate rest
+      "is_admin" -> iterateHMCreate rest
       _ -> [field] : iterateHMCreate rest
   iterateHMGet = flip (:) [] . map fst
   iterateHMEdit [] = []

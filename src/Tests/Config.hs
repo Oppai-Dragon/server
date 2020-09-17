@@ -11,7 +11,6 @@ import Test.HUnit
 configTests :: [Test]
 configTests =
   [ TestLabel "getApiActionsTest" getApiActionsTest
-  , TestLabel "getEssencesTest" getEssencesTest
   , TestLabel "getAccessTest" getAccessTest
   , TestLabel "getUriTest" getUriTest
   , TestLabel "getUriDBTest" getUriDBTest
@@ -23,7 +22,7 @@ configTests =
   , TestLabel "getOffsetLimitTest" getOffsetLimitTest
   ]
 
-getApiActionsTest, getEssencesTest, getAccessTest, getUriTest, getUriDBTest, getMethodActionsTest, getApiDBMethodTest, getRelationFieldsTest, getRelationsTreeTest, getRelationsTree'Test, getOffsetLimitTest ::
+getApiActionsTest, getAccessTest, getUriTest, getUriDBTest, getMethodActionsTest, getApiDBMethodTest, getRelationFieldsTest, getRelationsTreeTest, getRelationsTree'Test, getOffsetLimitTest ::
      Test
 getApiActionsTest =
   TestCase $
@@ -31,13 +30,6 @@ getApiActionsTest =
     "for (getApiActions testApi)"
     ["edit", "get", "create", "delete", "publish"] $
   getApiActions testApi
-
-getEssencesTest =
-  TestCase $
-  assertEqual
-    "for (getEssencesTest testApi)"
-    ["person", "author", "category", "tag", "draft", "news", "comment"] $
-  getEssences testApi
 
 getAccessTest =
   TestCase $

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 377a5d2881ed2ecb3ef073d84b723cc71a420281595469d48bc7308afdda7b8d
+-- hash: 456deb6a2cca40a846654d4c5b1d6121b2c2c8e03c1fc7641fae007d3ba43711
 
 name:           server
 version:        0.1.0.0
@@ -64,7 +64,6 @@ library
       Data.SQL
       Data.SQL.ShowSql
       Data.SQL.ToValue
-      Data.Value
       Database.Create
       Database.Delete
       Database.Edit
@@ -81,6 +80,10 @@ library
       Setup
       Tests
       Tests.Base
+      Tests.Base.Aeson
+      Tests.Base.Path
+      Tests.Base.Prelude
+      Tests.Base.Text
       Tests.Config
       Tests.Database
       Tests.Database.Create
@@ -104,7 +107,6 @@ library
       Tests.Setup
       Tests.SQL.ShowSql
       Tests.SQL.ToValue
-      Tests.Value
   other-modules:
       Paths_server
   hs-source-dirs:

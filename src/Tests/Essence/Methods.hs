@@ -73,7 +73,7 @@ getEssenceFieldsTest =
   TestCase $
   assertEqual
     "for (getEssenceFields testPersonCreateDB testApi)"
-    ["avatar", "is_admin", "last_name", "first_name"] $
+    ["avatar", "last_name", "first_name"] $
   getEssenceFields testPersonCreateDB testApi
 
 getEssenceDescriptionTest =

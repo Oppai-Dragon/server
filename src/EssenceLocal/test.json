@@ -1,0 +1,7 @@
+{ "TABLE":
+  { "test":
+    { "id":["SERIAL","PRIMARY KEY"]
+    , "text": ["TEXT"]
+    }
+  }
+}

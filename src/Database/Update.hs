@@ -57,8 +57,8 @@ isNewTables apiArr dbArr locArr =
 
 getChangedTables :: [EssenceDatabase] -> [EssenceLocal] -> IO [EssenceLocal]
 getChangedTables (essenceDb:restDb) (essenceLoc:restLoc) = do
-  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> essenceDb)
-  essenceLocObj <- set =<< setPath ("EssenceLocal\\" <> essenceLoc)
+  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> essenceDb <> ".json")
+  essenceLocObj <- set =<< setPath ("EssenceLocal\\" <> essenceLoc <> ".json")
   if essenceDbObj == essenceLocObj
     then getChangedTables restDb restLoc
     else (essenceLoc :) <$> getChangedTables restDb restLoc
@@ -72,8 +72,8 @@ updateTableArr (essence:rest) = do
 
 updateTable :: EssenceLocal -> IO ()
 updateTable essence = do
-  essenceLocObj <- set =<< setPath ("EssenceLocal\\" <> essence)
-  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> essence)
+  essenceLocObj <- set =<< setPath ("EssenceLocal\\" <> essence <> ".json")
+  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> essence <> ".json")
   let toColumnsObj obj =
         case getValue ["TABLE", T.pack essence] obj of
           A.Object x -> x
@@ -149,5 +149,5 @@ alterTableAdd table ((column, value):rest) =
   "ALTER TABLE " <>
   table <>
   " ADD IF NOT EXIST " <>
-  T.unpack column <>
+  T.unpack column <> " " <>
   intercalate " " (toStrArr value) <> ";" <> alterTableAdd table rest

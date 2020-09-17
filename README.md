@@ -50,7 +50,7 @@ This way you will do a little check functions and it also checks the basic funct
 ```git
 $ stack test
 ```
-To quickly check the server operation in Test curl/ there are .sh scripts, but they must be used in a specific order. First, you always need to create a person - personCreate.sh, He will be with admin rights, so then you need to create an author - authorCreate.sh, a tag and a category - tagCreate.sh, categoryCreate.sh.
+To quickly check the server operation in Test curl/ there are .sh scripts, but they must be used in a specific order. Best way - ./allCurls.sh. But if you want to do it manually, then first, you always need to create a person - personCreate.sh, He will be with admin rights, so then you need to create an author - authorCreate.sh, a tag and a category - tagCreate.sh, categoryCreate.sh.
 Then you can create a draft - draftCreate.sh and publish it, at the first publication - draftFirstPublish.sh, for subsequent ones, if you want to change it - draftNextPublish.sh. And now you can create a comment for the news - commentCreate.sh.
 
 After creating the entities, you may want to change them - <essence>Edit.sh, if there is no suitable script, you cannot change only person and news, to change news, you need to change the draft and publish it - draftNextPublish.sh.
