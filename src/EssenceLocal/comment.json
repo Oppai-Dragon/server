@@ -1,29 +1,29 @@
 { "TABLE":
     { "comment":
         { "id":
-            [ "BIGSERIAL"
-            , "PRIMARY KEY"
-            ]
+            { "type": "BIGSERIAL"
+            , "constraint": "PRIMARY KEY"
+            }
         , "news_id":
-            [ "BIGINT"
-            , "NOT NULL"
-            , "REFERENCES news (id)"
-            , "ON DELETE CASCADE"
-            ]
+            { "type": "BIGINT"
+            , "null": "NOT NULL"
+            , "relations": "REFERENCES news (id)"
+            , "action": "ON DELETE CASCADE"
+            }
         , "person_id":
-            [ "BIGINT"
-            , "NOT NULL"
-            , "REFERENCES person (id)"
-            , "ON DELETE CASCADE"
-            ]
+            { "type": "BIGINT"
+            , "null": "NOT NULL"
+            , "relations": "REFERENCES person (id)"
+            , "action": "ON DELETE CASCADE"
+            }
         , "date_of_creation":
-            [ "DATE"
-            , "DEFAULT CURRENT_DATE"
-            ]
+            { "type": "DATE"
+            , "default": "DEFAULT CURRENT_DATE"
+            }
         , "content":
-            [ "TEXT"
-            , "NOT NULL"
-            ]
+            { "type": "TEXT"
+            , "null": "NOT NULL"
+            }
         }
     }
 }

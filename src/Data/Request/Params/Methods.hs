@@ -28,14 +28,14 @@ type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
 
 type QueryBS = [(BS.ByteString, BS.ByteString)]
 
-isRequiredParams :: Essence Description -> QueryMBS -> Api -> Bool
-isRequiredParams (EssenceDescription "news" "create" _) queryMBS _ =
+isRequiredParams :: Essence Column -> QueryMBS -> Api -> Bool
+isRequiredParams (EssenceColumn "news" "create" _) queryMBS _ =
   case lookup "id" queryMBS of
     Just (Just _) -> True
     _ -> False
-isRequiredParams essenceDescription queryMBS api =
+isRequiredParams essenceColumn queryMBS api =
   let queryBS = queryBSWithoutMaybe queryMBS
-      requiredParams = getRequiredFields essenceDescription api
+      requiredParams = getRequiredFields essenceColumn api
    in case requiredParams of
         NullFields -> True
         _ -> iterateRequiredParams requiredParams queryBS
@@ -66,22 +66,22 @@ queryBSWithoutMaybe ((l, maybeR):rest) =
     Just valueBS -> (l, valueBS) : queryBSWithoutMaybe rest
     Nothing -> queryBSWithoutMaybe rest
 
-isConstraintCorrect :: Essence Description -> [(String, MyValue)] -> WApp ()
+isConstraintCorrect :: Essence Column -> [(String, MyValue)] -> WApp ()
 isConstraintCorrect _ [] = tellWApp $ All True
-isConstraintCorrect (EssenceDescription _ "get" _) _ = tellWApp $ All True
-isConstraintCorrect (EssenceDescription _ "delete" _) _ = tellWApp $ All True
-isConstraintCorrect EssenceDescription {} (("tag_ids", MyIntegers arr):_) = do
+isConstraintCorrect (EssenceColumn _ "get" _) _ = tellWApp $ All True
+isConstraintCorrect (EssenceColumn _ "delete" _) _ = tellWApp $ All True
+isConstraintCorrect EssenceColumn {} (("tag_ids", MyIntegers arr):_) = do
   (A.Object pageObj) <-
     liftUnderApp $ dbGetArray (EssenceList "tag" "get" [("id", MyIntegers arr)])
   let bool = length (HM.keys pageObj) == length arr
   tellWApp $ All bool
-isConstraintCorrect (EssenceDescription table action hm) ((field, myValue):rest) =
+isConstraintCorrect (EssenceColumn table action hm) ((field, myValue):rest) =
   case HM.lookup field hm of
-    Just description -> do
-      isUniqueParams table (field, myValue) (dConstraint description)
-      isRightRelationsParams (dRelations description) myValue
-      isConstraintCorrect (EssenceDescription table action hm) rest
-    Nothing -> isConstraintCorrect (EssenceDescription table action hm) rest
+    Just Column -> do
+      isUniqueParams table (field, myValue) (dConstraint Column)
+      isRightRelationsParams (dRelations Column) myValue
+      isConstraintCorrect (EssenceColumn table action hm) rest
+    Nothing -> isConstraintCorrect (EssenceColumn table action hm) rest
 
 -- Tell True, if essence with unique value doesn't exist
 isUniqueParams :: T.Text -> (String, MyValue) -> Maybe Constraint -> WApp ()
@@ -101,12 +101,12 @@ isRightRelationsParams (Just (Relations table fieldT)) myValue = do
   (A.Object obj) <- liftUnderApp $ dbGetOne (EssenceList name "get" [pare])
   tellWApp . All . not $ HM.null obj
 
-isTypeParamsCorrect :: Essence Description -> [(String, MyValue)] -> All
+isTypeParamsCorrect :: Essence Column -> [(String, MyValue)] -> All
 isTypeParamsCorrect _ [] = All True
-isTypeParamsCorrect essence@(EssenceDescription _ _ hashMap) ((field, myValue):rest) =
+isTypeParamsCorrect essence@(EssenceColumn _ _ hashMap) ((field, myValue):rest) =
   case HM.lookup field hashMap of
-    Just description ->
-      All (compareValueType (dValueType description) myValue) <>
+    Just Column ->
+      All (compareValueType (dValueType Column) myValue) <>
       isTypeParamsCorrect essence rest
     Nothing -> isTypeParamsCorrect essence rest
 

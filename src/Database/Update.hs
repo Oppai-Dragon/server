@@ -136,16 +136,16 @@ updateColumn table (column, arrLocValue) = вщ
   let arrDbValue = getValue ["TABLE",T.pack table,T.pack column] essenceDbObj
   let arrLocList = toStrArr arrLocValue
   let arrDbList = toStrArr arrDbValue
-  if isRedundantDescription arrDb arrLoc
-    then dropDescription essence $ descriptionDbList \\ descriptionLocList
-    else infoIO "No need delete description"
-  if isNewDescription arrDb arrLoc
-    then createDescription essence $ descriptionLocList \\ descriptionDbList
-    else infoIO "No need add description"
-  changedDescriptionList <- getChangedDescriptionList essence
-  if null changedDescriptionList
+  if isRedundantColumn arrDb arrLoc
+    then dropColumn essence $ ColumnDbList \\ ColumnLocList
+    else infoIO "No need delete Column"
+  if isNewColumn arrDb arrLoc
+    then createColumn essence $ ColumnLocList \\ ColumnDbList
+    else infoIO "No need add Column"
+  changedColumnList <- getChangedColumnList essence
+  if null changedColumnList
     then infoIO "No need change value"
-    else updatedescriptionArr table changedDescriptionList
+    else updateColumnArr table changedColumnList
 updateColumn _ (column, _) =
   infoIO $ "Column " <> column <> " must contain an array in EssenceLocal/.json"
 

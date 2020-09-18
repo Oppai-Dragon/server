@@ -99,23 +99,23 @@
         }
     }
 , "news":
-    { "filter_created_in":["DATE"]
-    , "filter_created_after":["DATE"]
-    , "filter_created_before":["DATE"]
-    , "filter_author_name":["VARCHAR(50)"]
-    , "filter_category_id":["INT"]
-    , "filter_tag_id":["INT"]
-    , "filter_tags_in":["INT[]"]
-    , "filter_tags_all":["INT[]"]
-    , "filter_name":["VARCHAR(20)"]
-    , "filter_content":["VARCHAR(30)"]
-    , "search_content":["VARCHAR(20)"]
-    , "search_author_name":["VARCHAR(50)"]
-    , "search_category_name":["VARCHAR(25)"]
-    , "search_tag_name":["VARCHAR(20)"]
-    , "sort_date_of_creation":["BOOLEAN"]
-    , "sort_author_name":["BOOLEAN"]
-    , "sort_category_name":["BOOLEAN"]
-    , "sort_number_of_photos":["BOOLEAN"]
+    { "filter_created_in":{"type": "DATE"}
+    , "filter_created_after":{"type": "DATE"}
+    , "filter_created_before":{"type": "DATE"}
+    , "filter_author_name":{"type": "VARCHAR(50)"}
+    , "filter_category_id":{"type": "INT"}
+    , "filter_tag_id":{"type": "INT"}
+    , "filter_tags_in":{"type": "INT[]"}
+    , "filter_tags_all":{"type": "INT[]"}
+    , "filter_name":{"type": "VARCHAR(20)"}
+    , "filter_content":{"type": "VARCHAR(30)"}
+    , "search_content":{"type": "VARCHAR(20)"}
+    , "search_author_name":{"type": "VARCHAR(50)"}
+    , "search_category_name":{"type": "VARCHAR(25)"}
+    , "search_tag_name":{"type": "VARCHAR(20)"}
+    , "sort_date_of_creation":{"type": "BOOLEAN"}
+    , "sort_author_name":{"type": "BOOLEAN"}
+    , "sort_category_name":{"type": "BOOLEAN"}
+    , "sort_number_of_photos":{"type": "BOOLEAN"}
     }
 }

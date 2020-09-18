@@ -1,7 +1,12 @@
 { "TABLE":
   { "test":
-    { "id":["SERIAL","PRIMARY KEY"]
-    , "text": ["TEXT"]
+    { "id":
+      { "type": "SERIAL"
+      , "constraint": "PRIMARY KEY"
+      }
+    , "text":
+      { "type": "TEXT"
+      }
     }
   }
 }

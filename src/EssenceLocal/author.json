@@ -5,15 +5,14 @@
             , "constraint": "PRIMARY KEY"
             }
         , "person_id":
-            [ "BIGINT"
-            , "NOT NULL"
-            , "UNIQUE"
-            , "REFERENCES person (id)"
-            , "ON DELETE CASCADE"
-            ]
+            { "type": "BIGINT"
+            , "null": "NOT NULL"
+            , "constraint": "UNIQUE"
+            , "relations": "REFERENCES person (id)"
+            }
         , "description":
-            [ "VARCHAR(150)"
-            ]
+            { "type": "VARCHAR(150)"
+            }
         }
     }
 }

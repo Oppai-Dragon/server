@@ -18,14 +18,14 @@ type Action = T.Text
 type Field = String
 
 class GetFields a where
-  getFields :: Essence Description -> a
-  iterateHM :: [(Field, Description)] -> Action -> [a]
+  getFields :: Essence Column -> a
+  iterateHM :: [(Field, Column)] -> Action -> [a]
   iterateHMCreate, iterateHMGet, iterateHMEdit, iterateHMDelete ::
-       [(Field, Description)] -> [a]
+       [(Field, Column)] -> [a]
 
 instance GetFields (Required [Field]) where
-  getFields :: Essence Description -> Required [Field]
-  getFields (EssenceDescription _ action hashMap) =
+  getFields :: Essence Column -> Required [Field]
+  getFields (EssenceColumn _ action hashMap) =
     let arr = iterateHM (HM.toList hashMap) action
         andFields =
           requiredSequenceA $
@@ -42,7 +42,7 @@ instance GetFields (Required [Field]) where
                _ -> False)
             arr
      in Required [andFields, orFields]
-  iterateHM :: [(Field, Description)] -> Action -> [Required [Field]]
+  iterateHM :: [(Field, Column)] -> Action -> [Required [Field]]
   iterateHM [] _ = []
   iterateHM arr action =
     case action of
@@ -52,16 +52,16 @@ instance GetFields (Required [Field]) where
       "delete" -> iterateHMDelete arr
       _ -> []
   iterateHMCreate, iterateHMGet, iterateHMEdit, iterateHMDelete ::
-       [(Field, Description)] -> [Required [Field]]
+       [(Field, Column)] -> [Required [Field]]
   iterateHMCreate [] = []
-  iterateHMCreate ((field, description):rest) =
+  iterateHMCreate ((field, Column):rest) =
     case field of
       "id" -> iterateHMCreate rest
       "date_of_creation" -> iterateHMCreate rest
       "access_key" -> iterateHMCreate rest
       "is_admin" -> iterateHMCreate rest
       _ ->
-        case dValue description of
+        case dValue Column of
           Just (NOT NULL) -> AND [field] : iterateHMCreate rest
           _ -> iterateHMCreate rest
   iterateHMGet _ = []
@@ -80,11 +80,11 @@ instance GetFields (Required [Field]) where
       _ -> iterateHMDelete rest
 
 instance GetFields [Field] where
-  getFields :: Essence Description -> [Field]
-  getFields (EssenceDescription _ action hashMap) =
+  getFields :: Essence Column -> [Field]
+  getFields (EssenceColumn _ action hashMap) =
     let arr = iterateHM (HM.toList hashMap) action
      in concat arr
-  iterateHM :: [(Field, Description)] -> Action -> [[Field]]
+  iterateHM :: [(Field, Column)] -> Action -> [[Field]]
   iterateHM [] _ = []
   iterateHM arr action =
     case action of
@@ -94,7 +94,7 @@ instance GetFields [Field] where
       "delete" -> iterateHMDelete arr
       _ -> []
   iterateHMCreate, iterateHMGet, iterateHMEdit, iterateHMDelete ::
-       [(Field, Description)] -> [[Field]]
+       [(Field, Column)] -> [[Field]]
   iterateHMCreate [] = []
   iterateHMCreate ((field, _):rest) =
     case field of

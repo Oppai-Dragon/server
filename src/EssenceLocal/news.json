@@ -1,45 +1,45 @@
 { "TABLE":
     { "news":
         { "id":
-            [ "BIGSERIAL"
-            , "PRIMARY KEY"
-            ]
+            { "type": "BIGSERIAL"
+            , "constraint": "PRIMARY KEY"
+            }
         , "draft_id":
-            [ "INT"
-            , "NOT NULL"
-            , "UNIQUE"
-            ]
+            { "type": "INT"
+            , "null": "NOT NULL"
+            , "constraint": "UNIQUE"
+            }
         , "name":
-            [ "VARCHAR(50)"
-            , "NOT NULL"
-            ]
+            { "type": "VARCHAR(50)"
+            , "null": "NOT NULL"
+            }
         , "date_of_creation":
-            [ "DATE"
-            , "DEFAULT CURRENT_DATE"
-            ]
+            { "type": "DATE"
+            , "default": "DEFAULT CURRENT_DATE"
+            }
         , "author_id":
-            [ "INT"
-            , "NOT NULL"
-            , "REFERENCES author (id)"
-            ]
+            { "type": "INT"
+            , "null": "NOT NULL"
+            , "relations": "REFERENCES author (id)"
+            }
         , "category_id":
-            [ "INT"
-            , "NOT NULL"
-            , "REFERENCES category (id)"
-            ]
+            { "type": "INT"
+            , "null": "NOT NULL"
+            , "relations": "REFERENCES category (id)"
+            }
         , "tag_ids":
-            [ "INTEGER[]"
-            ]
+            { "type": "INTEGER[]"
+            }
         , "content":
-            [ "TEXT"
-            , "NOT NULL"
-            ]
+            { "type": "TEXT"
+            , "null": "NOT NULL"
+            }
         , "main_photo":
-            [ "VARCHAR(50)"
-            ]
+            { "type": "VARCHAR(50)"
+            }
         , "optional_photos":
-            [ "VARCHAR(50)[]"
-            ]
+            { "type": "VARCHAR(50)[]"
+            }
         }
     }
 }

@@ -1,19 +1,19 @@
 { "TABLE":
     { "category":
         { "id":
-            [ "BIGSERIAL"
-            , "PRIMARY KEY"
-            ]
+            { "type": "BIGSERIAL"
+            , "constraint": "PRIMARY KEY"
+            }
         , "name":
-            [ "VARCHAR(35)"
-            , "NOT NULL"
-            , "UNIQUE"
-            ]
+            { "type": "VARCHAR(35)"
+            , "null": "NOT NULL"
+            , "constraint": "UNIQUE"
+            }
         , "child_category":
-            [ "INT"
-            , "REFERENCES category (id)"
-            , "ON DELETE SET NULL"
-            ]
+            { "type": "INT"
+            , "relations": "REFERENCES category (id)"
+            , "action": "ON DELETE SET NULL"
+            }
         }
     }
 }

@@ -20,11 +20,11 @@ essenceMethodsTests =
   [ TestLabel "addListTest" addListTest
   , TestLabel "deletePairTest" deletePairTest
   , TestLabel "getEssenceFieldsTest" getEssenceFieldsTest
-  , TestLabel "getEssenceDescriptionTest" getEssenceDescriptionTest
+  , TestLabel "getEssenceColumnTest" getEssenceColumnTest
   , TestLabel "getEssenceDatabaseTest" getEssenceDatabaseTest
-  , TestLabel "getHashMapDescriptionTest" getHashMapDescriptionTest
+  , TestLabel "getHashMapColumnTest" getHashMapColumnTest
   , TestLabel "iterateHashMapDBListTest" iterateHashMapDBListTest
-  , TestLabel "setDescriptionTest" setDescriptionTest
+  , TestLabel "setColumnTest" setColumnTest
   , TestLabel "getMaybeDataFieldTest" getMaybeDataFieldTest
   , TestLabel "parseOnlyValuesTest" parseOnlyValuesTest
   , TestLabel "parseOnlyFieldsTest" parseOnlyFieldsTest
@@ -35,7 +35,7 @@ essenceMethodsTests =
   , TestLabel "toEssenceListTest" toEssenceListTest
   ]
 
-addListTest, deletePairTest, getEssenceFieldsTest, getEssenceDescriptionTest, getEssenceDatabaseTest, getHashMapDescriptionTest, iterateHashMapDBListTest, setDescriptionTest, getMaybeDataFieldTest, parseOnlyValuesTest, parseOnlyFieldsTest, withoutEmptyTest, parseJustBSValueTest, parseNothingBSValueTest, parseFieldValueTest, toEssenceListTest ::
+addListTest, deletePairTest, getEssenceFieldsTest, getEssenceColumnTest, getEssenceDatabaseTest, getHashMapColumnTest, iterateHashMapDBListTest, setColumnTest, getMaybeDataFieldTest, parseOnlyValuesTest, parseOnlyFieldsTest, withoutEmptyTest, parseJustBSValueTest, parseNothingBSValueTest, parseFieldValueTest, toEssenceListTest ::
      Test
 addListTest =
   TestCase $
@@ -76,12 +76,12 @@ getEssenceFieldsTest =
     ["avatar", "last_name", "first_name"] $
   getEssenceFields testPersonCreateDB testApi
 
-getEssenceDescriptionTest =
+getEssenceColumnTest =
   TestCase $
   assertEqual
-    "for (getEssenceDescription \"person\" \"create\" testConfig testApi)"
+    "for (getEssenceColumn \"person\" \"create\" testConfig testApi)"
     testPersonCreateDB $
-  getEssenceDescription "person" "create" testConfig testApi
+  getEssenceColumn "person" "create" testConfig testApi
 
 getEssenceDatabaseTest =
   TestCase $
@@ -90,12 +90,12 @@ getEssenceDatabaseTest =
     testPersonDatabase $
   getEssenceDatabase "person" testConfig testApi
 
-getHashMapDescriptionTest =
+getHashMapColumnTest =
   TestCase $
   assertEqual
-    "for (getHashMapDescription (HM.fromList testPersonDatabaseFields))"
+    "for (getHashMapColumn (HM.fromList testPersonDatabaseFields))"
     (HM.fromList testPersonDBFields) $
-  getHashMapDescription (HM.fromList testPersonDatabaseFields)
+  getHashMapColumn (HM.fromList testPersonDatabaseFields)
 
 iterateHashMapDBListTest =
   TestCase $
@@ -104,12 +104,12 @@ iterateHashMapDBListTest =
     testPersonDBFields $
   iterateHashMapDBList testPersonDatabaseFields
 
-setDescriptionTest =
+setColumnTest =
   TestCase $
   assertEqual
-    "for (setDescription testPersonDatabaseDescription)"
-    (Description (MyInteger 0) Nothing Nothing (Just PRIMARY)) $
-  setDescription [("type", "int"), ("constraint", "primary key")]
+    "for (setColumn testPersonDatabaseColumn)"
+    (Column (MyInteger 0) Nothing Nothing (Just PRIMARY)) $
+  setColumn [("type", "int"), ("constraint", "primary key")]
 
 getMaybeDataFieldTest =
   TestCase $

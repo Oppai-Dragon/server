@@ -160,7 +160,7 @@ iterateObj (essence:rest) pageObj = do
                Just _ -> True
                _ -> False) .
         edbHashmap $
-        getEssenceDescription name "get" config api
+        getEssenceColumn name "get" config api
   nestedEssence <-
     case HM.lookup essence pageObj of
       Just (A.Object fieldsObj) ->

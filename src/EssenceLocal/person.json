@@ -1,33 +1,33 @@
 { "TABLE":
     { "person":
         { "id":
-            [ "BIGSERIAL"
-            , "PRIMARY KEY"
-            ]
+            { "type": "BIGSERIAL"
+            , "constraint": "PRIMARY KEY"
+            }
         , "first_name":
-            [ "VARCHAR(50)"
-            , "NOT NULL"
-            ]
+            { "type": "VARCHAR(50)"
+            , "null": "NOT NULL"
+            }
         , "last_name":
-            [ "VARCHAR(50)"
-            , "NOT NULL"
-            ]
+            { "type": "VARCHAR(50)"
+            , "null": "NOT NULL"
+            }
         , "date_of_creation":
-            [ "DATE"
-            , "DEFAULT CURRENT_DATE"
-            ]
+            { "type": "DATE"
+            , "default": "DEFAULT CURRENT_DATE"
+            }
         , "avatar":
-            [ "VARCHAR(50)"
-            , "DEFAULT 'https://oppai-dragon.site/images/avatar.jpg'"
-            ]
+            { "type": "VARCHAR(50)"
+            , "default": "DEFAULT 'https://oppai-dragon.site/images/avatar.jpg'"
+            }
         , "is_admin":
-            [ "BOOLEAN"
-            , "DEFAULT FALSE"
-            ]
+            { "type": "BOOLEAN"
+            , "default": "DEFAULT FALSE"
+            }
         , "access_key":
-            [ "UUID"
-            , "DEFAULT gen_random_uuid()"
-            ]
+            { "type": "UUID"
+            , "default": "DEFAULT gen_random_uuid()"
+            }
         }
     }
 }

@@ -38,18 +38,18 @@ ifEveryoneUpdateTest =
   TestCase $
   assertEqual
     "for (ifEveryoneUpdate testAuthorGetDB Author)"
-    (EssenceDescription "author" "get" $
+    (EssenceColumn "author" "get" $
      HM.fromList
-       [ ("id", Description (MyInteger 0) Nothing Nothing (Just PRIMARY))
+       [ ("id", Column (MyInteger 0) Nothing Nothing (Just PRIMARY))
        , ( "person_id"
-         , Description
+         , Column
              (MyInteger 0)
              (Just $ NOT NULL)
              (Just $ Relations "person" "id")
              (Just UNIQUE))
-       , ("description", Description (MyString "") Nothing Nothing Nothing)
+       , ("Column", Column (MyString "") Nothing Nothing Nothing)
        , ( "access_key"
-         , Description (MyString empty) (Just $ NOT NULL) Nothing Nothing)
+         , Column (MyString empty) (Just $ NOT NULL) Nothing Nothing)
        ]) $
   ifEveryoneUpdate testAuthorGetDB Author
 
@@ -57,17 +57,17 @@ ifGetUpdateTest =
   TestCase $
   assertEqual
     "for (ifGetUpdate testAuthorGetDB)"
-    (EssenceDescription "author" "get" $
+    (EssenceColumn "author" "get" $
      HM.fromList
-       [ ("id", Description (MyInteger 0) Nothing Nothing (Just PRIMARY))
-       , ("page", Description (MyInteger empty) Nothing Nothing Nothing)
+       [ ("id", Column (MyInteger 0) Nothing Nothing (Just PRIMARY))
+       , ("page", Column (MyInteger empty) Nothing Nothing Nothing)
        , ( "person_id"
-         , Description
+         , Column
              (MyInteger 0)
              (Just $ NOT NULL)
              (Just $ Relations "person" "id")
              (Just UNIQUE))
-       , ("description", Description (MyString "") Nothing Nothing Nothing)
+       , ("Column", Column (MyString "") Nothing Nothing Nothing)
        ]) $
   ifGetUpdate testAuthorGetDB
 

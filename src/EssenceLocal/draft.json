@@ -1,40 +1,40 @@
 { "TABLE":
     { "draft":
         { "id":
-            [ "BIGSERIAL"
-            , "PRIMARY KEY"
-            ]
+            { "type": "BIGSERIAL"
+            , "constraint": "PRIMARY KEY"
+            }
         , "name":
-            [ "VARCHAR(50)"
-            , "NOT NULL"
-            ]
+            { "type": "VARCHAR(50)"
+            , "null": "NOT NULL"
+            }
         , "date_of_creation":
-            [ "DATE"
-            , "DEFAULT CURRENT_DATE"
-            ]
+            { "type": "DATE"
+            , "default": "DEFAULT CURRENT_DATE"
+            }
         , "author_id":
-            [ "INT"
-            , "NOT NULL"
-            , "REFERENCES author (id)"
-            , "ON DELETE CASCADE"
-            ]
+            { "type": "INT"
+            , "null": "NOT NULL"
+            , "relations": "REFERENCES author (id)"
+            , "action": "ON DELETE CASCADE"
+            }
         , "category_id":
-            [ "INT"
-            , "REFERENCES category (id)"
-            , "ON DELETE SET NULL"
-            ]
+            { "type": "INT"
+            , "relations": "REFERENCES category (id)"
+            , "action": "ON DELETE SET NULL"
+            }
         , "tag_ids":
-            [ "INTEGER[]"
-            ]
+            { "type": "INTEGER[]"
+            }
         , "content":
-            [ "TEXT"
-            ]
+            { "type": "TEXT"
+            }
         , "main_photo":
-            [ "VARCHAR(50)"
-            ]
+            { "type": "VARCHAR(50)"
+            }
         , "optional_photos":
-            [ "VARCHAR(50)[]"
-            ]
+            { "type": "VARCHAR(50)[]"
+            }
         }
     }
 }

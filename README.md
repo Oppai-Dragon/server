@@ -191,7 +191,7 @@ Basically it is ReaderT Config IO = UnderApp. Then StateT s UnderApp appears on 
         - /Text.hs - Functions for Text from package text.
         - /Time.hs - Functions that require import from package time.
     - /Essence.hs - Essence data family with instances.
-        - /GetFields.hs - class GetFields for getting fields from Essence Description and Required fields.
+        - /GetFields.hs - class GetFields for getting fields from Essence Column and Required fields.
         - /Methods.hs - Functions for working with instances of family Essence.
         - /Parse.hs - Functions for parsing essence from json.
             - /Clause.hs - Functions for parsing clauses, which are needed for a more specialized query to the database.

@@ -4,11 +4,11 @@ module Data.Essence.Methods
   ( addList
   , deletePair
   , getEssenceFields
-  , getEssenceDescription
+  , getEssenceColumn
   , getEssenceDatabase
-  , getHashMapDescription
+  , getHashMapColumn
   , iterateHashMapDBList
-  , setDescription
+  , setColumn
   , getMaybeDataField
   , parseOnlyValues
   , parseOnlyFields
@@ -50,20 +50,20 @@ deletePair field (EssenceList name action list) =
   EssenceList name action $
   L.deleteBy (\(l1, _) (l2, _) -> l1 == l2) (field, MyEmpty) list
 
-getEssenceFields :: Essence Description -> Api -> [Field]
-getEssenceFields (EssenceDescription "news" "create" _) _ = ["id"]
-getEssenceFields essenceDescription api =
-  let relationsTree = getRelationsTree (edbName essenceDescription) api
+getEssenceFields :: Essence Column -> Api -> [Field]
+getEssenceFields (EssenceColumn "news" "create" _) _ = ["id"]
+getEssenceFields essenceColumn api =
+  let relationsTree = getRelationsTree (edbName essenceColumn) api
       relationFields = getRelationFields relationsTree
-   in getFields essenceDescription L.\\ relationFields
+   in getFields essenceColumn L.\\ relationFields
 
-getEssenceDescription ::
-     T.Text -> T.Text -> Config -> Api -> Essence Description
-getEssenceDescription essence apiAction conf api =
+getEssenceColumn ::
+     T.Text -> T.Text -> Config -> Api -> Essence Column
+getEssenceColumn essence apiAction conf api =
   let dbAction = getApiDBMethod apiAction api
    in case getEssenceDatabase essence conf api of
         EssenceDatabase name hashMapDB ->
-          EssenceDescription name dbAction $ getHashMapDescription hashMapDB
+          EssenceColumn name dbAction $ getHashMapColumn hashMapDB
 
 getEssenceDatabase :: T.Text -> Config -> Api -> Essence Database
 getEssenceDatabase essence (Config conf) (Api api) =
@@ -80,23 +80,23 @@ getEssenceDatabase essence (Config conf) (Api api) =
             _ -> EssenceDatabase essence . HM.fromList $ unpackObj objFromConf
         _ -> EssenceDatabase "" HM.empty
 
-getHashMapDescription :: Database -> HM.HashMap String Description
-getHashMapDescription = HM.fromList . iterateHashMapDBList . HM.toList
+getHashMapColumn :: Database -> HM.HashMap String Column
+getHashMapColumn = HM.fromList . iterateHashMapDBList . HM.toList
 
 iterateHashMapDBList ::
-     [(String, [(String, String)])] -> [(String, Description)]
+     [(String, [(String, String)])] -> [(String, Column)]
 iterateHashMapDBList [] = []
 iterateHashMapDBList (("access_key", _):rest) = iterateHashMapDBList rest
 iterateHashMapDBList ((field, list):rest) =
-  (field, setDescription list) : iterateHashMapDBList rest
+  (field, setColumn list) : iterateHashMapDBList rest
 
-setDescription :: [(String, String)] -> Description
-setDescription list =
+setColumn :: [(String, String)] -> Column
+setColumn list =
   let valueExpect = fst . last . reads . fromJust $ lookup "type" list
       value = getMaybeDataField $ lookup "value" list
       relations = getMaybeDataField $ lookup "relations" list
       constraint = getMaybeDataField $ lookup "constraint" list
-   in Description valueExpect value relations constraint
+   in Column valueExpect value relations constraint
 
 getMaybeDataField :: Read a => Maybe String -> Maybe a
 getMaybeDataField Nothing = Nothing
@@ -131,10 +131,10 @@ parseFieldValue (field:fields) bss =
   let bss' = map (\(l, r) -> (BSC8.unpack l, r)) bss
    in parseBSValue field bss' : parseFieldValue fields bss
 
-toEssenceList :: Essence Description -> QueryMBS -> UnderApp (Essence List)
-toEssenceList essenceDescription@(EssenceDescription name action _) queryMBS = do
+toEssenceList :: Essence Column -> QueryMBS -> UnderApp (Essence List)
+toEssenceList essenceColumn@(EssenceColumn name action _) queryMBS = do
   configHandle <- askUnderApp
-  let essenceFields = getEssenceFields essenceDescription $ hApi configHandle
+  let essenceFields = getEssenceFields essenceColumn $ hApi configHandle
   let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
   let nameStr = T.unpack name
   let actioStr = T.unpack action

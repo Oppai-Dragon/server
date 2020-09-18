@@ -166,7 +166,7 @@ testPersonDatabase =
 
 testPersonDatabaseFields :: [(String, [(String, String)])]
 testPersonDatabaseFields =
-  zip testPersonDatabaseFieldsName testPersonDatabaseDescription
+  zip testPersonDatabaseFieldsName testPersonDatabaseColumn
 
 testPersonDatabaseFieldsName :: [String]
 testPersonDatabaseFieldsName =
@@ -179,8 +179,8 @@ testPersonDatabaseFieldsName =
   , "first_name"
   ]
 
-testPersonDatabaseDescription :: [[(String, String)]]
-testPersonDatabaseDescription =
+testPersonDatabaseColumn :: [[(String, String)]]
+testPersonDatabaseColumn =
   [ [("type", "int"), ("constraint", "primary key")]
   , [("type", "string"), ("value", "null")]
   , [("type", "date"), ("value", "null")]
@@ -191,52 +191,52 @@ testPersonDatabaseDescription =
   ]
 
 --------------------------------------------------------------------------------------------
------------------------------------Essence Description
+-----------------------------------Essence Column
 --------------------------------------------------------------------------------------------
 -- | Author
-testAuthorGetDB :: Essence Description
-testAuthorGetDB = EssenceDescription "author" "get" testAuthorHMDescription
+testAuthorGetDB :: Essence Column
+testAuthorGetDB = EssenceColumn "author" "get" testAuthorHMColumn
 
-testAuthorHMDescription :: HM.HashMap String Description
-testAuthorHMDescription = HM.fromList testAuthorDBFields
+testAuthorHMColumn :: HM.HashMap String Column
+testAuthorHMColumn = HM.fromList testAuthorDBFields
 
-testAuthorDBFields :: [(String, Description)]
-testAuthorDBFields = zip testAuthorDBFieldsName testAuthorDBDescription
+testAuthorDBFields :: [(String, Column)]
+testAuthorDBFields = zip testAuthorDBFieldsName testAuthorDBColumn
 
 testAuthorDBFieldsName :: [String]
-testAuthorDBFieldsName = ["id", "person_id", "description"]
+testAuthorDBFieldsName = ["id", "person_id", "Column"]
 
-testAuthorDBDescription :: [Description]
-testAuthorDBDescription =
-  [ Description (MyInteger 0) Nothing Nothing (Just PRIMARY)
-  , Description
+testAuthorDBColumn :: [Column]
+testAuthorDBColumn =
+  [ Column (MyInteger 0) Nothing Nothing (Just PRIMARY)
+  , Column
       (MyInteger 0)
       (Just $ NOT NULL)
       (Just $ Relations "person" "id")
       (Just UNIQUE)
-  , Description (MyString "") Nothing Nothing Nothing
+  , Column (MyString "") Nothing Nothing Nothing
   ]
 
 -- | Person
-testPersonCreateDB :: Essence Description
-testPersonCreateDB = EssenceDescription "person" "create" testPersonHMDescription
+testPersonCreateDB :: Essence Column
+testPersonCreateDB = EssenceColumn "person" "create" testPersonHMColumn
 
-testPersonHMDescription :: HM.HashMap String Description
-testPersonHMDescription = HM.fromList testPersonDBFields
+testPersonHMColumn :: HM.HashMap String Column
+testPersonHMColumn = HM.fromList testPersonDBFields
 
-testPersonDBFields :: [(String, Description)]
-testPersonDBFields = zip testPersonDBFieldsName testPersonDBDescription
+testPersonDBFields :: [(String, Column)]
+testPersonDBFields = zip testPersonDBFieldsName testPersonDBColumn
 
 testPersonDBFieldsName :: [String]
 testPersonDBFieldsName =
   ["id", "avatar", "date_of_creation", "is_admin", "last_name", "first_name"]
 
-testPersonDBDescription :: [Description]
-testPersonDBDescription =
-  [ Description (MyInteger 0) Nothing Nothing (Just PRIMARY)
-  , Description (MyString "") (Just NULL) Nothing Nothing
-  , Description (MyDate "") (Just NULL) Nothing Nothing
-  , Description (MyBool False) (Just NULL) Nothing Nothing
-  , Description (MyString "") (Just $ NOT NULL) Nothing Nothing
-  , Description (MyString "") (Just $ NOT NULL) Nothing Nothing
+testPersonDBColumn :: [Column]
+testPersonDBColumn =
+  [ Column (MyInteger 0) Nothing Nothing (Just PRIMARY)
+  , Column (MyString "") (Just NULL) Nothing Nothing
+  , Column (MyDate "") (Just NULL) Nothing Nothing
+  , Column (MyBool False) (Just NULL) Nothing Nothing
+  , Column (MyString "") (Just $ NOT NULL) Nothing Nothing
+  , Column (MyString "") (Just $ NOT NULL) Nothing Nothing
   ]

@@ -1,14 +1,14 @@
 { "TABLE":
     { "tag":
         { "id":
-            [ "BIGSERIAL"
-            , "PRIMARY KEY"
-            ]
+            { "type": "BIGSERIAL"
+            , "constraint": "PRIMARY KEY"
+            }
         , "name":
-            [ "VARCHAR(35)"
-            , "NOT NULL"
-            , "UNIQUE"
-            ]
+            { "type": "VARCHAR(35)"
+            , "null": "NOT NULL"
+            , "constraint": "UNIQUE"
+            }
         }
     }
 }

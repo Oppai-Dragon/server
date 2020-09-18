@@ -56,26 +56,26 @@ isPathRequestCorrect req api
               Nothing -> False
           Nothing -> False
 
-ifEveryoneUpdate :: Essence Description -> Access -> Essence Description
-ifEveryoneUpdate essenceDescription access =
+ifEveryoneUpdate :: Essence Column -> Access -> Essence Column
+ifEveryoneUpdate essenceColumn access =
   if access > Everyone
-    then EssenceDescription (edbName essenceDescription) (edbAction essenceDescription) $
+    then EssenceColumn (edbName essenceColumn) (edbAction essenceColumn) $
          HM.insert
            "access_key"
-           (Description (MyString empty) (Just $ NOT NULL) Nothing Nothing)
-           (edbHashmap essenceDescription)
-    else essenceDescription
+           (Column (MyString empty) (Just $ NOT NULL) Nothing Nothing)
+           (edbHashmap essenceColumn)
+    else essenceColumn
 
-ifGetUpdate :: Essence Description -> Essence Description
-ifGetUpdate essenceDescription =
-  case edbAction essenceDescription of
+ifGetUpdate :: Essence Column -> Essence Column
+ifGetUpdate essenceColumn =
+  case edbAction essenceColumn of
     "get" ->
-      EssenceDescription (edbName essenceDescription) (edbAction essenceDescription) $
+      EssenceColumn (edbName essenceColumn) (edbAction essenceColumn) $
       HM.insert
         "page"
-        (Description (MyInteger empty) Nothing Nothing Nothing)
-        (edbHashmap essenceDescription)
-    _ -> essenceDescription
+        (Column (MyInteger empty) Nothing Nothing Nothing)
+        (edbHashmap essenceColumn)
+    _ -> essenceColumn
 
 parseRequest ::
      Wai.Request -> IO (EssenceName, Action, QueryMBS, HTTPTypes.Method)
@@ -96,19 +96,19 @@ isRequestCorrect req = do
           then "news"
           else essence'
   handle@(Config.Handle config api _ logHandle) <- Config.new
-  let essenceDescription = getEssenceDescription essence action config api
-  let essenceFields = getEssenceFields essenceDescription api
+  let essenceColumn = getEssenceColumn essence action config api
+  let essenceFields = getEssenceFields essenceColumn api
   let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
-  let paramsMsg = fromString . show $ getRequiredFields essenceDescription api
+  let paramsMsg = fromString . show $ getRequiredFields essenceColumn api
   accessArr <- getAccessArr queryMBS
   isConstraintsCorrect <-
-    runUnderApp (execWApp $ isConstraintCorrect essenceDescription listOfPairs) handle
+    runUnderApp (execWApp $ isConstraintCorrect essenceColumn listOfPairs) handle
   let checkingList =
         [ isPathRequestCorrect req api
         , isMethodCorrect method action api
         , isAccess essence action accessArr api
-        , isRequiredParams essenceDescription queryMBS api
-        , getAll $ isTypeParamsCorrect essenceDescription listOfPairs
+        , isRequiredParams essenceColumn queryMBS api
+        , getAll $ isTypeParamsCorrect essenceColumn listOfPairs
         , getAll isConstraintsCorrect
         ]
   let elseThenList =
