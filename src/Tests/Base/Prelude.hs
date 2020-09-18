@@ -22,7 +22,7 @@ basePreludeTests =
   , TestLabel "tailCaseTest" tailCaseTest
   ]
 
-ifElseThenTest, reverseMapTest, map2VarTest, deletePairTest, insertPairTest, mapToListOfPairTest, scientificToIntegerTest, replaceByTest, ordToBoolTest, lookup2Test, tailCaseTest ::
+ifElseThenTest, reverseMapTest, map2VarTest, deletePairTest, insertPairTest, mapToListOfPairTest, replaceByTest, ordToBoolTest, lookup2Test, tailCaseTest ::
      Test
 ifElseThenTest =
   TestCase $
@@ -57,11 +57,6 @@ mapToListOfPairTest =
     "for (mapToListOfPair (+1) [(1,3),(2,3),(1,4)])"
     [(2, 4), (3, 4), (2, 5)] $
   mapToListOfPair (+ 1) ([(1, 3), (2, 3), (1, 4)] :: [(Int, Int)])
-
-scientificToIntegerTest =
-  TestCase $
-  assertEqual "for (scientificToInteger 1234567890)" 1234567890 $
-  scientificToInteger 1234567890
 
 replaceByTest =
   TestCase $

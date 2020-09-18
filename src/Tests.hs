@@ -28,7 +28,6 @@ import Tests.Required.Methods
 import Tests.SQL.ShowSql
 import Tests.SQL.ToValue
 import Tests.Setup
-import Tests.Value
 
 import Control.Monad
 import qualified Data.HashMap.Strict as HM
@@ -54,7 +53,6 @@ testList =
   requestHandlingTests <>
   requestMethodIsRightTests <>
   requestParamsMethodsTests <>
-  valueTests <>
   showSqlTests <>
   sqlToValueTests <>
   databaseCreateTests <> databaseGetTests <> databaseTestTests <> databaseTests

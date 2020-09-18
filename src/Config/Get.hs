@@ -20,7 +20,6 @@ import Data.Essence.GetFields
 import Data.Essence.RelationsTree
 import Data.Request.Access
 import Data.Required
-import Data.Value
 
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as AT

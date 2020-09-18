@@ -1,9 +1,9 @@
 { "TABLE":
     { "author":
         { "id":
-            [ "BIGSERIAL"
-            , "PRIMARY KEY"
-            ]
+            { "type": "BIGSERIAL"
+            , "constraint": "PRIMARY KEY"
+            }
         , "person_id":
             [ "BIGINT"
             , "NOT NULL"

@@ -5,19 +5,22 @@ module Data.Base.Aeson
   , toText
   , toStr
   , toObj
+  , fromObj
   , toInt
   , isNull
+  , deleteFields
   , getValue
-  , scientificToInteger
+  , valueToInteger
   ) where
 
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as AT
 import qualified Data.HashMap.Strict as HM
 import Data.Maybe
-import qualified Data.Scientific as Scientific
 import qualified Data.Text as T
 import qualified Data.Vector as V
+
+type Field = T.Text
 
 toTextArr :: A.Value -> [T.Text]
 toTextArr = fromMaybe [] . AT.parseMaybe A.parseJSON
@@ -44,8 +47,12 @@ toStr value =
         _ -> ""
     _ -> ""
 
-toObj :: A.Value -> A.Object
-toObj = fromMaybe HM.empty . AT.parseMaybe A.parseJSON
+toObj :: A.Object -> [Field] -> A.Value
+toObj =
+  (A.Object .) . foldr (\field value -> HM.singleton field $ A.Object value)
+
+fromObj :: A.Value -> A.Object
+fromObj = fromMaybe HM.empty . AT.parseMaybe A.parseJSON
 
 toInt :: A.Value -> Int
 toInt = fromMaybe 1 . AT.parseMaybe A.parseJSON
@@ -56,7 +63,10 @@ isNull result =
     A.Null -> True
     _ -> False
 
-getValue :: [T.Text] -> A.Object -> A.Value
+deleteFields :: A.Object -> [Field] -> A.Object
+deleteFields = foldr HM.delete
+
+getValue :: [Field] -> A.Object -> A.Value
 getValue [] obj = A.Object obj
 getValue (field:rest) objOld =
   case AT.parseMaybe (A..: field) objOld of
@@ -64,5 +74,5 @@ getValue (field:rest) objOld =
     Just value -> value
     Nothing -> A.Null
 
-scientificToInteger :: Scientific.Scientific -> Integer
-scientificToInteger = fromMaybe 0 . AT.parseMaybe A.parseJSON . A.Number
+valueToInteger :: A.Value -> Integer
+valueToInteger = fromMaybe 0 . AT.parseMaybe A.parseJSON

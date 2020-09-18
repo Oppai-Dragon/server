@@ -7,7 +7,7 @@ module Setup
   , dropTables
   , buildConfigJson
   , createTables
-  , replaceEssenceJson
+  , replaceTableJson
   , collectEssenceJson
   , getEssenceDescriptionObjectArr
   , getEssenceLocalObjectArr
@@ -22,7 +22,6 @@ module Setup
 import Config
 import Config.Exception
 import Data.Base
-import Data.Value
 import Database.Exception
 import Log
 
@@ -74,7 +73,7 @@ dropTables essences = do
       result <- tryRunIO $ HDBC.run conn dropQuery []
       case result of
         1 -> do
-          deleteEssenceJson essences
+          deleteTableJson essences
           HDBC.commit conn
           HDBC.disconnect conn
           infoIO $ "Tables: " <> intercalate "," essences <> " are deleted"
@@ -105,29 +104,29 @@ createTables essences = do
       if tables == essencesApi
         then do
           HDBC.commit conn
-          replaceEssenceJson tables
+          replaceTableJson tables
           HDBC.disconnect conn
           infoIO $ "Tables: " <> intercalate "," essences <> " are created"
         else do
           HDBC.disconnect conn
           infoIO $ "Tables: " <> intercalate "," essences <> " aren't created"
 
-replaceEssenceJson :: EssenceArr -> IO ()
-replaceEssenceJson [] = return ()
-replaceEssenceJson (essence:rest) = do
+replaceTableJson :: EssenceArr -> IO ()
+replaceTableJson [] = return ()
+replaceTableJson (essence:rest) = do
   essencePath <- setPath $ "EssenceLocal\\" <> essence <> ".json"
   obj <- trySetIO $ set essencePath
   path <- setPath $ "EssenceDatabase\\" <> essence <> ".json"
   A.encodeFile path $ A.Object obj
-  replaceEssenceJson rest
+  replaceTableJson rest
 
-deleteEssenceJson :: EssenceArr -> IO ()
-deleteEssenceJson [] = return ()
-deleteEssenceJson (essence:rest) = do
+deleteTableJson :: EssenceArr -> IO ()
+deleteTableJson [] = return ()
+deleteTableJson (essence:rest) = do
   path <- setPath $ "EssenceDatabase\\" <> essence <> ".json"
   isExist <- Dir.doesFileExist path
   when isExist $ Dir.removeFile path
-  deleteEssenceJson rest
+  deleteTableJson rest
 
 collectEssenceJson :: IO [A.Object]
 collectEssenceJson = do

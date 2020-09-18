@@ -26,7 +26,6 @@ import Data.Essence
 import Data.Essence.GetFields
 import Data.Essence.Parse
 import Data.MyValue
-import Data.Value
 
 import Data.Maybe (fromJust)
 

@@ -6,7 +6,7 @@ module Data.Essence
   , Database
   , List
   , Description(..)
-  , VALUE(..)
+  , NULL(..)
   , Relations(..)
   , Constraint(..)
   ) where
@@ -14,6 +14,7 @@ module Data.Essence
 import Data.MyValue
 import Data.SQL
 
+import qualified Data.Aeson as A
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Text as T
 
@@ -64,18 +65,18 @@ instance Semigroup (Essence (Clause String)) where
 data Description =
   Description
     { dValueType :: MyValue
-    , dValue :: Maybe VALUE
+    , dNull :: Maybe NULL
     , dRelations :: Maybe Relations
     , dConstraint :: Maybe Constraint
     }
   deriving (Show, Eq)
 
-data VALUE
+data NULL
   = NULL
-  | NOT VALUE
+  | NOT NULL
   deriving (Show, Eq)
 
-instance Read VALUE where
+instance Read NULL where
   readsPrec _ input =
     case input of
       "null" -> [(NULL, "")]

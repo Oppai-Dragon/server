@@ -1,5 +1,5 @@
 module Tests.Base.Aeson
-  ( aesonBaseTests
+  ( baseAesonTests
   ) where
 
 import Data.Base.Aeson
@@ -8,16 +8,21 @@ import qualified Data.Aeson as A
 
 import Test.HUnit
 
-valueTests, valueTests, toStrTests :: [Test]
-aesonBaseTests = valueTests <> toStrTests
+baseAesonTests, valueTests, toStrTests :: [Test]
+baseAesonTests = valueTests <> toStrTests
 
 valueTests =
   [ TestLabel "isNullTest" isNullTest
-  , TestLabel "scientificToIntegerTest" scientificToIntegerTest
+  , TestLabel "valueToIntegerTest" valueToIntegerTest
   ]
 
-isNullTest :: Test
+isNullTest, valueToIntegerTest :: Test
 isNullTest = TestCase $ assertEqual "for (isNull Null)" True (isNull A.Null)
+
+valueToIntegerTest =
+  TestCase $
+  assertEqual "for (valueToInteger (A.Number 21321312))" 21321312 $
+  valueToInteger (A.Number 21321312)
 
 toStrTests =
   [ TestLabel "numberToStrTest" numberToStrTest

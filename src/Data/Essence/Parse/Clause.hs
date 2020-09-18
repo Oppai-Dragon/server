@@ -19,7 +19,7 @@ import Config
 import Data.Base
 import Data.Empty
 import Data.Essence
-import Data.MyValue
+import Data.MyValue as MyValue
 import Data.SQL
 
 import Data.List
@@ -63,7 +63,7 @@ pickClause name (field, myValue) =
   let clause = takeWhile (/= '_') field
       specificField = tailCase $ dropWhile (/= '_') field
       value = parseValue myValue
-      valueStr = toStr myValue
+      valueStr = MyValue.toStr myValue
       offsetLimit =
         case myValue of
           MyString x -> x

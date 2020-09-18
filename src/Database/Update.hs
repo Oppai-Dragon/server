@@ -3,8 +3,8 @@ module Database.Update
   ) where
 
 import Config
+import Config.Exception
 import Data.Base
-import Data.Value
 import Database.Exception
 import Log
 import Setup
@@ -19,7 +19,21 @@ type Table = String
 
 type EssenceLocal = String
 
+type TableObj = A.Object
+
+type ColumnLocal = T.Text
+
+type ColumnArr = [T.Text]
+
+type ColumnDatabase = T.Text
+
+type ColumnList = [(T.Text, A.Value)]
+
 type ColumnLocalList = [(T.Text, A.Value)]
+
+type ColumnLocalObj = A.Object
+
+type ColumnDatabaseObj = A.Object
 
 type EssenceDatabase = String
 
@@ -74,31 +88,66 @@ updateTable :: EssenceLocal -> IO ()
 updateTable essence = do
   essenceLocObj <- set =<< setPath ("EssenceLocal\\" <> essence <> ".json")
   essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> essence <> ".json")
-  let toColumnsObj obj =
-        case getValue ["TABLE", T.pack essence] obj of
-          A.Object x -> x
-          _ -> HM.empty
-  let columnsDbObj = toColumnsObj essenceDbObj
-  let columnsDbList = HM.toList columnsDbObj
-  let columnsLocObj = toColumnsObj essenceLocObj
-  let columnsLocList = HM.toList columnsLocObj
-  if isRedundantColumns columnsDbList columnsLocList
+  let columnsDbList = toColumnList essence essenceLocObj
+  let columnDbArr = getColumnArr essence essenceLocObj
+  let columnsLocList = toColumnList essence essenceDbObj
+  let columnLocArr = getColumnArr essence essenceDbObj
+  if isRedundantColumns columnDbArr columnLocArr
     then dropColumns essence $ columnsDbList \\ columnsLocList
     else infoIO "No need delete columns"
-  if isNewColumns columnsDbList columnsLocList
+  if isNewColumns columnDbArr columnLocArr
     then createColumns essence $ columnsLocList \\ columnsDbList
     else infoIO "No need add columns"
-  --changedColumns <- getChangedColumns (sort columnsDb) (sort columnsLoc)
-  --if null changedColumns
-  --  then infoIO "No need change columns"
-  --  else updateTableArr changedColumns
-  return ()
+  changedColumnList <- getChangedColumnList essence
+  if null changedColumnList
+    then infoIO "No need change columns"
+    else updateColumnArr table changedColumnList
 
-isRedundantColumns, isNewColumns ::
-     ColumnDatabaseList -> ColumnLocalList -> Bool
+isRedundantColumns, isNewColumns :: [ColumnDatabase] -> [ColumnLocal] -> Bool
 isRedundantColumns = ((not . null) .) . (\\)
 
 isNewColumns = ((not . null) .) . flip (\\)
+
+getChangedColumnList :: Table -> IO ColumnLocalList
+getChangedColumnList table = do
+  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> table <> ".json")
+  essenceLocObj <- set =<< setPath ("EssenceLocal\\" <> table <> ".json")
+  let columnDbList = toColumnList table essenceDbObj
+  let columnLocList = toColumnList table essenceLocObj
+  return $ getChangedColumnList' columnDbList columnLocList
+
+getChangedColumnList' ::
+     ColumnDatabaseList -> ColumnLocalList -> ColumnLocalList
+getChangedColumnList' (columnDbPair:restDb) (columnLocPair:restLoc) =
+  if columnDbPair == columnLocPair
+    then getChangedColumnList' restDb restLoc
+    else columnLocPair : getChangedColumnList' restDb restLoc
+getChangedColumnList' _ _ = return []
+
+updateColumnArr :: Table -> ColumnLocalList -> IO ()
+updateColumnArr _ [] = return ()
+updateColumnArr table (columnPair:rest) = do
+  updateColumn table columnPair
+  updateColumnArr rest
+
+updateColumn :: Table -> (String, A.Value) -> IO ()
+updateColumn table (column, arrLocValue) = вщ
+  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> table <> ".json")
+  let arrDbValue = getValue ["TABLE",T.pack table,T.pack column] essenceDbObj
+  let arrLocList = toStrArr arrLocValue
+  let arrDbList = toStrArr arrDbValue
+  if isRedundantDescription arrDb arrLoc
+    then dropDescription essence $ descriptionDbList \\ descriptionLocList
+    else infoIO "No need delete description"
+  if isNewDescription arrDb arrLoc
+    then createDescription essence $ descriptionLocList \\ descriptionDbList
+    else infoIO "No need add description"
+  changedDescriptionList <- getChangedDescriptionList essence
+  if null changedDescriptionList
+    then infoIO "No need change value"
+    else updatedescriptionArr table changedDescriptionList
+updateColumn _ (column, _) =
+  infoIO $ "Column " <> column <> " must contain an array in EssenceLocal/.json"
 
 dropColumns, createColumns :: Table -> ColumnLocalList -> IO ()
 dropColumns table columnList = do
@@ -107,15 +156,18 @@ dropColumns table columnList = do
     Nothing -> return ()
     Just conn -> do
       let dropQueries = alterTableDrop table columnList
+      let getColumns = fst . unzip
       result <- tryRunIO $ HDBC.runRaw conn dropQueries
       case result of
         1 -> do
-          replaceEssenceJson [table]
+          deleteColumnJson table $ getColumns columnList
           HDBC.commit conn
           HDBC.disconnect conn
           infoIO $
-            "Columns: " <>
-            (intercalate "," . map T.unpack . fst . unzip) columnList <>
+            "Table: " <>
+            table <>
+            ", Columns: " <>
+            (intercalate "," . map T.unpack . getColumns) columnList <>
             " are deleted"
         _ -> HDBC.disconnect conn >> return ()
 
@@ -128,11 +180,13 @@ createColumns table columnList = do
       result <- tryRunIO $ HDBC.runRaw conn addQueries
       case result of
         1 -> do
-          replaceEssenceJson [table]
+          replaceColumnJson table $ HM.fromList columnList
           HDBC.commit conn
           HDBC.disconnect conn
           infoIO $
-            "Columns: " <>
+            "Table: " <>
+            table <>
+            ", Columns: " <>
             (intercalate "," . map T.unpack . fst . unzip) columnList <>
             " are created"
         _ -> HDBC.disconnect conn >> return ()
@@ -148,6 +202,32 @@ alterTableAdd _ [] = ""
 alterTableAdd table ((column, value):rest) =
   "ALTER TABLE " <>
   table <>
-  " ADD IF NOT EXIST " <>
-  T.unpack column <> " " <>
-  intercalate " " (toStrArr value) <> ";" <> alterTableAdd table rest
+  " ADD IF NOT EXISTS " <>
+  T.unpack column <>
+  " " <> intercalate " " (toStrArr value) <> ";" <> alterTableAdd table rest
+
+replaceColumnJson :: Table -> ColumnLocalObj -> IO ()
+replaceColumnJson table columnLocObj = do
+  (columnDbObj, encodeFileFunc) <- getColumnDbObj table
+  let columnNewObj = HM.union columnLocObj columnDbObj
+  encodeFileFunc columnNewObj
+
+deleteColumnJson :: Table -> [ColumnLocal] -> IO ()
+deleteColumnJson table columnLoc = do
+  (columnDbObj, encodeFileFunc) <- getColumnDbObj table
+  let columnNewObj = deleteFields columnDbObj columnLoc
+  encodeFileFunc columnNewObj
+
+getColumnDbObj :: Table -> IO (ColumnDatabaseObj, A.Object -> IO ())
+getColumnDbObj table = do
+  path <- setPath $ "EssenceDatabase\\" <> table <> ".json"
+  essenceDbObj <- trySetIO $ set path
+  let fields = ["TABLE", T.pack table]
+  let columnDbObj = fromObj $ getValue fields essenceDbObj
+  return (columnDbObj, \x -> A.encodeFile path $ toObj x fields)
+
+toColumnList :: Table -> TableObj -> ColumnList
+toColumnList table = HM.toList . fromObj . getValue ["TABLE", T.pack table]
+
+getColumnArr :: Table -> TableObj -> ColumnArr
+getColumnArr table = HM.keys . fromObj . getValue ["TABLE", T.pack table]

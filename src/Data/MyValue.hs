@@ -17,7 +17,7 @@ module Data.MyValue
   , toValue
   ) where
 
-import Data.Base
+import Data.Base hiding (toStr)
 
 import qualified Data.Aeson as A
 import qualified Data.ByteString as BS
@@ -141,7 +141,7 @@ fromBS = fromStr . BSC8.unpack
 fromValue :: A.Value -> MyValue
 fromValue value =
   case value of
-    A.Number num -> MyInteger $ scientificToInteger num
+    A.Number num -> MyInteger . valueToInteger $ A.Number num
     A.String text -> fromStr $ T.unpack text
     A.Bool bool -> MyBool bool
     A.Array vector ->
@@ -151,7 +151,7 @@ fromValue value =
                A.String _ ->
                  MyStrings . map (\(A.String x) -> T.unpack x) $ V.toList vector
                A.Number _ ->
-                 MyIntegers . map (\(A.Number x) -> scientificToInteger x) $
+                 MyIntegers . map valueToInteger $
                  V.toList vector
                _ -> MyEmpty
     A.Object obj -> MyStrings . map T.unpack $ HM.keys obj
