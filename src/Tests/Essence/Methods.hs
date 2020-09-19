@@ -4,6 +4,7 @@ module Tests.Essence.Methods
 
 import Config
 import Data.Essence
+import Data.Essence.Column
 import Data.Essence.Methods
 import Data.MyValue (MyValue(..))
 
@@ -21,9 +22,8 @@ essenceMethodsTests =
   , TestLabel "deletePairTest" deletePairTest
   , TestLabel "getEssenceFieldsTest" getEssenceFieldsTest
   , TestLabel "getEssenceColumnTest" getEssenceColumnTest
-  , TestLabel "getEssenceDatabaseTest" getEssenceDatabaseTest
   , TestLabel "getHashMapColumnTest" getHashMapColumnTest
-  , TestLabel "iterateHashMapDBListTest" iterateHashMapDBListTest
+  , TestLabel "iterateHashMapJsonListTest" iterateHashMapJsonListTest
   , TestLabel "setColumnTest" setColumnTest
   , TestLabel "getMaybeDataFieldTest" getMaybeDataFieldTest
   , TestLabel "parseOnlyValuesTest" parseOnlyValuesTest
@@ -35,7 +35,7 @@ essenceMethodsTests =
   , TestLabel "toEssenceListTest" toEssenceListTest
   ]
 
-addListTest, deletePairTest, getEssenceFieldsTest, getEssenceColumnTest, getEssenceDatabaseTest, getHashMapColumnTest, iterateHashMapDBListTest, setColumnTest, getMaybeDataFieldTest, parseOnlyValuesTest, parseOnlyFieldsTest, withoutEmptyTest, parseJustBSValueTest, parseNothingBSValueTest, parseFieldValueTest, toEssenceListTest ::
+addListTest, deletePairTest, getEssenceFieldsTest, getEssenceColumnTest, getEssenceDatabaseTest, getHashMapColumnTest, iterateHashMapJsonListTest, setColumnTest, getMaybeDataFieldTest, parseOnlyValuesTest, parseOnlyFieldsTest, withoutEmptyTest, parseJustBSValueTest, parseNothingBSValueTest, parseFieldValueTest, toEssenceListTest ::
      Test
 addListTest =
   TestCase $
@@ -83,38 +83,27 @@ getEssenceColumnTest =
     testPersonCreateDB $
   getEssenceColumn "person" "create" testConfig testApi
 
-getEssenceDatabaseTest =
-  TestCase $
-  assertEqual
-    "for (getEssenceDatabase \"person\" testConfig testApi)"
-    testPersonDatabase $
-  getEssenceDatabase "person" testConfig testApi
-
 getHashMapColumnTest =
   TestCase $
   assertEqual
-    "for (getHashMapColumn (HM.fromList testPersonDatabaseFields))"
-    (HM.fromList testPersonDBFields) $
-  getHashMapColumn (HM.fromList testPersonDatabaseFields)
+    "for (getHashMapColumn (HM.fromList testPersonColumnFields))"
+    (HM.fromList testPersonColumnFields) $
+  getHashMapColumn (HM.fromList testPersonColumnFields)
 
-iterateHashMapDBListTest =
+iterateHashMapJsonListTest =
   TestCase $
   assertEqual
-    "for (iterateHashMapDBList testPersonDatabaseFields)"
-    testPersonDBFields $
-  iterateHashMapDBList testPersonDatabaseFields
+    "for (iterateHashMapDBList testPersonColumnFields)"
+    testPersonColumnFields $
+  iterateHashMapDBList testPersonColumnFields
 
 setColumnTest =
   TestCase $
   assertEqual
     "for (setColumn testPersonDatabaseColumn)"
-    (Column (MyInteger 0) Nothing Nothing (Just PRIMARY)) $
-  setColumn [("type", "int"), ("constraint", "primary key")]
-
-getMaybeDataFieldTest =
-  TestCase $
-  assertEqual "for (getMaybeDataField (Just \"null\"))" (Just NULL) $
-  getMaybeDataField (Just "null")
+    defaultColumn {cValueType = DATE, cDefault = JUST $ Default "CURRENT_DATE"} .
+  setColumn $
+  A.object ["type" A..= A.String "DATE", "default" A..= A.String "CURRENT_DATE"]
 
 parseOnlyValuesTest =
   TestCase $

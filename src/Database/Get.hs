@@ -11,6 +11,7 @@ module Database.Get
 import Config
 import Data.Base hiding (deletePair)
 import Data.Essence
+import Data.Essence.Column
 import Data.Essence.Methods
 import Data.MyValue
 import Data.SQL
@@ -152,14 +153,14 @@ iterateObj (essence:rest) pageObj = do
   (Config.Handle config api _ logHandle) <- askUnderApp
   let name = T.pack . takeWhile (not . isDigit) $ T.unpack essence
   let relationsFields =
-        map (\(field, descr) -> (field, fromJust $ dRelations descr)) .
+        map (\(field, descr) -> (field, fromJust $ cRelations descr)) .
         HM.toList .
         HM.filter
           (\descr ->
-             case dRelations descr of
+             case cRelations descr of
                Just _ -> True
                _ -> False) .
-        edbHashmap $
+        eColHashMap $
         getEssenceColumn name "get" config api
   nestedEssence <-
     case HM.lookup essence pageObj of

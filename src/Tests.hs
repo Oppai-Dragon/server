@@ -14,7 +14,6 @@ import Tests.Database.Test
 import Tests.Empty
 import Tests.Essence.GetFields
 import Tests.Essence.Methods
-import Tests.Essence.Parse
 import Tests.Essence.Parse.Clause
 import Tests.Essence.RelationsTree.Methods
 import Tests.MyValue

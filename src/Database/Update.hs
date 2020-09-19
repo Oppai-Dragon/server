@@ -60,6 +60,7 @@ updateDatabase = do
   if null changedTables
     then infoIO "No need change tables"
     else updateTableArr changedTables
+  buildConfigJson
 
 isRedundantTables, isNewTables ::
      [EssenceApi] -> [EssenceDatabase] -> [EssenceLocal] -> Bool
@@ -101,7 +102,7 @@ updateTable essence = do
   changedColumnList <- getChangedColumnList essence
   if null changedColumnList
     then infoIO "No need change columns"
-    else updateColumnArr table changedColumnList
+    else updateColumnArr essence changedColumnList
 
 isRedundantColumns, isNewColumns :: [ColumnDatabase] -> [ColumnLocal] -> Bool
 isRedundantColumns = ((not . null) .) . (\\)
@@ -122,32 +123,32 @@ getChangedColumnList' (columnDbPair:restDb) (columnLocPair:restLoc) =
   if columnDbPair == columnLocPair
     then getChangedColumnList' restDb restLoc
     else columnLocPair : getChangedColumnList' restDb restLoc
-getChangedColumnList' _ _ = return []
+getChangedColumnList' _ _ = []
 
 updateColumnArr :: Table -> ColumnLocalList -> IO ()
 updateColumnArr _ [] = return ()
 updateColumnArr table (columnPair:rest) = do
   updateColumn table columnPair
-  updateColumnArr rest
+  updateColumnArr table rest
 
-updateColumn :: Table -> (String, A.Value) -> IO ()
-updateColumn table (column, arrLocValue) = вщ
-  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> table <> ".json")
-  let arrDbValue = getValue ["TABLE",T.pack table,T.pack column] essenceDbObj
-  let arrLocList = toStrArr arrLocValue
-  let arrDbList = toStrArr arrDbValue
-  if isRedundantColumn arrDb arrLoc
-    then dropColumn essence $ ColumnDbList \\ ColumnLocList
-    else infoIO "No need delete Column"
-  if isNewColumn arrDb arrLoc
-    then createColumn essence $ ColumnLocList \\ ColumnDbList
-    else infoIO "No need add Column"
-  changedColumnList <- getChangedColumnList essence
-  if null changedColumnList
-    then infoIO "No need change value"
-    else updateColumnArr table changedColumnList
-updateColumn _ (column, _) =
-  infoIO $ "Column " <> column <> " must contain an array in EssenceLocal/.json"
+updateColumn :: Table -> (T.Text, A.Value) -> IO ()
+updateColumn _ _ {-table (column, arrLocValue)-} = undefined--do
+--  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> table <> ".json")
+--  let arrDbValue = getValue ["TABLE",T.pack table,T.pack column] essenceDbObj
+--  let arrLocList = toStrArr arrLocValue
+--  let arrDbList = toStrArr arrDbValue
+--  if isRedundantColumn arrDb arrLoc
+--    then dropColumn essence $ ColumnDbList \\ ColumnLocList
+--    else infoIO "No need delete Column"
+--  if isNewColumn arrDb arrLoc
+--    then createColumn essence $ ColumnLocList \\ ColumnDbList
+--    else infoIO "No need add Column"
+--  changedColumnList <- getChangedColumnList essence
+--  if null changedColumnList
+--    then infoIO "No need change value"
+--    else updateColumnArr table changedColumnList
+--updateColumn _ (column, _) =
+--  infoIO $ "Column " <> column <> " must contain an array in EssenceLocal/.json"
 
 dropColumns, createColumns :: Table -> ColumnLocalList -> IO ()
 dropColumns table columnList = do

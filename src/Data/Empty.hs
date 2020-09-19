@@ -55,6 +55,11 @@ instance Empty Bool where
   isEmpty _ = False
   parseValue = show
 
+instance Empty [Bool] where
+  empty = []
+  isEmpty _ = False
+  parseValue = show
+
 instance Empty MyValue where
   empty = MyEmpty
   isEmpty (MyString value) = isEmpty value
@@ -62,7 +67,9 @@ instance Empty MyValue where
   isEmpty (MyInteger value) = isEmpty value
   isEmpty (MyIntegers value) = isEmpty value
   isEmpty (MyBool value) = isEmpty value
+  isEmpty (MyBools value) = isEmpty value
   isEmpty (MyDate value) = isEmpty value
+  isEmpty (MyDates value) = isEmpty value
   isEmpty (MyNextval value) = isEmpty value
   isEmpty MyEmpty = True
   parseValue (MyString value) = parseValue value
@@ -70,7 +77,9 @@ instance Empty MyValue where
   parseValue (MyInteger value) = parseValue value
   parseValue (MyIntegers value) = parseValue value
   parseValue (MyBool value) = parseValue value
+  parseValue (MyBools value) = parseValue value
   parseValue (MyDate value) = parseValue value
+  parseValue (MyDates value) = parseValue value
   parseValue (MyNextval value) = case value of
     'n':'e':'x':'t':'v':'a':'l':_ -> value
     _ -> parseValue value

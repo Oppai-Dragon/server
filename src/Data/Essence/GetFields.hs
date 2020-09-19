@@ -7,6 +7,7 @@ module Data.Essence.GetFields
   ) where
 
 import Data.Essence
+import Data.Essence.Column hiding (Action(..))
 import Data.Required
 import Data.Required.Methods
 
@@ -54,14 +55,14 @@ instance GetFields (Required [Field]) where
   iterateHMCreate, iterateHMGet, iterateHMEdit, iterateHMDelete ::
        [(Field, Column)] -> [Required [Field]]
   iterateHMCreate [] = []
-  iterateHMCreate ((field, Column):rest) =
+  iterateHMCreate ((field, column):rest) =
     case field of
       "id" -> iterateHMCreate rest
       "date_of_creation" -> iterateHMCreate rest
       "access_key" -> iterateHMCreate rest
       "is_admin" -> iterateHMCreate rest
       _ ->
-        case dValue Column of
+        case cNULL column of
           Just (NOT NULL) -> AND [field] : iterateHMCreate rest
           _ -> iterateHMCreate rest
   iterateHMGet _ = []

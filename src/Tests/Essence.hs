@@ -1,6 +1,7 @@
 module Tests.Essence where
 
 import Data.Essence
+import Data.Essence.Column
 import Data.MyValue
 
 import qualified Data.Aeson as A
@@ -157,86 +158,54 @@ testCommentListCreateFields =
   [("content", MyString testContent), ("date_of_creation", MyDate testDate)]
 
 --------------------------------------------------------------------------------------------
------------------------------------Essence Database
---------------------------------------------------------------------------------------------
--- | Person
-testPersonDatabase :: Essence Database
-testPersonDatabase =
-  EssenceDatabase "person" $ HM.fromList testPersonDatabaseFields
-
-testPersonDatabaseFields :: [(String, [(String, String)])]
-testPersonDatabaseFields =
-  zip testPersonDatabaseFieldsName testPersonDatabaseColumn
-
-testPersonDatabaseFieldsName :: [String]
-testPersonDatabaseFieldsName =
-  [ "id"
-  , "avatar"
-  , "date_of_creation"
-  , "is_admin"
-  , "access_key"
-  , "last_name"
-  , "first_name"
-  ]
-
-testPersonDatabaseColumn :: [[(String, String)]]
-testPersonDatabaseColumn =
-  [ [("type", "int"), ("constraint", "primary key")]
-  , [("type", "string"), ("value", "null")]
-  , [("type", "date"), ("value", "null")]
-  , [("type", "bool"), ("value", "null")]
-  , [("type", "uuid"), ("value", "null")]
-  , [("type", "string"), ("value", "not null")]
-  , [("type", "string"), ("value", "not null")]
-  ]
-
---------------------------------------------------------------------------------------------
 -----------------------------------Essence Column
 --------------------------------------------------------------------------------------------
 -- | Author
-testAuthorGetDB :: Essence Column
-testAuthorGetDB = EssenceColumn "author" "get" testAuthorHMColumn
+testAuthorGetColumn :: Essence Column
+testAuthorGetColumn = EssenceColumn "author" "get" testAuthorHMColumn
 
 testAuthorHMColumn :: HM.HashMap String Column
-testAuthorHMColumn = HM.fromList testAuthorDBFields
+testAuthorHMColumn = HM.fromList testAuthorColumnFields
 
-testAuthorDBFields :: [(String, Column)]
-testAuthorDBFields = zip testAuthorDBFieldsName testAuthorDBColumn
+testAuthorColumnFields :: [(String, Column)]
+testAuthorColumnFields = zip testAuthorColumnFieldsName testAuthorColumnList
 
-testAuthorDBFieldsName :: [String]
-testAuthorDBFieldsName = ["id", "person_id", "Column"]
+testAuthorColumnFieldsName :: [String]
+testAuthorColumnFieldsName = ["id", "person_id", "Column"]
 
-testAuthorDBColumn :: [Column]
-testAuthorDBColumn =
-  [ Column (MyInteger 0) Nothing Nothing (Just PRIMARY)
-  , Column
-      (MyInteger 0)
-      (Just $ NOT NULL)
-      (Just $ Relations "person" "id")
-      (Just UNIQUE)
-  , Column (MyString "") Nothing Nothing Nothing
+testAuthorColumnList :: [Column]
+testAuthorColumnList =
+  [ defaultColumn {cValueType = BIGSERIAL, cConstraint = Just PrimaryKey}
+  , defaultColumn
+      { cValueType = BIGINT
+      , cNULL = Just $ NOT NULL
+      , cRelations = Just $ Relations "person" "id"
+      , cConstraint = Just UNIQUE
+      }
+  , defaultColumn {cValueType = VARCHAR (150)}
   ]
 
 -- | Person
-testPersonCreateDB :: Essence Column
-testPersonCreateDB = EssenceColumn "person" "create" testPersonHMColumn
+testPersonCreateColumn :: Essence Column
+testPersonCreateColumn = EssenceColumn "person" "create" testPersonHMColumn
 
 testPersonHMColumn :: HM.HashMap String Column
-testPersonHMColumn = HM.fromList testPersonDBFields
+testPersonHMColumn = HM.fromList testPersonColumnFields
 
-testPersonDBFields :: [(String, Column)]
-testPersonDBFields = zip testPersonDBFieldsName testPersonDBColumn
+testPersonColumnFields :: [(String, Column)]
+testPersonColumnFields = zip testPersonColumnFieldsName testPersonColumnList
 
-testPersonDBFieldsName :: [String]
-testPersonDBFieldsName =
+testPersonColumnFieldsName :: [String]
+testPersonColumnFieldsName =
   ["id", "avatar", "date_of_creation", "is_admin", "last_name", "first_name"]
 
-testPersonDBColumn :: [Column]
-testPersonDBColumn =
-  [ Column (MyInteger 0) Nothing Nothing (Just PRIMARY)
-  , Column (MyString "") (Just NULL) Nothing Nothing
-  , Column (MyDate "") (Just NULL) Nothing Nothing
-  , Column (MyBool False) (Just NULL) Nothing Nothing
-  , Column (MyString "") (Just $ NOT NULL) Nothing Nothing
-  , Column (MyString "") (Just $ NOT NULL) Nothing Nothing
+testPersonColumnList :: [Column]
+testPersonColumnList =
+  [ defaultColumn {cValueType = BIGSERIAL, cConstraint = Just PrimaryKey}
+  , defaultColumn {cValueType = VARCHAR 50, cNULL = Just NULL}
+  , defaultColumn {cValueType = DATE, cNULL = Just NULL}
+  , defaultColumn
+      {cValueType = BOOLEAN, cNULL = Just NULL, cConstraint = Just PrimaryKey}
+  , defaultColumn {cValueType = VARCHAR 50, cNULL = Just $ NOT NULL}
+  , defaultColumn {cValueType = VARCHAR 50, cNULL = Just $ NOT NULL}
   ]

@@ -12,6 +12,7 @@ import Config
 import Data.Base
 import Data.Empty
 import Data.Essence
+import Data.Essence.Column hiding (Action(..))
 import Data.Essence.Methods
 import Data.MyValue
 import Data.Request
@@ -57,24 +58,27 @@ isPathRequestCorrect req api
           Nothing -> False
 
 ifEveryoneUpdate :: Essence Column -> Access -> Essence Column
-ifEveryoneUpdate essenceColumn access =
+ifEveryoneUpdate essenceColumn@(EssenceColumn { eColName = name
+                                              , eColAction = action
+                                              , eColHashMap = hashMap
+                                              }) access =
   if access > Everyone
-    then EssenceColumn (edbName essenceColumn) (edbAction essenceColumn) $
+    then EssenceColumn name action $
          HM.insert
            "access_key"
-           (Column (MyString empty) (Just $ NOT NULL) Nothing Nothing)
-           (edbHashmap essenceColumn)
+           defaultColumn {cValueType = TEXT, cNULL = Just $ NOT NULL}
+           hashMap
     else essenceColumn
 
 ifGetUpdate :: Essence Column -> Essence Column
-ifGetUpdate essenceColumn =
-  case edbAction essenceColumn of
+ifGetUpdate essenceColumn@(EssenceColumn { eColName = name
+                                         , eColAction = action
+                                         , eColHashMap = hashMap
+                                         }) =
+  case action of
     "get" ->
-      EssenceColumn (edbName essenceColumn) (edbAction essenceColumn) $
-      HM.insert
-        "page"
-        (Column (MyInteger empty) Nothing Nothing Nothing)
-        (edbHashmap essenceColumn)
+      EssenceColumn name action $
+      HM.insert "page" defaultColumn {cValueType = INT} hashMap
     _ -> essenceColumn
 
 parseRequest ::
@@ -102,7 +106,9 @@ isRequestCorrect req = do
   let paramsMsg = fromString . show $ getRequiredFields essenceColumn api
   accessArr <- getAccessArr queryMBS
   isConstraintsCorrect <-
-    runUnderApp (execWApp $ isConstraintCorrect essenceColumn listOfPairs) handle
+    runUnderApp
+      (execWApp $ isConstraintCorrect essenceColumn listOfPairs)
+      handle
   let checkingList =
         [ isPathRequestCorrect req api
         , isMethodCorrect method action api

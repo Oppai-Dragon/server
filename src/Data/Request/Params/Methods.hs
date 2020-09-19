@@ -4,6 +4,7 @@ module Data.Request.Params.Methods
   , iterateParams
   , queryBSWithoutMaybe
   , isConstraintCorrect
+  , isCorrectLengthText
   , isUniqueParams
   , isRightRelationsParams
   , isTypeParamsCorrect
@@ -13,6 +14,7 @@ module Data.Request.Params.Methods
 import Config
 import Data.Base
 import Data.Essence
+import Data.Essence.Column
 import Data.MyValue
 import Data.Required
 import Database.Get
@@ -68,8 +70,8 @@ queryBSWithoutMaybe ((l, maybeR):rest) =
 
 isConstraintCorrect :: Essence Column -> [(String, MyValue)] -> WApp ()
 isConstraintCorrect _ [] = tellWApp $ All True
-isConstraintCorrect (EssenceColumn _ "get" _) _ = tellWApp $ All True
-isConstraintCorrect (EssenceColumn _ "delete" _) _ = tellWApp $ All True
+isConstraintCorrect EssenceColumn {eColAction="get"} _ = tellWApp $ All True
+isConstraintCorrect EssenceColumn {eColAction="delete"} _ = tellWApp $ All True
 isConstraintCorrect EssenceColumn {} (("tag_ids", MyIntegers arr):_) = do
   (A.Object pageObj) <-
     liftUnderApp $ dbGetArray (EssenceList "tag" "get" [("id", MyIntegers arr)])
@@ -77,11 +79,27 @@ isConstraintCorrect EssenceColumn {} (("tag_ids", MyIntegers arr):_) = do
   tellWApp $ All bool
 isConstraintCorrect (EssenceColumn table action hm) ((field, myValue):rest) =
   case HM.lookup field hm of
-    Just Column -> do
-      isUniqueParams table (field, myValue) (dConstraint Column)
-      isRightRelationsParams (dRelations Column) myValue
+    Just column -> do
+      isCorrectLengthText (cValueType column) myValue
+      isUniqueParams table (field, myValue) (cConstraint column)
+      isRightRelationsParams (cRelations column) myValue
       isConstraintCorrect (EssenceColumn table action hm) rest
     Nothing -> isConstraintCorrect (EssenceColumn table action hm) rest
+
+isCorrectLengthText :: ValueType -> MyValue -> WApp ()
+isCorrectLengthText valueType (MyString str) =
+  let tellBool x = tellWApp . All $ x >= length str
+  in case valueType of
+    CHAR len -> tellBool len
+    VARCHAR len -> tellBool len
+    _ -> return ()
+isCorrectLengthText valueType (MyStrings arr) =
+  let tellBool x = tellWApp . All $ all ((>=) x . length) arr
+  in case valueType of
+    CHAR_ARR len -> tellBool len
+    VARCHAR_ARR len -> tellBool len
+    _ -> return ()
+isCorrectLengthText _ _ = return ()
 
 -- Tell True, if essence with unique value doesn't exist
 isUniqueParams :: T.Text -> (String, MyValue) -> Maybe Constraint -> WApp ()
@@ -105,18 +123,46 @@ isTypeParamsCorrect :: Essence Column -> [(String, MyValue)] -> All
 isTypeParamsCorrect _ [] = All True
 isTypeParamsCorrect essence@(EssenceColumn _ _ hashMap) ((field, myValue):rest) =
   case HM.lookup field hashMap of
-    Just Column ->
-      All (compareValueType (dValueType Column) myValue) <>
+    Just column ->
+      All (compareValueType (cValueType column) myValue) <>
       isTypeParamsCorrect essence rest
     Nothing -> isTypeParamsCorrect essence rest
 
-compareValueType :: MyValue -> MyValue -> Bool
-compareValueType (MyInteger _) (MyInteger _) = True
-compareValueType (MyString _) (MyString _) = True
-compareValueType (MyIntegers _) (MyIntegers _) = True
-compareValueType (MyStrings _) (MyStrings _) = True
-compareValueType (MyBool _) (MyBool _) = True
-compareValueType (MyDate _) (MyDate _) = True
-compareValueType (MyNextval _) (MyNextval _) = True
-compareValueType MyEmpty MyEmpty = True
+compareValueType :: ValueType -> MyValue -> Bool
+compareValueType valueType (MyInteger _) =
+  case valueType of
+    SMALLINT -> True
+    BIGINT -> True
+    INTEGER -> True
+    INT -> True
+    _ -> False
+compareValueType valueType (MyString _) =
+  case valueType of
+    CHAR _ -> True
+    VARCHAR _ -> True
+    TEXT -> True
+    UUID -> True
+    _ -> False
+compareValueType valueType (MyIntegers _) =
+  case valueType of
+    SMALLINT_ARR -> True
+    BIGINT_ARR -> True
+    INTEGER_ARR -> True
+    INT_ARR -> True
+    _ -> False
+compareValueType valueType (MyStrings _) =
+  case valueType of
+    CHAR_ARR _ -> True
+    VARCHAR_ARR _ -> True
+    TEXT_ARR -> True
+    _ -> False
+compareValueType BOOLEAN (MyBool _) = True
+compareValueType BOOLEAN_ARR (MyBools _) = True
+compareValueType DATE (MyDate _) = True
+compareValueType DATE_ARR (MyDates _) = True
+compareValueType valueType (MyNextval _) =
+  case valueType of
+    SERIAL -> True
+    BIGSERIAL -> True
+    _ -> False
 compareValueType _ _ = False

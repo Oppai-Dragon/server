@@ -7,32 +7,29 @@ module Data.SQL.ToValue
   ) where
 
 import Config
+import Data.Base
 import Data.Essence
 import Data.MyValue as MyValue
 
-import Data.Aeson
-import Data.Aeson.Types (parseMaybe)
-
+import qualified Data.Aeson as A
 import qualified Data.HashMap.Strict as HM
-
 import qualified Data.List as L
 import qualified Data.Text as T
+import qualified Database.HDBC as HDBC
 
-import Database.HDBC
-
-sqlToValue :: SqlValue -> Value
-sqlToValue SqlNull = Null
+sqlToValue :: HDBC.SqlValue -> A.Value
+sqlToValue HDBC.SqlNull = A.Null
 sqlToValue sqlValue =
-  MyValue.toValue $ MyValue.fromStr (fromSql sqlValue :: String)
+  MyValue.toValue $ MyValue.fromStr (HDBC.fromSql sqlValue :: String)
 
-fromZip :: [T.Text] -> [Value] -> Object
+fromZip :: [T.Text] -> [A.Value] -> A.Object
 fromZip = (HM.fromList .) . zip
 
-sqlValuesToJsonValue :: Essence List -> [SqlValue] -> Config -> Value
+sqlValuesToJsonValue :: Essence List -> [HDBC.SqlValue] -> Config -> A.Value
 sqlValuesToJsonValue (EssenceList name action _) sqlValues (Config conf) =
   let essenceFields =
-        case parseMaybe (.: T.pack name) conf of
-          Just (Object fieldsObj) -> HM.keys fieldsObj
+        case getValue [T.pack name] conf of
+          A.Object fieldsObj -> HM.keys fieldsObj
           _ -> []
       fields =
         case [name, action] of
@@ -45,9 +42,10 @@ sqlValuesToJsonValue (EssenceList name action _) sqlValues (Config conf) =
               Just index -> flip L.delete sqlValues $ (!!) sqlValues index
               Nothing -> sqlValues
           _ -> sqlValues
-   in Object . fromZip fields $ map sqlToValue sqlValuesNeeded
+   in A.Object . fromZip fields $ map sqlToValue sqlValuesNeeded
 
-sqlValuesArrToObj :: Int -> Essence List -> [[SqlValue]] -> Config -> Object
+sqlValuesArrToObj ::
+     Int -> Essence List -> [[HDBC.SqlValue]] -> Config -> A.Object
 sqlValuesArrToObj _ _ [] _ = HM.empty
 sqlValuesArrToObj n essenceList (sqlValues:sqlValuesArr) conf =
   let essenceField = T.pack $ elName essenceList <> show n
@@ -55,5 +53,5 @@ sqlValuesArrToObj n essenceList (sqlValues:sqlValuesArr) conf =
    in HM.singleton essenceField essenceValue `HM.union`
       sqlValuesArrToObj (n + 1) essenceList sqlValuesArr conf
 
-sqlValuesArrToValue :: Essence List -> [[SqlValue]] -> Config -> Value
-sqlValuesArrToValue = ((Object .) .) . sqlValuesArrToObj 1
+sqlValuesArrToValue :: Essence List -> [[HDBC.SqlValue]] -> Config -> A.Value
+sqlValuesArrToValue = ((A.Object .) .) . sqlValuesArrToObj 1

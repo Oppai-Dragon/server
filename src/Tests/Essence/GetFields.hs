@@ -7,6 +7,8 @@ import Data.Required
 
 import Tests.Essence
 
+import qualified Data.Aeson as A
+
 import Test.HUnit
 
 essenceGetFieldsTests, getRequiredFields, getEssenceFields :: [Test]
@@ -25,37 +27,37 @@ iterateRequiredHMTest, iterateRequiredHMCreateTest, iterateRequiredHMGetTest, it
 iterateRequiredHMTest =
   TestCase $
   assertEqual
-    "for (iterateHM testAuthorDBFields \"create\")"
+    "for (iterateHM testAuthorColumnFields \"create\")"
     ([AND ["person_id"]] :: [Required [String]]) $
-  iterateHM testAuthorDBFields "create"
+  iterateHM testAuthorColumnFields "create"
 
 iterateRequiredHMCreateTest =
   TestCase $
   assertEqual
-    "for (iterateHMCreate testAuthorDBFields)"
+    "for (iterateHMCreate testAuthorColumnFields)"
     ([AND ["person_id"]] :: [Required [String]]) $
-  iterateHMCreate testAuthorDBFields
+  iterateHMCreate testAuthorColumnFields
 
 iterateRequiredHMGetTest =
   TestCase $
   assertEqual
-    "for (iterateHMGet testAuthorDBFields)"
+    "for (iterateHMGet testAuthorColumnFields)"
     ([] :: [Required [String]]) $
-  iterateHMGet testAuthorDBFields
+  iterateHMGet testAuthorColumnFields
 
 iterateRequiredHMEditTest =
   TestCase $
   assertEqual
-    "for (iterateHMEdit testAuthorDBFields)"
+    "for (iterateHMEdit testAuthorColumnFields)"
     ([AND ["id"], OR ["person_id"], OR ["description"]] :: [Required [String]]) $
-  iterateHMEdit testAuthorDBFields
+  iterateHMEdit testAuthorColumnFields
 
 iterateRequiredHMDeleteTest =
   TestCase $
   assertEqual
-    "for (iterateHMDelete testAuthorDBFields)"
+    "for (iterateHMDelete testAuthorColumnFields)"
     ([AND ["id"]] :: [Required [String]]) $
-  iterateHMDelete testAuthorDBFields
+  iterateHMDelete testAuthorColumnFields
 
 getEssenceFields =
   [ TestLabel "iterateEssenceHMTest" iterateEssenceHMTest
@@ -70,32 +72,32 @@ iterateEssenceHMTest, iterateEssenceHMCreateTest, iterateEssenceHMGetTest, itera
 iterateEssenceHMTest =
   TestCase $
   assertEqual
-    "for (iterateHM testAuthorDBFields \"create\")"
+    "for (iterateHM testAuthorColumnFields \"create\")"
     ([["person_id"], ["description"]] :: [[String]]) $
-  iterateHM testAuthorDBFields "create"
+  iterateHM testAuthorColumnFields "create"
 
 iterateEssenceHMCreateTest =
   TestCase $
   assertEqual
-    "for (iterateHMCreate testAuthorDBFields)"
+    "for (iterateHMCreate testAuthorColumnFields)"
     ([["person_id"], ["description"]] :: [[String]]) $
-  iterateHMCreate testAuthorDBFields
+  iterateHMCreate testAuthorColumnFields
 
 iterateEssenceHMGetTest =
   TestCase $
-  assertEqual "for (iterateHMGet testAuthorDBFields)" ([["id","person_id","description"]] :: [[String]]) $
-  iterateHMGet testAuthorDBFields
+  assertEqual "for (iterateHMGet testAuthorColumnFields)" ([["id","person_id","description"]] :: [[String]]) $
+  iterateHMGet testAuthorColumnFields
 
 iterateEssenceHMEditTest =
   TestCase $
   assertEqual
-    "for (iterateHMEdit testAuthorDBFields)"
+    "for (iterateHMEdit testAuthorColumnFields)"
     ([["id"], ["person_id"], ["description"]] :: [[String]]) $
-  iterateHMEdit testAuthorDBFields
+  iterateHMEdit testAuthorColumnFields
 
 iterateEssenceHMDeleteTest =
   TestCase $
   assertEqual
-    "for (iterateHMDelete testAuthorDBFields)"
+    "for (iterateHMDelete testAuthorColumnFields)"
     ([["id"]] :: [[String]]) $
-  iterateHMDelete testAuthorDBFields
+  iterateHMDelete testAuthorColumnFields

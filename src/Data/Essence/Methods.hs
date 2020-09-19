@@ -5,11 +5,8 @@ module Data.Essence.Methods
   , deletePair
   , getEssenceFields
   , getEssenceColumn
-  , getEssenceDatabase
-  , getHashMapColumn
-  , iterateHashMapDBList
+  , iterateHashMapJsonList
   , setColumn
-  , getMaybeDataField
   , parseOnlyValues
   , parseOnlyFields
   , withoutEmpty
@@ -24,13 +21,10 @@ import Data.Base hiding (deletePair)
 import Data.Empty
 import Data.Essence
 import Data.Essence.GetFields
-import Data.Essence.Parse
 import Data.MyValue
 
-import Data.Maybe (fromJust)
-
-import Data.Aeson
-import Data.Aeson.Types (parseMaybe)
+import qualified Data.Aeson as A
+import qualified Data.Aeson.Types as AT
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC8
 import qualified Data.HashMap.Strict as HM
@@ -53,57 +47,37 @@ deletePair field (EssenceList name action list) =
 getEssenceFields :: Essence Column -> Api -> [Field]
 getEssenceFields (EssenceColumn "news" "create" _) _ = ["id"]
 getEssenceFields essenceColumn api =
-  let relationsTree = getRelationsTree (edbName essenceColumn) api
+  let relationsTree = getRelationsTree (eColName essenceColumn) api
       relationFields = getRelationFields relationsTree
    in getFields essenceColumn L.\\ relationFields
 
-getEssenceColumn ::
-     T.Text -> T.Text -> Config -> Api -> Essence Column
-getEssenceColumn essence apiAction conf api =
-  let dbAction = getApiDBMethod apiAction api
-   in case getEssenceDatabase essence conf api of
-        EssenceDatabase name hashMapDB ->
-          EssenceColumn name dbAction $ getHashMapColumn hashMapDB
-
-getEssenceDatabase :: T.Text -> Config -> Api -> Essence Database
-getEssenceDatabase essence (Config conf) (Api api) =
-  let unpackObj obj = do
+getEssenceColumn :: T.Text -> T.Text -> Config -> Api -> Essence Column
+getEssenceColumn essence apiAction (Config conf) (Api api) =
+  let dbAction = getApiDBMethod apiAction $ Api api
+      unpackObj obj = do
         (field, value) <- HM.toList obj
-        let resultArr = map parsePsql $ toStrArr value
-        return (T.unpack field, resultArr)
-   in case parseMaybe (.: essence) conf of
-        Just (Object objFromConf) ->
-          case parseMaybe (.: essence) api of
-            Just (Object objFromApi) ->
-              EssenceDatabase essence . HM.fromList $
-              unpackObj objFromConf <> unpackObj objFromApi
-            _ -> EssenceDatabase essence . HM.fromList $ unpackObj objFromConf
-        _ -> EssenceDatabase "" HM.empty
+        return (T.unpack field, value)
+      listToHmColumn = HM.fromList . iterateHashMapJsonList . concatMap unpackObj
+   in case getValue [essence] conf of
+        A.Object objFromConf ->
+          case getValue [essence] api of
+            A.Object objFromApi ->
+              EssenceColumn essence dbAction $ listToHmColumn [objFromConf, objFromApi]
+            _ -> EssenceColumn essence dbAction $ listToHmColumn [objFromConf]
+        _ -> EssenceColumn "" "" HM.empty
 
-getHashMapColumn :: Database -> HM.HashMap String Column
-getHashMapColumn = HM.fromList . iterateHashMapDBList . HM.toList
+iterateHashMapJsonList :: [(String, A.Value)] -> [(String, Column)]
+iterateHashMapJsonList [] = []
+iterateHashMapJsonList (("access_key", _):rest) = iterateHashMapJsonList rest
+iterateHashMapJsonList ((field, value):rest) =
+  (field, setColumn value) : iterateHashMapJsonList rest
 
-iterateHashMapDBList ::
-     [(String, [(String, String)])] -> [(String, Column)]
-iterateHashMapDBList [] = []
-iterateHashMapDBList (("access_key", _):rest) = iterateHashMapDBList rest
-iterateHashMapDBList ((field, list):rest) =
-  (field, setColumn list) : iterateHashMapDBList rest
-
-setColumn :: [(String, String)] -> Column
-setColumn list =
-  let valueExpect = fst . last . reads . fromJust $ lookup "type" list
-      value = getMaybeDataField $ lookup "value" list
-      relations = getMaybeDataField $ lookup "relations" list
-      constraint = getMaybeDataField $ lookup "constraint" list
-   in Column valueExpect value relations constraint
-
-getMaybeDataField :: Read a => Maybe String -> Maybe a
-getMaybeDataField Nothing = Nothing
-getMaybeDataField (Just value) =
-  case reads value of
-    [(l, _)] -> Just l
-    _ -> Nothing
+setColumn :: A.Value -> Column
+setColumn v =
+  case AT.parseMaybe A.parseJSON v of
+    Just x -> x
+    Nothing ->
+      error $ "Data.Essence.Methods.setColumn - can't parse " <> show v
 
 parseOnlyValues :: List -> [MyValue]
 parseOnlyValues = map snd

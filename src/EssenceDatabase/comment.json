@@ -1,1 +1,0 @@
-{"TABLE":{"comment":{"content":["TEXT","NOT NULL"],"date_of_creation":["DATE","DEFAULT CURRENT_DATE"],"person_id":["BIGINT","NOT NULL","REFERENCES person (id)","ON DELETE CASCADE"],"news_id":["BIGINT","NOT NULL","REFERENCES news (id)","ON DELETE CASCADE"],"id":["BIGSERIAL","PRIMARY KEY"]}}}

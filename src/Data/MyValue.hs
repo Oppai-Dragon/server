@@ -35,22 +35,12 @@ data MyValue
   | MyInteger Integer
   | MyIntegers [Integer]
   | MyBool Bool
+  | MyBools [Bool]
   | MyNextval String
   | MyDate String
+  | MyDates [String]
   | MyEmpty
-  deriving (Show, Eq)
-
-instance Read MyValue where
-  readsPrec _ input =
-    case input of
-      "int" -> [(MyInteger 0, "")]
-      "array int" -> [(MyIntegers [], "")]
-      "string" -> [(MyString [], "")]
-      "array string" -> [(MyStrings [], "")]
-      "date" -> [(MyDate [], "")]
-      "bool" -> [(MyBool False, "")]
-      "uuid" -> [(MyNextval [], "")]
-      _ -> [(MyEmpty, "")]
+  deriving (Read, Show, Eq)
 
 parseInteger, parseString, parseBool, parseIntegers, parseStrings, parseDate, parseNextval ::
      Parsec String String MyValue
@@ -150,9 +140,8 @@ fromValue value =
         else case head (V.toList vector) of
                A.String _ ->
                  MyStrings . map (\(A.String x) -> T.unpack x) $ V.toList vector
-               A.Number _ ->
-                 MyIntegers . map valueToInteger $
-                 V.toList vector
+               A.Number _ -> MyIntegers . map valueToInteger $ V.toList vector
+               A.Bool _ -> MyBools . map (\(A.Bool x) -> x) $ V.toList vector
                _ -> MyEmpty
     A.Object obj -> MyStrings . map T.unpack $ HM.keys obj
     A.Null -> MyEmpty
@@ -171,8 +160,10 @@ toStr myValue =
     MyBool bool -> show bool
     MyIntegers intArr -> show intArr
     MyStrings strArr -> filter (/= '\"') $ show strArr
+    MyBools boolArr -> show boolArr
     MyNextval val -> val
     MyDate date -> date
+    MyDates dateArr -> filter (/= '\"') $ show dateArr
     MyEmpty -> ""
 
 toValue :: MyValue -> A.Value
@@ -184,6 +175,8 @@ toValue myValue =
     MyIntegers arr ->
       A.Array . V.fromList $ map (A.Number . flip Scientific.scientific 0) arr
     MyStrings arr -> A.Array . V.fromList $ map (A.String . T.pack) arr
+    MyBools arr -> A.Array . V.fromList $ map A.Bool arr
     MyNextval val -> A.String $ T.pack val
     MyDate date -> A.String $ T.pack date
+    MyDates arr -> A.Array . V.fromList $ map (A.String . T.pack) arr
     MyEmpty -> A.Null
