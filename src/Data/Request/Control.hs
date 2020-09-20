@@ -1,6 +1,6 @@
 module Data.Request.Control
   ( isPathRequestCorrect
-  , ifEveryoneUpdate
+  , ifNotEveryoneUpdate
   , ifGetUpdate
   , parseRequest
   , isRequestCorrect
@@ -57,16 +57,16 @@ isPathRequestCorrect req api
               Nothing -> False
           Nothing -> False
 
-ifEveryoneUpdate :: Essence Column -> Access -> Essence Column
-ifEveryoneUpdate essenceColumn@(EssenceColumn { eColName = name
-                                              , eColAction = action
-                                              , eColHashMap = hashMap
-                                              }) access =
+ifNotEveryoneUpdate :: Essence Column -> Access -> Essence Column
+ifNotEveryoneUpdate essenceColumn@(EssenceColumn { eColName = name
+                                                 , eColAction = action
+                                                 , eColHashMap = hashMap
+                                                 }) access =
   if access > Everyone
     then EssenceColumn name action $
          HM.insert
            "access_key"
-           defaultColumn {cValueType = TEXT, cNULL = Just $ NOT NULL}
+           defaultColumn {cValueType = UUID, cNULL = Just $ NOT NULL}
            hashMap
     else essenceColumn
 

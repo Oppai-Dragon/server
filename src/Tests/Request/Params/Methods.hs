@@ -3,6 +3,7 @@ module Tests.Request.Params.Methods
   ) where
 
 import Config
+import Data.Essence.Column
 import Data.MyValue
 import Data.Request.Params.Methods
 import Data.Required
@@ -28,10 +29,10 @@ isRequiredParamsTest, iterateRequiredParamsTest, iterateParamsTest, queryBSWitho
 isRequiredParamsTest =
   TestCase $
   assertEqual
-    "for (isRequiredParams testPersonCreateDB [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
+    "for (isRequiredParams testPersonCreateColumn [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
     True $
   isRequiredParams
-    testPersonCreateDB
+    testPersonCreateColumn
     [("first_name", Just "misha"), ("last_name", Just "dragon")]
     testApi
 
@@ -64,13 +65,13 @@ queryBSWithoutMaybeTest =
 isTypeParamsCorrectTest =
   TestCase $
   assertEqual
-    "for (isTypeParamsCorrect testPersonCreateDB [(\"first_name\",MyString \"misha\"),(\"last_name\",MyString \"dragon\")])"
+    "for (isTypeParamsCorrect testPersonCreateColumn [(\"first_name\",MyString \"misha\"),(\"last_name\",MyString \"dragon\")])"
     (All True) $
   isTypeParamsCorrect
-    testPersonCreateDB
+    testPersonCreateColumn
     [("first_name", MyString "misha"), ("last_name", MyString "dragon")]
 
 compareValueTypeTest =
   TestCase $
-  assertEqual "for (compareValueType (MyInteger 1) (MyInteger 2))" True $
-  compareValueType (MyInteger 1) (MyInteger 2)
+  assertEqual "for (compareValueType INT (MyInteger 2))" True $
+  compareValueType INT (MyInteger 2)

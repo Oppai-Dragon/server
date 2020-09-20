@@ -30,9 +30,9 @@ toFieldsTest =
 getRequiredFieldsTest =
   TestCase $
   assertEqual
-    "for (getRequiredFields testPersonCreateDB)"
+    "for (getRequiredFields testPersonCreateColumn)"
     (Required [AND ["last_name", "first_name"]] :: Required [String]) $
-  getRequiredFields testPersonCreateDB testApi
+  getRequiredFields testPersonCreateColumn testApi
 
 requiredSequenceATest =
   TestCase $

@@ -28,7 +28,7 @@ type EssenceName = String
 
 type Field = String
 
-toEssenceClause :: Essence List -> W (Essence (Clause String)) ()
+toEssenceClause :: Essence List -> Writer (Essence (Clause String)) ()
 toEssenceClause (EssenceList _ _ []) = return ()
 toEssenceClause (EssenceList name _ ((field, myValue):rest)) =
   let tableList = pickTableName field

@@ -1,5 +1,6 @@
 module Database.Exception
-  ( tryConnect
+  ( Result(..)
+  , tryConnect
   , tryRun
   , tryQuickQuery
   , tryConnectIO
@@ -13,6 +14,8 @@ import Log
 
 import qualified Database.HDBC as HDBC
 import qualified Database.HDBC.PostgreSQL as PSQL
+
+data Result = Success | Fail
 
 tryConnect ::
      HasCallStack => IO PSQL.Connection -> UnderApp (Maybe PSQL.Connection)
@@ -28,17 +31,17 @@ tryConnect connectIO = do
       liftIO (errorM logHandle $ show err) >>
       return Nothing
 
-tryRun :: HasCallStack => IO a -> UnderApp Integer
+tryRun :: HasCallStack => IO a -> UnderApp Result
 tryRun run = do
   (Config.Handle _ _ _ logHandle) <- askUnderApp
   result <- liftIO $ tryM run
   case result of
     Right _ ->
-      liftIO (debugM logHandle "Query was runned in database") >> return 1
+      liftIO (debugM logHandle "Query was runned in database") >> return Success
     Left err ->
       liftIO (warningM logHandle "Can't run query in database") >>
       liftIO (errorM logHandle $ show err) >>
-      return 0
+      return Fail
 
 tryQuickQuery ::
      HasCallStack => IO [[HDBC.SqlValue]] -> UnderApp [[HDBC.SqlValue]]
@@ -67,16 +70,16 @@ tryConnectIO connectIO = do
       errorM logHandle (show err) >>
       return Nothing
 
-tryRunIO :: HasCallStack => IO a -> IO Integer
+tryRunIO :: HasCallStack => IO a -> IO Result
 tryRunIO run = do
   logHandle <- Log.new
   result <- tryM run
   case result of
-    Right _ -> debugM logHandle "Query was runned in database" >> return 1
+    Right _ -> debugM logHandle "Query was runned in database" >> return Success
     Left err ->
       warningM logHandle "Can't run query in database" >>
       errorM logHandle (show err) >>
-      return 0
+      return Fail
 
 tryQuickQueryIO :: HasCallStack => IO [[HDBC.SqlValue]] -> IO [[HDBC.SqlValue]]
 tryQuickQueryIO quickQuery' = do

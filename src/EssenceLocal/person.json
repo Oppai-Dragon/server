@@ -14,19 +14,19 @@
             }
         , "date_of_creation":
             { "type": "DATE"
-            , "default": "DEFAULT CURRENT_DATE"
+            , "default": "CURRENT_DATE"
             }
         , "avatar":
             { "type": "VARCHAR(50)"
-            , "default": "DEFAULT 'https://oppai-dragon.site/images/avatar.jpg'"
+            , "default": "'https://oppai-dragon.site/images/avatar.jpg'"
             }
         , "is_admin":
             { "type": "BOOLEAN"
-            , "default": "DEFAULT FALSE"
+            , "default": "FALSE"
             }
         , "access_key":
             { "type": "UUID"
-            , "default": "DEFAULT gen_random_uuid()"
+            , "default": "gen_random_uuid()"
             }
         }
     }

@@ -29,9 +29,9 @@ dbEdit = do
       liftUnderApp . liftIO . debugM logHandle $ "PSQL request: " <> editQuery
       result <- liftUnderApp . tryRun $ HDBC.run conn editQuery []
       case result of
-        0 ->
+        Success ->
           liftUnderApp . liftIO . infoM logHandle $ name <> " was not changed"
-        _ -> liftUnderApp . liftIO . infoM logHandle $ name <> " was changed"
+        Fail -> liftUnderApp . liftIO . infoM logHandle $ name <> " was changed"
       liftUnderApp . liftIO $ HDBC.commit conn
       let value = A.object ["result" A..= (toValue . MyInteger) result]
       liftUnderApp . liftIO $ HDBC.disconnect conn

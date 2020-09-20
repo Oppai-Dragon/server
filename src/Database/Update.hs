@@ -5,11 +5,14 @@ module Database.Update
 import Config
 import Config.Exception
 import Data.Base
+import Data.Essence.Column
+import Data.SQL.AlterTable
 import Database.Exception
 import Log
 import Setup
 
 import qualified Data.Aeson as A
+import qualified Data.Aeson.Types as AT
 import qualified Data.HashMap.Strict as HM
 import Data.List
 import qualified Data.Text as T
@@ -21,11 +24,11 @@ type EssenceLocal = String
 
 type TableObj = A.Object
 
-type ColumnLocal = T.Text
+type ColumnLocal = Column
 
 type ColumnArr = [T.Text]
 
-type ColumnDatabase = T.Text
+type ColumnDatabase = Column
 
 type ColumnList = [(T.Text, A.Value)]
 
@@ -132,23 +135,48 @@ updateColumnArr table (columnPair:rest) = do
   updateColumnArr table rest
 
 updateColumn :: Table -> (T.Text, A.Value) -> IO ()
-updateColumn _ _ {-table (column, arrLocValue)-} = undefined--do
---  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> table <> ".json")
---  let arrDbValue = getValue ["TABLE",T.pack table,T.pack column] essenceDbObj
---  let arrLocList = toStrArr arrLocValue
---  let arrDbList = toStrArr arrDbValue
---  if isRedundantColumn arrDb arrLoc
---    then dropColumn essence $ ColumnDbList \\ ColumnLocList
---    else infoIO "No need delete Column"
---  if isNewColumn arrDb arrLoc
---    then createColumn essence $ ColumnLocList \\ ColumnDbList
---    else infoIO "No need add Column"
---  changedColumnList <- getChangedColumnList essence
---  if null changedColumnList
---    then infoIO "No need change value"
---    else updateColumnArr table changedColumnList
---updateColumn _ (column, _) =
---  infoIO $ "Column " <> column <> " must contain an array in EssenceLocal/.json"
+updateColumn table (column, columnDescriptionLocObj) = do
+  maybeConn <- tryConnectIO getConnection
+  case maybeConn of
+    Nothing -> return ()
+    Just conn -> do
+      essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> table <> ".json")
+      let columnLoc =
+            case AT.parseMaybe A.parseJSON columnDescriptionLocObj of
+              Just x -> x
+              Nothing ->
+                error $
+                "Database.Update.updateColumn Can't parse to column" <>
+                show columnDescriptionLocObj
+      let columnDescriptionDbObj =
+            getValue ["TABLE", T.pack table, column] essenceDbObj
+      let columnDb =
+            case AT.parseMaybe A.parseJSON columnDescriptionDbObj of
+              Just x -> x
+              Nothing ->
+                error $
+                "Database.Update.updateColumn Can't parse to column" <>
+                show columnDescriptionDbObj
+      alterTableQueries <- getAlterQueries
+      tryRunIO $ HDBC.runRaw alterTableQueries
+      when cValueType columnLoc /= cValueType columnDb $
+        HDBC.run conn (alterTable table (T.unpack column) $ cValueType columnLoc) []
+      when cNULL columnLoc /= cNULL columnDb $
+        HDBC.run conn (alterTable table (T.unpack column) $ cNULL columnLoc) []
+      when cDefault columnLoc /= cDefault columnDb $
+        HDBC.run conn (alterTable table (T.unpack column) $ cDefault columnLoc) []
+      when cRelations columnLoc /= cRelations columnDb $
+        HDBC.run conn (alterTable table (T.unpack column) $ cRelations columnLoc) []
+      when cConstraint columnLoc /= cConstraint columnDb $
+        HDBC.run conn (alterTable table (T.unpack column) $ cConstraint columnLoc) []
+      when cValueType columnLoc /= cValueType columnDb $
+        HDBC.run conn (alterTable table (T.unpack column) $ cValueType columnLoc) []
+updateColumn _ (column, _) =
+  infoIO $
+  "Column " <> T.unpack column <> " must contain an array in EssenceLocal/.json"
+
+getAlterQueries :: Table -> ColumnName -> ColumnLocal -> ColumnDatabase -> String
+getAlterQueries table
 
 dropColumns, createColumns :: Table -> ColumnLocalList -> IO ()
 dropColumns table columnList = do
@@ -160,7 +188,7 @@ dropColumns table columnList = do
       let getColumns = fst . unzip
       result <- tryRunIO $ HDBC.runRaw conn dropQueries
       case result of
-        1 -> do
+        Success -> do
           deleteColumnJson table $ getColumns columnList
           HDBC.commit conn
           HDBC.disconnect conn
@@ -170,7 +198,7 @@ dropColumns table columnList = do
             ", Columns: " <>
             (intercalate "," . map T.unpack . getColumns) columnList <>
             " are deleted"
-        _ -> HDBC.disconnect conn >> return ()
+        Fail -> HDBC.disconnect conn >> return ()
 
 createColumns table columnList = do
   maybeConn <- tryConnectIO getConnection
@@ -180,7 +208,7 @@ createColumns table columnList = do
       let addQueries = alterTableAdd table columnList
       result <- tryRunIO $ HDBC.runRaw conn addQueries
       case result of
-        1 -> do
+        Success -> do
           replaceColumnJson table $ HM.fromList columnList
           HDBC.commit conn
           HDBC.disconnect conn
@@ -190,7 +218,7 @@ createColumns table columnList = do
             ", Columns: " <>
             (intercalate "," . map T.unpack . fst . unzip) columnList <>
             " are created"
-        _ -> HDBC.disconnect conn >> return ()
+        Fail -> HDBC.disconnect conn >> return ()
 
 alterTableDrop, alterTableAdd :: Table -> ColumnLocalList -> String
 alterTableDrop _ [] = ""

@@ -171,7 +171,7 @@ testAuthorColumnFields :: [(String, Column)]
 testAuthorColumnFields = zip testAuthorColumnFieldsName testAuthorColumnList
 
 testAuthorColumnFieldsName :: [String]
-testAuthorColumnFieldsName = ["id", "person_id", "Column"]
+testAuthorColumnFieldsName = ["id", "person_id", "description"]
 
 testAuthorColumnList :: [Column]
 testAuthorColumnList =
@@ -202,10 +202,44 @@ testPersonColumnFieldsName =
 testPersonColumnList :: [Column]
 testPersonColumnList =
   [ defaultColumn {cValueType = BIGSERIAL, cConstraint = Just PrimaryKey}
-  , defaultColumn {cValueType = VARCHAR 50, cNULL = Just NULL}
-  , defaultColumn {cValueType = DATE, cNULL = Just NULL}
   , defaultColumn
-      {cValueType = BOOLEAN, cNULL = Just NULL, cConstraint = Just PrimaryKey}
+      { cValueType = VARCHAR 50
+      , cDefault =
+          Just $ Default "'https://oppai-dragon.site/images/avatar.jpg'"
+      }
+  , defaultColumn {cValueType = DATE, cDefault = Just $ Default "CURRENT_DATE"}
+  , defaultColumn {cValueType = BOOLEAN, cDefault = Just $ Default "FALSE"}
   , defaultColumn {cValueType = VARCHAR 50, cNULL = Just $ NOT NULL}
   , defaultColumn {cValueType = VARCHAR 50, cNULL = Just $ NOT NULL}
+  ]
+
+testPersonColumnJsonList :: [(String, A.Value)]
+testPersonColumnJsonList =
+  [ ( "id"
+    , A.object
+        [ "type" A..= A.String "BIGSERIAL"
+        , "constraint" A..= A.String "PRIMARY KEY"
+        ])
+  , ( "avatar"
+    , A.object
+        [ "type" A..= A.String "VARCHAR(50)"
+        , "default" A..=
+          A.String "'https://oppai-dragon.site/images/avatar.jpg'"
+        ])
+  , ( "date_of_creation"
+    , A.object
+        [ "type" A..= A.String "DATE"
+        , "default" A..= A.String "CURRENT_DATE"
+        ])
+  , ( "is_admin"
+    , A.object
+        [ "type" A..= A.String "BOOLEAN"
+        , "default" A..= A.String "FALSE"
+        ])
+  , ( "last_name"
+    , A.object
+        ["type" A..= A.String "VARCHAR(50)", "null" A..= A.String "NOT NULL"])
+  , ( "first_name"
+    , A.object
+        ["type" A..= A.String "VARCHAR(50)", "null" A..= A.String "NOT NULL"])
   ]

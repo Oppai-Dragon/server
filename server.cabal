@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 412e5738fe93a52ad26a2d8e9628aa7f0fa96dc75527687fc3316b9682e2fd57
+-- hash: fc3913113818876438859c8020d6f43ff452e0e16ec9c4785fc6d66516779ac2
 
 name:           server
 version:        0.1.0.0
@@ -62,6 +62,7 @@ library
       Data.Required
       Data.Required.Methods
       Data.SQL
+      Data.SQL.AlterTable
       Data.SQL.ShowSql
       Data.SQL.ToValue
       Database.Create

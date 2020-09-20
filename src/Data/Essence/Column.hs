@@ -3,6 +3,7 @@ module Data.Essence.Column
   , Column(..)
   , ValueType(..)
   , NULL(..)
+  , Default(..)
   , Relations(..)
   , Constraint(..)
   , Action(..)
@@ -37,10 +38,10 @@ data Column =
 instance A.FromJSON Column where
   parseJSON =
     A.withObject "From JSON Data.Essence.Column" $ \x ->
-      Column <$> x A..: "type" <*> x A..:? "null" <*> x A..:? "default" <*>
-      x A..:? "relations" <*>
-      x A..:? "constraint" <*>
-      x A..:? "action"
+      Column <$> x A..: "type" <*> x A..:! "null" <*> x A..:! "default" <*>
+      x A..:! "relations" <*>
+      x A..:! "constraint" <*>
+      x A..:! "action"
 
 data ValueType
   = SMALLINT
@@ -153,15 +154,14 @@ instance A.FromJSON NULL where
 
 data Default =
   Default T.Text
-  deriving Eq
+  deriving (Eq)
 
 instance Show Default where
   show (Default text) = "DEFAULT " <> T.unpack text
 
 instance A.FromJSON Default where
   parseJSON =
-    A.withText "From JSON Data.Essence.Default" $ \x ->
-      pure . Default . T.tail $ T.dropWhile (/= ' ') x
+    A.withText "From JSON Data.Essence.Default" $ \x -> pure $ Default x
 
 data Relations =
   Relations
@@ -211,6 +211,7 @@ instance A.FromJSON Constraint where
 data Action
   = OnDeleteCascade
   | OnDeleteRestrict
+  | OnDeleteSetNull
   deriving (Eq)
 
 instance Show Action where
@@ -218,6 +219,7 @@ instance Show Action where
     case x of
       OnDeleteCascade -> "ON DELETE CASCADE"
       OnDeleteRestrict -> "ON DELETE RESTRICT"
+      OnDeleteSetNull -> "ON DELETE SET NULL"
 
 instance A.FromJSON Action where
   parseJSON =
@@ -225,4 +227,5 @@ instance A.FromJSON Action where
       case x of
         "ON DELETE CASCADE" -> pure OnDeleteCascade
         "ON DELETE RESTRICT" -> pure OnDeleteRestrict
+        "ON DELETE SET NULL" -> pure OnDeleteSetNull
         _ -> fail $ "Unknown Action: " <> T.unpack x

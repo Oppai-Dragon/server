@@ -7,8 +7,6 @@ import Data.Required
 
 import Tests.Essence
 
-import qualified Data.Aeson as A
-
 import Test.HUnit
 
 essenceGetFieldsTests, getRequiredFields, getEssenceFields :: [Test]
@@ -85,7 +83,9 @@ iterateEssenceHMCreateTest =
 
 iterateEssenceHMGetTest =
   TestCase $
-  assertEqual "for (iterateHMGet testAuthorColumnFields)" ([["id","person_id","description"]] :: [[String]]) $
+  assertEqual
+    "for (iterateHMGet testAuthorColumnFields)"
+    ([["id", "person_id", "description"]] :: [[String]]) $
   iterateHMGet testAuthorColumnFields
 
 iterateEssenceHMEditTest =

@@ -4,9 +4,8 @@ module Tests.Request.Control
 
 import Config
 import Data.Base
-import Data.Empty
 import Data.Essence
-import Data.MyValue
+import Data.Essence.Column
 import Data.Request.Access
 import Data.Request.Control
 
@@ -20,56 +19,60 @@ import Test.HUnit
 requestControlTests :: [Test]
 requestControlTests =
   [ TestLabel "isPathRequestCorrectTest" isPathRequestCorrectTest
-  , TestLabel "ifEveryoneUpdateTest" ifEveryoneUpdateTest
+  , TestLabel "ifNotEveryoneUpdateTest" ifNotEveryoneUpdateTest
   , TestLabel "ifGetUpdateTest" ifGetUpdateTest
   , TestLabel "parseRequestTest" parseRequestTest
   , TestLabel "isRequestCorrectTest" isRequestCorrectTest
   , TestLabel "getAccessArrTest" getAccessArrTest
   ]
 
-isPathRequestCorrectTest, ifEveryoneUpdateTest, ifGetUpdateTest, parseRequestTest, isRequestCorrectTest, getAccessArrTest ::
+isPathRequestCorrectTest, ifNotEveryoneUpdateTest, ifGetUpdateTest, parseRequestTest, isRequestCorrectTest, getAccessArrTest ::
      Test
 isPathRequestCorrectTest =
   TestCase $
   assertEqual "for (isPathRequestCorrect testPersonCreateReq testApi)" True $
   isPathRequestCorrect testPersonCreateReq testApi
 
-ifEveryoneUpdateTest =
+ifNotEveryoneUpdateTest =
   TestCase $
   assertEqual
-    "for (ifEveryoneUpdate testAuthorGetDB Author)"
+    "for (ifNotEveryoneUpdate testAuthorGetColumn Author)"
     (EssenceColumn "author" "get" $
      HM.fromList
-       [ ("id", Column (MyInteger 0) Nothing Nothing (Just PRIMARY))
+       [ ( "id"
+         , defaultColumn {cValueType = BIGSERIAL, cConstraint = Just PrimaryKey})
        , ( "person_id"
-         , Column
-             (MyInteger 0)
-             (Just $ NOT NULL)
-             (Just $ Relations "person" "id")
-             (Just UNIQUE))
-       , ("Column", Column (MyString "") Nothing Nothing Nothing)
+         , defaultColumn
+             { cValueType = BIGINT
+             , cNULL = Just $ NOT NULL
+             , cRelations = Just $ Relations "person" "id"
+             , cConstraint = Just UNIQUE
+             })
+       , ("description", defaultColumn {cValueType = VARCHAR 150})
        , ( "access_key"
-         , Column (MyString empty) (Just $ NOT NULL) Nothing Nothing)
+         , defaultColumn {cValueType = UUID, cNULL = Just $ NOT NULL})
        ]) $
-  ifEveryoneUpdate testAuthorGetDB Author
+  ifNotEveryoneUpdate testAuthorGetColumn Author
 
 ifGetUpdateTest =
   TestCase $
   assertEqual
-    "for (ifGetUpdate testAuthorGetDB)"
+    "for (ifGetUpdate testAuthorGetColumn)"
     (EssenceColumn "author" "get" $
      HM.fromList
-       [ ("id", Column (MyInteger 0) Nothing Nothing (Just PRIMARY))
-       , ("page", Column (MyInteger empty) Nothing Nothing Nothing)
+       [ ( "id"
+         , defaultColumn {cValueType = BIGSERIAL, cConstraint = Just PrimaryKey})
+       , ("page", defaultColumn {cValueType = INT})
        , ( "person_id"
-         , Column
-             (MyInteger 0)
-             (Just $ NOT NULL)
-             (Just $ Relations "person" "id")
-             (Just UNIQUE))
-       , ("Column", Column (MyString "") Nothing Nothing Nothing)
+         , defaultColumn
+             { cValueType = BIGINT
+             , cNULL = Just $ NOT NULL
+             , cRelations = Just $ Relations "person" "id"
+             , cConstraint = Just UNIQUE
+             })
+       , ("description", defaultColumn {cValueType = VARCHAR 150})
        ]) $
-  ifGetUpdate testAuthorGetDB
+  ifGetUpdate testAuthorGetColumn
 
 parseRequestTest =
   TestCase $

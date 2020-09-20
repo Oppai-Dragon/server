@@ -29,9 +29,9 @@ dbDelete = do
       liftUnderApp . liftIO . debugM logHandle $ "PSQL request: " <> deleteQuery
       result <- liftUnderApp . tryRun $ HDBC.run conn deleteQuery []
       case result of
-        0 ->
+        Success ->
           liftUnderApp . liftIO . infoM logHandle $ name <> " was not deleted"
-        _ -> liftUnderApp . liftIO . infoM logHandle $ name <> " was deleted"
+        Fail -> liftUnderApp . liftIO . infoM logHandle $ name <> " was deleted"
       liftUnderApp . liftIO $ HDBC.commit conn
       let value = A.object ["result" A..= (toValue . MyInteger) result]
       liftUnderApp . liftIO $ HDBC.disconnect conn

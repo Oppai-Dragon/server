@@ -27,6 +27,7 @@ import Log
 
 import Control.Monad
 import qualified Data.Aeson as A
+import Data.Function
 import Data.Functor.Identity
 import qualified Data.HashMap.Strict as HM
 import Data.List
@@ -72,13 +73,12 @@ dropTables essences = do
       let dropQuery = getDropTablesQuery essences
       result <- tryRunIO $ HDBC.run conn dropQuery []
       case result of
-        1 -> do
+        Success -> do
           deleteTableJson essences
           HDBC.commit conn
           HDBC.disconnect conn
           infoIO $ "Tables: " <> intercalate "," essences <> " are deleted"
-        _ -> HDBC.disconnect conn >> return ()
-
+        Fail -> HDBC.disconnect conn >> return ()
 
 buildConfigJson :: IO ()
 buildConfigJson = do
@@ -132,7 +132,12 @@ collectEssenceJson :: IO [A.Object]
 collectEssenceJson = do
   api <- setApi
   let essences = getEssences api
-  objList <- getEssenceDescriptionObjectArr $ map T.unpack essences
+  nowConfig <- set =<< setPath "Config.json"
+  objList <-
+    map T.unpack essences &
+    if HM.null nowConfig
+      then getEssenceLocalObjectArr
+      else getEssenceDescriptionObjectArr
   return [obj | obj <- [parseOnlyTable o | o <- objList], not $ null obj]
 
 parseOnlyTable :: A.Object -> A.Object
@@ -144,7 +149,8 @@ parseOnlyTable obj =
 getEssenceDescriptionObjectArr :: EssenceArr -> IO [A.Object]
 getEssenceDescriptionObjectArr [] = return []
 getEssenceDescriptionObjectArr (essence:rest) =
-  (:) <$> getEssenceDescriptionObject essence <*> getEssenceDescriptionObjectArr rest
+  (:) <$> getEssenceDescriptionObject essence <*>
+  getEssenceDescriptionObjectArr rest
 
 getEssenceLocalObjectArr :: EssenceArr -> IO [A.Object]
 getEssenceLocalObjectArr [] = return []
@@ -183,7 +189,7 @@ parseAllQueries str =
                _ -> x2)
    in addingSemicolon . unwords . addingLBracket . words $ str
 
-iterateObj :: A.Object -> W String ()
+iterateObj :: A.Object -> Writer String ()
 iterateObj obj =
   let helper [] = tellWApp ""
       helper (a:arr) = do

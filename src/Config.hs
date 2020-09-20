@@ -8,7 +8,7 @@ module Config
   , SApp
   , S
   , WApp
-  , W
+  , Writer
   , Config.Handle(..)
   , setEng
   , Config.new
@@ -38,8 +38,6 @@ type SApp = StateT (Essence List) UnderApp
 type S a b = StateT a b
 
 type WApp = WriterT All UnderApp
-
-type W a b = Writer a b
 
 data Handle =
   Handle

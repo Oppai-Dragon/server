@@ -42,7 +42,6 @@ testList =
   essenceGetFieldsTests <>
   essenceMethodsTests <>
   essenceRelationsTreeMethodsTests <>
-  essenceParseTests <>
   essenceParseClauseTests <>
   myValueTests <>
   requiredMethodsTests <>

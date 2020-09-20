@@ -10,7 +10,7 @@
             }
         , "date_of_creation":
             { "type": "DATE"
-            , "default": "DEFAULT CURRENT_DATE"
+            , "default": "CURRENT_DATE"
             }
         , "author_id":
             { "type": "INT"
