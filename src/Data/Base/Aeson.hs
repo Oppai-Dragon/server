@@ -11,6 +11,7 @@ module Data.Base.Aeson
   , deleteFields
   , getValue
   , valueToInteger
+  , toStringKeys
   ) where
 
 import qualified Data.Aeson as A
@@ -76,3 +77,6 @@ getValue (field:rest) objOld =
 
 valueToInteger :: A.Value -> Integer
 valueToInteger = fromMaybe 0 . AT.parseMaybe A.parseJSON
+
+toStringKeys :: HM.HashMap T.Text a -> HM.HashMap String a
+toStringKeys = HM.fromList . map (\(l,r) -> (T.unpack l,r)) . HM.toList

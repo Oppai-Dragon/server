@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Data.MyValue
   ( MyValue(..)
@@ -18,6 +19,7 @@ module Data.MyValue
   ) where
 
 import Data.Base hiding (toStr)
+import Data.MyValue.Parse
 
 import qualified Data.Aeson as A
 import qualified Data.ByteString as BS
@@ -31,29 +33,50 @@ import Text.Parsec
 
 data MyValue
   = MyString String
-  | MyStrings [String]
+  | MyStringArr [String]
   | MyInteger Integer
-  | MyIntegers [Integer]
+  | MyIntegerArr [Integer]
   | MyBool Bool
-  | MyBools [Bool]
+  | MyBoolArr [Bool]
   | MyNextval String
   | MyDate String
-  | MyDates [String]
+  | MyDateArr [String]
+  | MyUri String
   | MyEmpty
   deriving (Read, Show, Eq)
 
-parseInteger, parseString, parseBool, parseIntegers, parseStrings, parseDate, parseNextval ::
+
+parseInteger, parseIntegerArr, parseString, parseStringArr, parseBool, parseBoolArr, parseDate, parseDateArr, parseNextval ::
      Parsec String String MyValue
+
 parseInteger = do
-  field <- many1 digit
+  field <- parseIntegerStr
   return . MyInteger $
     case reads field of
       [(l, _)] -> l
       _ -> 0
 
+parseIntegerArr = do
+  _ <- char '[' <|> char '{'
+  integers <- many $ digit <|> char ','
+  _ <- char ']' <|> char '}'
+  let arr = '[' : integers <> "]"
+  return . MyIntegerArr $
+    case reads arr :: [([Integer], String)] of
+      [(l, _)] -> l
+      _ -> []
+
 parseString = do
   field <- many1 $ noneOf "[]{}:;\'\",<.>/?\\=+()*&^%$#@!~`\n\t\r"
   return $ MyString field
+
+parseStringArr = do
+  _ <- char '[' <|> char '{'
+  strings <-
+    many (noneOf "[]{}:;\'<,.>/?\\=+()*&^%$#@!~`\n\t\r") `sepBy` char ','
+  _ <- char ']' <|> char '}'
+  let arr = map (filter (/= '\"')) strings
+  return $ MyStringArr arr
 
 parseBool = do
   field <-
@@ -67,6 +90,14 @@ parseBool = do
       "TRUE" -> True
       _ -> False
 
+parseBoolArr = do
+  _ <- char '[' <|> char '{'
+  fields <- many (try (string "False") <|> string "FALSE" <|> string "false" <|>
+    try (string "True") <|>
+    string "TRUE" <|>
+    string "true") `sepBy` char ','
+  _ <- char ']' <|> char '}'
+
 parseDate = do
   num1 <- try (count 4 digit) <|> count 2 digit
   sep1 <- char '-'
@@ -75,27 +106,10 @@ parseDate = do
   num3 <- try (count 4 digit) <|> count 2 digit
   return . MyDate $ num1 <> (sep1 : num2) <> (sep2 : num3)
 
-parseIntegers = do
-  _ <- char '[' <|> char '{'
-  integers <- many $ digit <|> char ','
-  _ <- char ']' <|> char '}'
-  let arr = '[' : integers <> "]"
-  return . MyIntegers $
-    case reads arr :: [([Integer], String)] of
-      [(l, _)] -> l
-      _ -> []
-
-parseStrings = do
-  _ <- char '[' <|> char '{'
-  strings <-
-    many (noneOf "[]{}:;\'<,.>/?\\=+()*&^%$#@!~`\n\t\r") `sepBy` char ','
-  _ <- char ']' <|> char '}'
-  let arr = map (filter (/= '\"')) strings
-  return $ MyStrings arr
-
-parseLDtimes :: Int -> Parsec String String String
-parseLDtimes 0 = return []
-parseLDtimes n = (letter <|> digit) >>= (\ch -> (ch :) <$> parseLDtimes (n - 1))
+parseLetterDigitTimes :: Int -> Parsec String String String
+parseLetterDigitTimes 0 = return []
+parseLetterDigitTimes n =
+  (letter <|> digit) >>= (\ch -> (ch :) <$> parseLetterDigitTimes (n - 1))
 
 parseNextval = do
   let parseStr = do
@@ -103,15 +117,15 @@ parseNextval = do
         part2 <- many anyChar
         return $ part1 <> part2
   let parseAccessKey = do
-        part1 <- parseLDtimes 8
+        part1 <- parseLetterDigitTimes 8
         sep1 <- char '-'
-        part2 <- parseLDtimes 4
+        part2 <- parseLetterDigitTimes 4
         sep2 <- char '-'
-        part3 <- parseLDtimes 4
+        part3 <- parseLetterDigitTimes 4
         sep3 <- char '-'
-        part4 <- parseLDtimes 4
+        part4 <- parseLetterDigitTimes 4
         sep4 <- char '-'
-        part5 <- parseLDtimes 12
+        part5 <- parseLetterDigitTimes 12
         return $
           part1 <>
           (sep1 : part2) <> (sep2 : part3) <> (sep3 : part4) <> (sep4 : part5)

@@ -15,20 +15,21 @@ module Setup
   , getEssenceLocalObject
   , getAllQueris
   , getCreateQuery
-  , parseAllQueries
-  , iterateObj
   ) where
 
 import Config
 import Config.Exception
 import Data.Base
+import Data.Essence
+import Data.SQL.ShowSql
 import Database.Exception
+import Data.MyValue
 import Log
 
 import Control.Monad
 import qualified Data.Aeson as A
+import qualified Data.Aeson.Types as AT
 import Data.Function
-import Data.Functor.Identity
 import qualified Data.HashMap.Strict as HM
 import Data.List
 import qualified Data.Text as T
@@ -50,12 +51,35 @@ setup = do
   essences <- map T.unpack . getEssences <$> setApi
   createTables essences
   buildConfigJson
+  createFirstAdmin
 
 resetup :: IO ()
 resetup = do
   essences <- map T.unpack . getEssences <$> setApi
   dropTables essences
   setup
+
+createFirstAdmin :: IO ()
+createFirstAdmin = do
+  let adminEssenceColumn =
+        EssenceColumn "person" "create" $
+        HM.fromList
+          [ ("first_name", MyString "First")
+          , ("last_name", MyString "Admin")
+          , ("access_key", MyString "12345678-1234-1234-1234-123456789abc")
+          ]
+  maybeConn <- tryConnectIO getConnection
+  case maybeConn of
+    Nothing -> return ()
+    Just conn -> do
+      let createQuery = showSql adminEssenceColumn
+      result <- tryRunIO $ HDBC.run conn createQuery []
+      case result of
+        Success -> do
+          HDBC.commit conn
+          HDBC.disconnect conn
+          infoIO $ "First Admin is created "
+        Fail -> HDBC.disconnect conn >> return ()
 
 getConnection :: IO PSQL.Connection
 getConnection = do
@@ -138,13 +162,7 @@ collectEssenceJson = do
     if HM.null nowConfig
       then getEssenceLocalObjectArr
       else getEssenceDescriptionObjectArr
-  return [obj | obj <- [parseOnlyTable o | o <- objList], not $ null obj]
-
-parseOnlyTable :: A.Object -> A.Object
-parseOnlyTable obj =
-  case getValue ["TABLE"] obj of
-    A.Object o -> o
-    _ -> HM.empty
+  return [obj | obj <- objList, not $ null obj]
 
 getEssenceDescriptionObjectArr :: EssenceArr -> IO [A.Object]
 getEssenceDescriptionObjectArr [] = return []
@@ -176,32 +194,6 @@ getAllQueris essences = do
 
 getCreateQuery :: A.Object -> String
 getCreateQuery obj =
-  (<>) "CREATE " . parseAllQueries . runIdentity . execWApp $ iterateObj obj
-
-parseAllQueries :: String -> String
-parseAllQueries str =
-  let addingSemicolon = flip (<>) ");" . init
-      addingLBracket =
-        map2Var
-          (\x1 x2 ->
-             case x1 of
-               "TABLE" -> x2 <> " ("
-               _ -> x2)
-   in addingSemicolon . unwords . addingLBracket . words $ str
-
-iterateObj :: A.Object -> Writer String ()
-iterateObj obj =
-  let helper [] = tellWApp ""
-      helper (a:arr) = do
-        tellWApp $ T.unpack a <> " "
-        case getValue [a] obj of
-          A.Object x ->
-            (tellWApp . runIdentity . execWApp . iterateObj) x >> helper arr
-          A.Array vector ->
-            (tellWApp . unwords . map T.unpack . toTextArr) (A.Array vector) >>
-            tellWApp " ," >>
-            helper arr
-          A.String text ->
-            tellWApp (T.unpack text) >> tellWApp " ," >> helper arr
-          _ -> helper arr
-   in helper $ HM.keys obj
+  case AT.parseMaybe A.parseJSON (A.Object obj) :: Maybe (Essence Column) of
+    Just x -> showSql x
+    Nothing -> "Can't parse from json " <> show obj

@@ -1,18 +1,16 @@
-{ "TABLE":
-    { "author":
-        { "id":
-            { "type": "BIGSERIAL"
-            , "constraint": "PRIMARY KEY"
-            }
-        , "person_id":
-            { "type": "BIGINT"
-            , "null": "NOT NULL"
-            , "constraint": "UNIQUE"
-            , "relations": "REFERENCES person (id)"
-            }
-        , "description":
-            { "type": "VARCHAR(150)"
-            }
+{ "author":
+    { "id":
+        { "type": "BIGSERIAL"
+        , "constraint": "PRIMARY KEY"
+        }
+    , "person_id":
+        { "type": "BIGINT"
+        , "null": "NOT NULL"
+        , "constraint": "UNIQUE"
+        , "relations": "REFERENCES person (id)"
+        }
+    , "description":
+        { "type": "VARCHAR(150)"
         }
     }
 }

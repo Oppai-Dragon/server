@@ -15,7 +15,10 @@ import Log
 import qualified Database.HDBC as HDBC
 import qualified Database.HDBC.PostgreSQL as PSQL
 
-data Result = Success | Fail
+data Result
+  = Success
+  | Fail
+  deriving (Show, Eq)
 
 tryConnect ::
      HasCallStack => IO PSQL.Connection -> UnderApp (Maybe PSQL.Connection)

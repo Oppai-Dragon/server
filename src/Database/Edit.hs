@@ -5,12 +5,12 @@ module Database.Edit
 import Config
 import Data.Base
 import Data.Essence
-import Data.MyValue
 import Data.SQL.ShowSql
 import Database.Exception
 import Log
 
 import qualified Data.Aeson as A
+import qualified Data.Text as T
 import qualified Database.HDBC as HDBC
 import qualified Database.HDBC.PostgreSQL as PSQL
 
@@ -33,7 +33,7 @@ dbEdit = do
           liftUnderApp . liftIO . infoM logHandle $ name <> " was not changed"
         Fail -> liftUnderApp . liftIO . infoM logHandle $ name <> " was changed"
       liftUnderApp . liftIO $ HDBC.commit conn
-      let value = A.object ["result" A..= (toValue . MyInteger) result]
+      let value = A.object ["result" A..= (A.String . T.pack . show) result]
       liftUnderApp . liftIO $ HDBC.disconnect conn
       liftUnderApp . liftIO $ debugM logHandle "End dbEdit"
       pure value

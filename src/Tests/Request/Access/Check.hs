@@ -1,16 +1,16 @@
-module Tests.Request.Access.IsRight
-  ( requestAccessIsRightTests
+module Tests.Request.Access.Check
+  ( requestAccessCheckTests
   ) where
 
 import Config
 
 import Data.Request.Access
-import Data.Request.Access.IsRight
+import Data.Request.Access.Check
 
 import Test.HUnit
 
-requestAccessIsRightTests :: [Test]
-requestAccessIsRightTests = [TestLabel "isAccessTest" isAccessTest]
+requestAccessCheckTests :: [Test]
+requestAccessCheckTests = [TestLabel "isAccessTest" isAccessTest]
 
 isAccessTest :: Test
 isAccessTest =

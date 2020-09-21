@@ -6,6 +6,7 @@ module Data.Essence.GetFields
   ( GetFields(..)
   ) where
 
+import Data.Base
 import Data.Essence
 import Data.Essence.Column hiding (Action(..))
 import Data.Required
@@ -27,7 +28,7 @@ class GetFields a where
 instance GetFields (Required [Field]) where
   getFields :: Essence Column -> Required [Field]
   getFields (EssenceColumn _ action hashMap) =
-    let arr = iterateHM (HM.toList hashMap) action
+    let arr = iterateHM (HM.toList $ toStringKeys hashMap) action
         andFields =
           requiredSequenceA $
           filter
@@ -83,7 +84,7 @@ instance GetFields (Required [Field]) where
 instance GetFields [Field] where
   getFields :: Essence Column -> [Field]
   getFields (EssenceColumn _ action hashMap) =
-    let arr = iterateHM (HM.toList hashMap) action
+    let arr = iterateHM (HM.toList $ toStringKeys hashMap) action
      in concat arr
   iterateHM :: [(Field, Column)] -> Action -> [[Field]]
   iterateHM [] _ = []

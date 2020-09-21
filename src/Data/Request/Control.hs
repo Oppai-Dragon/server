@@ -17,9 +17,9 @@ import Data.Essence.Methods
 import Data.MyValue
 import Data.Request
 import Data.Request.Access
-import Data.Request.Access.IsRight
-import Data.Request.Method.IsRight
-import Data.Request.Params.Methods
+import Data.Request.Access.Check
+import Data.Request.Method.Check
+import Data.Request.Params.Check
 import Data.SQL
 import Data.SQL.ShowSql
 import Log

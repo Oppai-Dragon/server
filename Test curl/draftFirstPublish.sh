@@ -1,6 +1,6 @@
 #!/bin/bash
 id=$(jq .draft1.id draft.json)
-access_key=$(jq .person1.access_key person.json)
+access_key=$(jq .access_key admin.json)
 generate_post_data()
 {
 cat <<EOF

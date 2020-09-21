@@ -5,7 +5,7 @@ module Data.Essence.Methods
   , deletePair
   , getEssenceFields
   , getEssenceColumn
-  , iterateHashMapJsonList
+  , iterateHMJson
   , setColumn
   , parseOnlyValues
   , parseOnlyFields
@@ -54,23 +54,16 @@ getEssenceFields essenceColumn api =
 getEssenceColumn :: T.Text -> T.Text -> Config -> Api -> Essence Column
 getEssenceColumn essence apiAction (Config conf) (Api api) =
   let dbAction = getApiDBMethod apiAction $ Api api
-      unpackObj obj = do
-        (field, value) <- HM.toList obj
-        return (T.unpack field, value)
-      listToHmColumn = HM.fromList . iterateHashMapJsonList . concatMap unpackObj
    in case getValue [essence] conf of
         A.Object objFromConf ->
           case getValue [essence] api of
             A.Object objFromApi ->
-              EssenceColumn essence dbAction $ listToHmColumn [objFromConf, objFromApi]
-            _ -> EssenceColumn essence dbAction $ listToHmColumn [objFromConf]
+              EssenceColumn essence dbAction . iterateHMJson $ HM.unions [objFromConf, objFromApi]
+            _ -> EssenceColumn essence dbAction $ iterateHMJson objFromConf
         _ -> EssenceColumn "" "" HM.empty
 
-iterateHashMapJsonList :: [(String, A.Value)] -> [(String, Column)]
-iterateHashMapJsonList [] = []
-iterateHashMapJsonList (("access_key", _):rest) = iterateHashMapJsonList rest
-iterateHashMapJsonList ((field, value):rest) =
-  (field, setColumn value) : iterateHashMapJsonList rest
+iterateHMJson :: A.Object -> HM.HashMap T.Text Column
+iterateHMJson = HM.map setColumn . HM.delete "access_key"
 
 setColumn :: A.Value -> Column
 setColumn v =
@@ -82,7 +75,7 @@ setColumn v =
 parseOnlyValues :: List -> [MyValue]
 parseOnlyValues = map snd
 
-parseOnlyFields :: List -> [String]
+parseOnlyFields :: List -> [Field]
 parseOnlyFields = map fst
 
 withoutEmpty :: [(Field, MyValue)] -> [(Field, MyValue)]

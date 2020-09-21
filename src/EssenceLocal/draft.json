@@ -1,40 +1,38 @@
-{ "TABLE":
-    { "draft":
-        { "id":
-            { "type": "BIGSERIAL"
-            , "constraint": "PRIMARY KEY"
-            }
-        , "name":
-            { "type": "VARCHAR(50)"
-            , "null": "NOT NULL"
-            }
-        , "date_of_creation":
-            { "type": "DATE"
-            , "default": "CURRENT_DATE"
-            }
-        , "author_id":
-            { "type": "INT"
-            , "null": "NOT NULL"
-            , "relations": "REFERENCES author (id)"
-            , "action": "ON DELETE CASCADE"
-            }
-        , "category_id":
-            { "type": "INT"
-            , "relations": "REFERENCES category (id)"
-            , "action": "ON DELETE SET NULL"
-            }
-        , "tag_ids":
-            { "type": "INTEGER[]"
-            }
-        , "content":
-            { "type": "TEXT"
-            }
-        , "main_photo":
-            { "type": "VARCHAR(50)"
-            }
-        , "optional_photos":
-            { "type": "VARCHAR(50)[]"
-            }
+{ "draft":
+    { "id":
+        { "type": "BIGSERIAL"
+        , "constraint": "PRIMARY KEY"
+        }
+    , "name":
+        { "type": "VARCHAR(50)"
+        , "null": "NOT NULL"
+        }
+    , "date_of_creation":
+        { "type": "DATE"
+        , "default": "CURRENT_DATE"
+        }
+    , "author_id":
+        { "type": "INT"
+        , "null": "NOT NULL"
+        , "relations": "REFERENCES author (id)"
+        , "action": "ON DELETE CASCADE"
+        }
+    , "category_id":
+        { "type": "INT"
+        , "relations": "REFERENCES category (id)"
+        , "action": "ON DELETE SET NULL"
+        }
+    , "tag_ids":
+        { "type": "INTEGER[]"
+        }
+    , "content":
+        { "type": "TEXT"
+        }
+    , "main_photo":
+        { "type": "VARCHAR(50)"
+        }
+    , "optional_photos":
+        { "type": "VARCHAR(50)[]"
         }
     }
 }

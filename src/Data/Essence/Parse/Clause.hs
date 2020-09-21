@@ -14,14 +14,13 @@ module Data.Essence.Parse.Clause
   , parseSubStr
   ) where
 
-import Config
-
 import Data.Base
 import Data.Empty
 import Data.Essence
 import Data.MyValue as MyValue
 import Data.SQL
 
+import Control.Monad.Trans.Writer.CPS
 import Data.List
 
 type EssenceName = String
@@ -140,7 +139,10 @@ addEssenceName name field = name <> "." <> field
 
 parseTagsIn :: MyValue -> String
 parseTagsIn value =
-  let tagArr = case value of {MyIntegers arr -> arr; _ -> []}
+  let tagArr =
+        case value of
+          MyIntegers arr -> arr
+          _ -> []
    in intercalate " OR " $ map (\tag -> show tag <> "=ANY(tag_ids)") tagArr
 
 parseAuthorName :: String -> String -> String

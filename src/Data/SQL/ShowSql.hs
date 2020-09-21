@@ -17,8 +17,10 @@ import Data.MyValue
 import Data.SQL
 
 import Data.Functor.Identity
+import qualified Data.HashMap.Strict as HM
 import Data.List
 import Data.Maybe
+import qualified Data.Text as T
 
 type SqlRequest = String
 
@@ -105,6 +107,33 @@ instance ShowSql (Essence List) where
         whereC = [Where ("id", myId)]
      in showSql $ Delete name whereC
   showSql x = show x
+
+instance ShowSql Column where
+  showSql Column { cValueType = valueType
+                 , cNULL = maybeNULL
+                 , cDefault = maybeDefault
+                 , cRelations = maybeRelations
+                 , cConstraint = maybeConstraint
+                 , cAction = maybeAction
+                 } =
+    let strArr =
+          show valueType :
+          filter
+            (/= "")
+            [ (\case {Just x -> show x; Nothing -> ""}) maybeNULL
+            , (\case {Just x -> show x; Nothing -> ""}) maybeDefault
+            , (\case {Just x -> show x; Nothing -> ""}) maybeConstraint
+            , (\case {Just x -> show x; Nothing -> ""}) maybeRelations
+            , (\case {Just x -> show x; Nothing -> ""}) maybeAction
+            ]
+     in intercalate " " strArr
+
+instance ShowSql (Essence Column) where
+  showSql (EssenceColumn table "create" columnHM) =
+    let columnRows = map (\(l, r) -> T.unpack l <> " " <> showSql r) $ HM.toList columnHM
+     in "CREATE TABLE " <>
+        T.unpack table <> " ( " <> intercalate ", " columnRows <> " );"
+  showSql (EssenceColumn _ _ _) = ""
 
 -- Apply only to homogeneous list of Clause String
 clauseSequenceA :: [Clause String] -> Clause [String]

@@ -5,12 +5,12 @@ module Database.Update
 import Config
 import Config.Exception
 import Data.Base
-import Data.Essence.Column
 import Data.SQL.AlterTable
 import Database.Exception
 import Log
 import Setup
 
+import Control.Monad.Trans.Writer.CPS
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as AT
 import qualified Data.HashMap.Strict as HM
@@ -24,11 +24,11 @@ type EssenceLocal = String
 
 type TableObj = A.Object
 
-type ColumnLocal = Column
+type ColumnNameArr = [T.Text]
 
-type ColumnArr = [T.Text]
+type ColumnNameLocalArr = [T.Text]
 
-type ColumnDatabase = Column
+type ColumnNameDatabaseArr = [T.Text]
 
 type ColumnList = [(T.Text, A.Value)]
 
@@ -107,7 +107,8 @@ updateTable essence = do
     then infoIO "No need change columns"
     else updateColumnArr essence changedColumnList
 
-isRedundantColumns, isNewColumns :: [ColumnDatabase] -> [ColumnLocal] -> Bool
+isRedundantColumns, isNewColumns ::
+     ColumnNameDatabaseArr -> ColumnNameLocalArr -> Bool
 isRedundantColumns = ((not . null) .) . (\\)
 
 isNewColumns = ((not . null) .) . flip (\\)
@@ -157,26 +158,19 @@ updateColumn table (column, columnDescriptionLocObj) = do
                 error $
                 "Database.Update.updateColumn Can't parse to column" <>
                 show columnDescriptionDbObj
-      alterTableQueries <- getAlterQueries
-      tryRunIO $ HDBC.runRaw alterTableQueries
-      when cValueType columnLoc /= cValueType columnDb $
-        HDBC.run conn (alterTable table (T.unpack column) $ cValueType columnLoc) []
-      when cNULL columnLoc /= cNULL columnDb $
-        HDBC.run conn (alterTable table (T.unpack column) $ cNULL columnLoc) []
-      when cDefault columnLoc /= cDefault columnDb $
-        HDBC.run conn (alterTable table (T.unpack column) $ cDefault columnLoc) []
-      when cRelations columnLoc /= cRelations columnDb $
-        HDBC.run conn (alterTable table (T.unpack column) $ cRelations columnLoc) []
-      when cConstraint columnLoc /= cConstraint columnDb $
-        HDBC.run conn (alterTable table (T.unpack column) $ cConstraint columnLoc) []
-      when cValueType columnLoc /= cValueType columnDb $
-        HDBC.run conn (alterTable table (T.unpack column) $ cValueType columnLoc) []
-updateColumn _ (column, _) =
-  infoIO $
-  "Column " <> T.unpack column <> " must contain an array in EssenceLocal/.json"
-
-getAlterQueries :: Table -> ColumnName -> ColumnLocal -> ColumnDatabase -> String
-getAlterQueries table
+      let alterTableQueries =
+            execWriter $
+            getAlterQueries table (T.unpack column) columnLoc columnDb
+      result <- tryRunIO $ HDBC.runRaw conn alterTableQueries
+      case result of
+        Success -> do
+          replaceColumnJson table $ HM.singleton column columnDescriptionLocObj
+          HDBC.commit conn
+          HDBC.disconnect conn
+          infoIO $
+            "Table: " <>
+            table <> ", Column: " <> T.unpack column <> " was updated"
+        Fail -> HDBC.disconnect conn >> return ()
 
 dropColumns, createColumns :: Table -> ColumnLocalList -> IO ()
 dropColumns table columnList = do
@@ -241,7 +235,7 @@ replaceColumnJson table columnLocObj = do
   let columnNewObj = HM.union columnLocObj columnDbObj
   encodeFileFunc columnNewObj
 
-deleteColumnJson :: Table -> [ColumnLocal] -> IO ()
+deleteColumnJson :: Table -> ColumnNameLocalArr -> IO ()
 deleteColumnJson table columnLoc = do
   (columnDbObj, encodeFileFunc) <- getColumnDbObj table
   let columnNewObj = deleteFields columnDbObj columnLoc
@@ -258,5 +252,5 @@ getColumnDbObj table = do
 toColumnList :: Table -> TableObj -> ColumnList
 toColumnList table = HM.toList . fromObj . getValue ["TABLE", T.pack table]
 
-getColumnArr :: Table -> TableObj -> ColumnArr
+getColumnArr :: Table -> TableObj -> ColumnNameArr
 getColumnArr table = HM.keys . fromObj . getValue ["TABLE", T.pack table]

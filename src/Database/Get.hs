@@ -35,7 +35,8 @@ dbGet = do
   liftUnderApp . liftIO $ debugM logHandle "Start dbGet"
   addOffsetLimit
   essenceList@(EssenceList name _ _) <- getSApp
-  liftUnderApp . liftIO . debugM logHandle $ "Essence List: " <> show essenceList
+  liftUnderApp . liftIO . debugM logHandle $
+    "Essence List: " <> show essenceList
   let getQuery = showSql essenceList
   let uriDB = getUri config
   maybeConn <- liftUnderApp . tryConnect $ PSQL.connectPostgreSQL uriDB
@@ -153,11 +154,11 @@ iterateObj (essence:rest) pageObj = do
   (Config.Handle config api _ logHandle) <- askUnderApp
   let name = T.pack . takeWhile (not . isDigit) $ T.unpack essence
   let relationsFields =
-        map (\(field, descr) -> (field, fromJust $ cRelations descr)) .
         HM.toList .
+        HM.map (fromJust . cRelations) .
         HM.filter
-          (\descr ->
-             case cRelations descr of
+          (\x ->
+             case cRelations x of
                Just _ -> True
                _ -> False) .
         eColHashMap $
@@ -171,7 +172,7 @@ iterateObj (essence:rest) pageObj = do
   (:) (HM.singleton essence $ A.Object nestedEssence) <$>
     iterateObj rest pageObj
 
-nesteEssence :: [(String, Relations)] -> S A.Object UnderApp ()
+nesteEssence :: [(T.Text, Relations)] -> StateT A.Object UnderApp ()
 nesteEssence [] = do
   fieldsObj <- getSApp
   let table = "tag"
@@ -186,7 +187,7 @@ nesteEssence [] = do
 nesteEssence ((field, Relations table tableField):rest) = do
   fieldsObj <- getSApp
   let listOfPair =
-        case HM.lookup (T.pack field) fieldsObj of
+        case HM.lookup field fieldsObj of
           Just value -> [(T.unpack tableField, fromValue value)]
           Nothing -> []
   (A.Object essenceObj) <-
@@ -194,6 +195,5 @@ nesteEssence ((field, Relations table tableField):rest) = do
   (A.Object completeObj) <- liftUnderApp $ nesteEssences essenceObj
   if HM.null completeObj
     then modifySApp $ HM.union essenceObj
-    else modifySApp (HM.delete (T.pack field)) >>
-         modifySApp (HM.union completeObj)
+    else modifySApp (HM.delete field) >> modifySApp (HM.union completeObj)
   nesteEssence rest

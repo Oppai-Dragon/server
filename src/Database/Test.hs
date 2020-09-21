@@ -52,7 +52,7 @@ testAction funcName essenceName =
   Test.assertEqual ("fail " <> funcName <> " on " <> essenceName)
 
 goodResultValue :: A.Value
-goodResultValue = A.object ["result" A..= A.Number 1]
+goodResultValue = A.object ["result" A..= A.String "Success"]
 
 getDefaultValues :: [String] -> [(T.Text, A.Value)]
 getDefaultValues [] = []
@@ -91,7 +91,7 @@ getTest essenceList@(EssenceList name action _) funcName got@(A.Object gotObj) =
         _ -> testAction funcName name (HM.keys expectedObj) (HM.keys gotObj)
 getTest _ _ _ = Test.TestCase $ Test.assertBool "getTest take only " False
 
-createEssenceTest :: [Essence List] -> S EssenceData UnderApp [Test.Test]
+createEssenceTest :: [Essence List] -> StateT EssenceData UnderApp [Test.Test]
 createEssenceTest ((EssenceList name "create" list):rest) = do
   currentData <- getSApp
   randomInt <- liftUnderApp $ liftIO getRandomInteger
@@ -182,7 +182,7 @@ getNeededFields essence obj =
     A.Null -> []
     value -> [("id", fromValue value)]
 
-updateData :: EssenceName -> A.Value -> S EssenceData UnderApp ()
+updateData :: EssenceName -> A.Value -> StateT EssenceData UnderApp ()
 updateData essence value = do
   let essenceObj =
         case value of

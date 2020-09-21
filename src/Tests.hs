@@ -18,11 +18,11 @@ import Tests.Essence.Parse.Clause
 import Tests.Essence.RelationsTree.Methods
 import Tests.MyValue
 import Tests.Request
-import Tests.Request.Access.IsRight
+import Tests.Request.Access.Check
 import Tests.Request.Control
 import Tests.Request.Handling
-import Tests.Request.Method.IsRight
-import Tests.Request.Params.Methods
+import Tests.Request.Method.Check
+import Tests.Request.Params.Check
 import Tests.Required.Methods
 import Tests.SQL.ShowSql
 import Tests.SQL.ToValue
@@ -47,10 +47,10 @@ testList =
   requiredMethodsTests <>
   requestTests <>
   requestControlTests <>
-  requestAccessIsRightTests <>
+  requestAccessCheckTests <>
   requestHandlingTests <>
-  requestMethodIsRightTests <>
-  requestParamsMethodsTests <>
+  requestMethodCheckTests <>
+  requestParamsCheckTests <>
   showSqlTests <>
   sqlToValueTests <>
   databaseCreateTests <> databaseGetTests <> databaseTestTests <> databaseTests

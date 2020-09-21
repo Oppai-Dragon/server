@@ -1,33 +1,31 @@
-{ "TABLE":
-    { "person":
-        { "id":
-            { "type": "BIGSERIAL"
-            , "constraint": "PRIMARY KEY"
-            }
-        , "first_name":
-            { "type": "VARCHAR(50)"
-            , "null": "NOT NULL"
-            }
-        , "last_name":
-            { "type": "VARCHAR(50)"
-            , "null": "NOT NULL"
-            }
-        , "date_of_creation":
-            { "type": "DATE"
-            , "default": "CURRENT_DATE"
-            }
-        , "avatar":
-            { "type": "VARCHAR(50)"
-            , "default": "'https://oppai-dragon.site/images/avatar.jpg'"
-            }
-        , "is_admin":
-            { "type": "BOOLEAN"
-            , "default": "FALSE"
-            }
-        , "access_key":
-            { "type": "UUID"
-            , "default": "gen_random_uuid()"
-            }
+{ "person":
+    { "id":
+        { "type": "BIGSERIAL"
+        , "constraint": "PRIMARY KEY"
+        }
+    , "first_name":
+        { "type": "VARCHAR(50)"
+        , "null": "NOT NULL"
+        }
+    , "last_name":
+        { "type": "VARCHAR(50)"
+        , "null": "NOT NULL"
+        }
+    , "date_of_creation":
+        { "type": "DATE"
+        , "default": "CURRENT_DATE"
+        }
+    , "avatar":
+        { "type": "VARCHAR(50)"
+        , "default": "'https://oppai-dragon.site/images/avatar.jpg'"
+        }
+    , "is_admin":
+        { "type": "BOOLEAN"
+        , "default": "FALSE"
+        }
+    , "access_key":
+        { "type": "UUID"
+        , "default": "gen_random_uuid()"
         }
     }
 }

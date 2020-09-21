@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fc3913113818876438859c8020d6f43ff452e0e16ec9c4785fc6d66516779ac2
+-- hash: 839c28b5ad0e5906339601322ba1b46c01f298a47a1bf42c760b0f8e390228d2
 
 name:           server
 version:        0.1.0.0
@@ -52,13 +52,14 @@ library
       Data.Essence.RelationsTree
       Data.Essence.RelationsTree.Methods
       Data.MyValue
+      Data.MyValue.Parse
       Data.Request
       Data.Request.Access
-      Data.Request.Access.IsRight
+      Data.Request.Access.Check
       Data.Request.Control
       Data.Request.Handling
-      Data.Request.Method.IsRight
-      Data.Request.Params.Methods
+      Data.Request.Method.Check
+      Data.Request.Params.Check
       Data.Required
       Data.Required.Methods
       Data.SQL
@@ -98,11 +99,11 @@ library
       Tests.Essence.RelationsTree.Methods
       Tests.MyValue
       Tests.Request
-      Tests.Request.Access.IsRight
+      Tests.Request.Access.Check
       Tests.Request.Control
       Tests.Request.Handling
-      Tests.Request.Method.IsRight
-      Tests.Request.Params.Methods
+      Tests.Request.Method.Check
+      Tests.Request.Params.Check
       Tests.Required.Methods
       Tests.Setup
       Tests.SQL.ShowSql

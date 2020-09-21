@@ -6,9 +6,8 @@ module Config
   , Psql(..)
   , UnderApp
   , SApp
-  , S
+  , StateT
   , WApp
-  , Writer
   , Config.Handle(..)
   , setEng
   , Config.new
@@ -34,8 +33,6 @@ import System.IO.Unsafe (unsafePerformIO)
 type UnderApp = ReaderT Config.Handle IO
 
 type SApp = StateT (Essence List) UnderApp
-
-type S a b = StateT a b
 
 type WApp = WriterT All UnderApp
 

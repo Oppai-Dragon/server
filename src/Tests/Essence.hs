@@ -66,7 +66,7 @@ testFirstName = "testFirstName"
 
 testLastName = "testLastName"
 
-testAccessKey = "12345678-1234-1234-1234-123456789abc"
+testAccessKey = "12345678-1234-1234-1234-12345678test"
 
 testAvatar = "https://oppai-dragon.site/images/avatar.jpg"
 
@@ -164,13 +164,17 @@ testCommentListCreateFields =
 testAuthorGetColumn :: Essence Column
 testAuthorGetColumn = EssenceColumn "author" "get" testAuthorHMColumn
 
-testAuthorHMColumn :: HM.HashMap String Column
+testAuthorHMColumn :: HM.HashMap T.Text Column
 testAuthorHMColumn = HM.fromList testAuthorColumnFields
 
-testAuthorColumnFields :: [(String, Column)]
+testAuthorColumnFields :: [(T.Text, Column)]
 testAuthorColumnFields = zip testAuthorColumnFieldsName testAuthorColumnList
 
-testAuthorColumnFieldsName :: [String]
+testAuthorColumnFieldsString :: [(String, Column)]
+testAuthorColumnFieldsString =
+  zip ["id", "person_id", "description"] testAuthorColumnList
+
+testAuthorColumnFieldsName :: [T.Text]
 testAuthorColumnFieldsName = ["id", "person_id", "description"]
 
 testAuthorColumnList :: [Column]
@@ -189,13 +193,13 @@ testAuthorColumnList =
 testPersonCreateColumn :: Essence Column
 testPersonCreateColumn = EssenceColumn "person" "create" testPersonHMColumn
 
-testPersonHMColumn :: HM.HashMap String Column
+testPersonHMColumn :: HM.HashMap T.Text Column
 testPersonHMColumn = HM.fromList testPersonColumnFields
 
-testPersonColumnFields :: [(String, Column)]
+testPersonColumnFields :: [(T.Text, Column)]
 testPersonColumnFields = zip testPersonColumnFieldsName testPersonColumnList
 
-testPersonColumnFieldsName :: [String]
+testPersonColumnFieldsName :: [T.Text]
 testPersonColumnFieldsName =
   ["id", "avatar", "date_of_creation", "is_admin", "last_name", "first_name"]
 
@@ -213,33 +217,35 @@ testPersonColumnList =
   , defaultColumn {cValueType = VARCHAR 50, cNULL = Just $ NOT NULL}
   ]
 
-testPersonColumnJsonList :: [(String, A.Value)]
-testPersonColumnJsonList =
-  [ ( "id"
-    , A.object
-        [ "type" A..= A.String "BIGSERIAL"
-        , "constraint" A..= A.String "PRIMARY KEY"
-        ])
-  , ( "avatar"
-    , A.object
-        [ "type" A..= A.String "VARCHAR(50)"
-        , "default" A..=
-          A.String "'https://oppai-dragon.site/images/avatar.jpg'"
-        ])
-  , ( "date_of_creation"
-    , A.object
-        [ "type" A..= A.String "DATE"
-        , "default" A..= A.String "CURRENT_DATE"
-        ])
-  , ( "is_admin"
-    , A.object
-        [ "type" A..= A.String "BOOLEAN"
-        , "default" A..= A.String "FALSE"
-        ])
-  , ( "last_name"
-    , A.object
-        ["type" A..= A.String "VARCHAR(50)", "null" A..= A.String "NOT NULL"])
-  , ( "first_name"
-    , A.object
-        ["type" A..= A.String "VARCHAR(50)", "null" A..= A.String "NOT NULL"])
-  ]
+testPersonColumnObj :: A.Object
+testPersonColumnObj =
+  HM.fromList
+    [ ( "id"
+      , A.object
+          [ "type" A..= A.String "BIGSERIAL"
+          , "constraint" A..= A.String "PRIMARY KEY"
+          ])
+    , ( "first_name"
+      , A.object
+          ["type" A..= A.String "VARCHAR(50)", "null" A..= A.String "NOT NULL"])
+    , ( "last_name"
+      , A.object
+          ["type" A..= A.String "VARCHAR(50)", "null" A..= A.String "NOT NULL"])
+    , ( "date_of_creation"
+      , A.object
+          ["type" A..= A.String "DATE", "default" A..= A.String "CURRENT_DATE"])
+    , ( "avatar"
+      , A.object
+          [ "type" A..= A.String "VARCHAR(50)"
+          , "default" A..=
+            A.String "'https://oppai-dragon.site/images/avatar.jpg'"
+          ])
+    , ( "is_admin"
+      , A.object
+          ["type" A..= A.String "BOOLEAN", "default" A..= A.String "FALSE"])
+    , ( "access_key"
+      , A.object
+          [ "type" A..= A.String "UUID"
+          , "default" A..= A.String "gen_random_uuid()"
+          ])
+    ]

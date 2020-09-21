@@ -39,7 +39,7 @@ type Name = String
 type Field = String
 
 goodResult :: A.Object
-goodResult = HM.singleton "result" $ A.Number 1
+goodResult = HM.singleton "result" $ A.String "Success"
 
 isEssenceRelations :: Name -> Api -> Bool
 isEssenceRelations essence api =

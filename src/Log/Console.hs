@@ -57,7 +57,7 @@ warningM logHandle msg = do
 errorM logHandle msg = do
   logM logHandle ERROR msg
   traceIO $ prettyLog ERROR msg
-  traceIO $ myPrettyCallStack callStack
+  traceIO $ lastPrettyCallStack callStack
 
 tryM :: IO a -> IO (Either SomeException a)
 tryM = try
@@ -69,11 +69,11 @@ infoIO :: HasCallStack => String -> IO ()
 infoIO msg = do
   traceIO $ prettyLog INFO msg
   traceIO $ lastPrettyCallStack callStack
+
 -------------------------------------------------------------------------------
 -- * Readables
 prettyLog :: Level -> String -> String
 prettyLog level text = "[" <> show level <> "] " <> text
-
 
 lastPrettyCallStack :: CallStack -> String
 lastPrettyCallStack = myPrettySrcLoc . snd . last . getCallStack

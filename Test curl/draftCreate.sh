@@ -3,7 +3,7 @@ name="testDraft"
 content="testContent"
 category_id=$(jq .category1.id category.json)
 tag_id=$(jq .tag1.id tag.json)
-access_key=$(jq .person1.access_key person.json)
+access_key=$(jq .access_key admin.json)
 generate_post_data()
 {
 cat <<EOF

@@ -1,4 +1,4 @@
-module Data.Request.Params.Methods
+module Data.Request.Params.Check
   ( isRequiredParams
   , iterateRequiredParams
   , iterateParams
@@ -70,15 +70,16 @@ queryBSWithoutMaybe ((l, maybeR):rest) =
 
 isConstraintCorrect :: Essence Column -> [(String, MyValue)] -> WApp ()
 isConstraintCorrect _ [] = tellWApp $ All True
-isConstraintCorrect EssenceColumn {eColAction="get"} _ = tellWApp $ All True
-isConstraintCorrect EssenceColumn {eColAction="delete"} _ = tellWApp $ All True
+isConstraintCorrect EssenceColumn {eColAction = "get"} _ = tellWApp $ All True
+isConstraintCorrect EssenceColumn {eColAction = "delete"} _ =
+  tellWApp $ All True
 isConstraintCorrect EssenceColumn {} (("tag_ids", MyIntegers arr):_) = do
   (A.Object pageObj) <-
     liftUnderApp $ dbGetArray (EssenceList "tag" "get" [("id", MyIntegers arr)])
   let bool = length (HM.keys pageObj) == length arr
   tellWApp $ All bool
 isConstraintCorrect (EssenceColumn table action hm) ((field, myValue):rest) =
-  case HM.lookup field hm of
+  case HM.lookup (T.pack field) hm of
     Just column -> do
       isCorrectLengthText (cValueType column) myValue
       isUniqueParams table (field, myValue) (cConstraint column)
@@ -89,16 +90,16 @@ isConstraintCorrect (EssenceColumn table action hm) ((field, myValue):rest) =
 isCorrectLengthText :: ValueType -> MyValue -> WApp ()
 isCorrectLengthText valueType (MyString str) =
   let tellBool x = tellWApp . All $ x >= length str
-  in case valueType of
-    CHAR len -> tellBool len
-    VARCHAR len -> tellBool len
-    _ -> return ()
+   in case valueType of
+        CHAR len -> tellBool len
+        VARCHAR len -> tellBool len
+        _ -> return ()
 isCorrectLengthText valueType (MyStrings arr) =
   let tellBool x = tellWApp . All $ all ((>=) x . length) arr
-  in case valueType of
-    CHAR_ARR len -> tellBool len
-    VARCHAR_ARR len -> tellBool len
-    _ -> return ()
+   in case valueType of
+        CHAR_ARR len -> tellBool len
+        VARCHAR_ARR len -> tellBool len
+        _ -> return ()
 isCorrectLengthText _ _ = return ()
 
 -- Tell True, if essence with unique value doesn't exist
@@ -122,7 +123,7 @@ isRightRelationsParams (Just (Relations table fieldT)) myValue = do
 isTypeParamsCorrect :: Essence Column -> [(String, MyValue)] -> All
 isTypeParamsCorrect _ [] = All True
 isTypeParamsCorrect essence@(EssenceColumn _ _ hashMap) ((field, myValue):rest) =
-  case HM.lookup field hashMap of
+  case HM.lookup (T.pack field) hashMap of
     Just column ->
       All (compareValueType (cValueType column) myValue) <>
       isTypeParamsCorrect essence rest

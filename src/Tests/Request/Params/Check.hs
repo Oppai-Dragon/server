@@ -1,11 +1,11 @@
-module Tests.Request.Params.Methods
-  ( requestParamsMethodsTests
+module Tests.Request.Params.Check
+  ( requestParamsCheckTests
   ) where
 
 import Config
 import Data.Essence.Column
 import Data.MyValue
-import Data.Request.Params.Methods
+import Data.Request.Params.Check
 import Data.Required
 
 import Data.Monoid
@@ -14,8 +14,8 @@ import Tests.Essence
 
 import Test.HUnit
 
-requestParamsMethodsTests :: [Test]
-requestParamsMethodsTests =
+requestParamsCheckTests :: [Test]
+requestParamsCheckTests =
   [ TestLabel "isRequiredParamsTest" isRequiredParamsTest
   , TestLabel "iterateRequiredParamsTest" iterateRequiredParamsTest
   , TestLabel "iterateParamsTest" iterateParamsTest

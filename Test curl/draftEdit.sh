@@ -3,7 +3,7 @@ essence="draft"
 action="edit"
 name="testDraft2"
 id=$(jq ."$essence"1.id $essence.json)
-access_key=$(jq .person1.access_key person.json)
+access_key=$(jq .access_key admin.json)
 generate_post_data()
 {
 cat <<EOF

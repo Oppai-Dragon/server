@@ -1,29 +1,27 @@
-{ "TABLE":
-    { "comment":
-        { "id":
-            { "type": "BIGSERIAL"
-            , "constraint": "PRIMARY KEY"
-            }
-        , "news_id":
-            { "type": "BIGINT"
-            , "null": "NOT NULL"
-            , "relations": "REFERENCES news (id)"
-            , "action": "ON DELETE CASCADE"
-            }
-        , "person_id":
-            { "type": "BIGINT"
-            , "null": "NOT NULL"
-            , "relations": "REFERENCES person (id)"
-            , "action": "ON DELETE CASCADE"
-            }
-        , "date_of_creation":
-            { "type": "DATE"
-            , "default": "CURRENT_DATE"
-            }
-        , "content":
-            { "type": "TEXT"
-            , "null": "NOT NULL"
-            }
+{ "comment":
+    { "id":
+        { "type": "BIGSERIAL"
+        , "constraint": "PRIMARY KEY"
+        }
+    , "news_id":
+        { "type": "BIGINT"
+        , "null": "NOT NULL"
+        , "relations": "REFERENCES news (id)"
+        , "action": "ON DELETE CASCADE"
+        }
+    , "person_id":
+        { "type": "BIGINT"
+        , "null": "NOT NULL"
+        , "relations": "REFERENCES person (id)"
+        , "action": "ON DELETE CASCADE"
+        }
+    , "date_of_creation":
+        { "type": "DATE"
+        , "default": "CURRENT_DATE"
+        }
+    , "content":
+        { "type": "TEXT"
+        , "null": "NOT NULL"
         }
     }
 }

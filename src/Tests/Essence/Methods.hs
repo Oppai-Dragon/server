@@ -8,9 +8,9 @@ import Data.Essence.Column
 import Data.Essence.Methods
 import Data.MyValue (MyValue(..))
 
-import qualified Data.Aeson as A
-
 import Control.Monad.Trans.Reader
+import qualified Data.Aeson as A
+import qualified Data.HashMap.Strict as HM
 
 import Tests.Essence
 
@@ -22,7 +22,7 @@ essenceMethodsTests =
   , TestLabel "deletePairTest" deletePairTest
   , TestLabel "getEssenceFieldsTest" getEssenceFieldsTest
   , TestLabel "getEssenceColumnTest" getEssenceColumnTest
-  , TestLabel "iterateHashMapJsonListTest" iterateHashMapJsonListTest
+  , TestLabel "iterateHMJsonTest" iterateHMJsonTest
   , TestLabel "setColumnTest" setColumnTest
   , TestLabel "parseOnlyValuesTest" parseOnlyValuesTest
   , TestLabel "parseOnlyFieldsTest" parseOnlyFieldsTest
@@ -33,7 +33,7 @@ essenceMethodsTests =
   , TestLabel "toEssenceListTest" toEssenceListTest
   ]
 
-addListTest, deletePairTest, getEssenceFieldsTest, getEssenceColumnTest, iterateHashMapJsonListTest, setColumnTest, parseOnlyValuesTest, parseOnlyFieldsTest, withoutEmptyTest, parseJustBSValueTest, parseNothingBSValueTest, parseFieldValueTest, toEssenceListTest ::
+addListTest, deletePairTest, getEssenceFieldsTest, getEssenceColumnTest, iterateHMJsonTest, setColumnTest, parseOnlyValuesTest, parseOnlyFieldsTest, withoutEmptyTest, parseJustBSValueTest, parseNothingBSValueTest, parseFieldValueTest, toEssenceListTest ::
      Test
 addListTest =
   TestCase $
@@ -81,12 +81,12 @@ getEssenceColumnTest =
     testPersonCreateColumn $
   getEssenceColumn "person" "create" testConfig testApi
 
-iterateHashMapJsonListTest =
+iterateHMJsonTest =
   TestCase $
   assertEqual
-    "for (iterateHashMapJsonList testPersonColumnJsonList)"
-    testPersonColumnFields $
-  iterateHashMapJsonList testPersonColumnJsonList
+    "for (iterateHMJson testPersonColumnObj)"
+    (HM.fromList testPersonColumnFields) $
+  iterateHMJson testPersonColumnObj
 
 setColumnTest =
   TestCase $

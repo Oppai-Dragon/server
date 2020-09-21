@@ -1,19 +1,17 @@
-{ "TABLE":
-    { "category":
-        { "id":
-            { "type": "BIGSERIAL"
-            , "constraint": "PRIMARY KEY"
-            }
-        , "name":
-            { "type": "VARCHAR(35)"
-            , "null": "NOT NULL"
-            , "constraint": "UNIQUE"
-            }
-        , "child_category":
-            { "type": "INT"
-            , "relations": "REFERENCES category (id)"
-            , "action": "ON DELETE SET NULL"
-            }
+{ "category":
+    { "id":
+        { "type": "BIGSERIAL"
+        , "constraint": "PRIMARY KEY"
+        }
+    , "name":
+        { "type": "VARCHAR(35)"
+        , "null": "NOT NULL"
+        , "constraint": "UNIQUE"
+        }
+    , "child_category":
+        { "type": "INT"
+        , "relations": "REFERENCES category (id)"
+        , "action": "ON DELETE SET NULL"
         }
     }
 }
