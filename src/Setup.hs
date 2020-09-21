@@ -21,9 +21,9 @@ import Config
 import Config.Exception
 import Data.Base
 import Data.Essence
+import Data.MyValue
 import Data.SQL.ShowSql
 import Database.Exception
-import Data.MyValue
 import Log
 
 import Control.Monad
@@ -61,9 +61,10 @@ resetup = do
 
 createFirstAdmin :: IO ()
 createFirstAdmin = do
-  let adminEssenceColumn =
-        EssenceColumn "person" "create" $
-        HM.fromList
+  let adminEssenceList =
+        EssenceList
+          "person"
+          "create"
           [ ("first_name", MyString "First")
           , ("last_name", MyString "Admin")
           , ("access_key", MyString "12345678-1234-1234-1234-123456789abc")
@@ -72,7 +73,7 @@ createFirstAdmin = do
   case maybeConn of
     Nothing -> return ()
     Just conn -> do
-      let createQuery = showSql adminEssenceColumn
+      let createQuery = showSql adminEssenceList
       result <- tryRunIO $ HDBC.run conn createQuery []
       case result of
         Success -> do

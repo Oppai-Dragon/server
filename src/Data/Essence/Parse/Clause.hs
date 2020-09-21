@@ -141,7 +141,7 @@ parseTagsIn :: MyValue -> String
 parseTagsIn value =
   let tagArr =
         case value of
-          MyIntegers arr -> arr
+          MyIntegerArr arr -> arr
           _ -> []
    in intercalate " OR " $ map (\tag -> show tag <> "=ANY(tag_ids)") tagArr
 

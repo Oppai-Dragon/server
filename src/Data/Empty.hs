@@ -63,24 +63,27 @@ instance Empty [Bool] where
 instance Empty MyValue where
   empty = MyEmpty
   isEmpty (MyString value) = isEmpty value
-  isEmpty (MyStrings value) = isEmpty value
+  isEmpty (MyStringArr value) = isEmpty value
   isEmpty (MyInteger value) = isEmpty value
-  isEmpty (MyIntegers value) = isEmpty value
+  isEmpty (MyIntegerArr value) = isEmpty value
   isEmpty (MyBool value) = isEmpty value
-  isEmpty (MyBools value) = isEmpty value
+  isEmpty (MyBoolArr value) = isEmpty value
   isEmpty (MyDate value) = isEmpty value
-  isEmpty (MyDates value) = isEmpty value
+  isEmpty (MyDateArr value) = isEmpty value
   isEmpty (MyNextval value) = isEmpty value
+  isEmpty (MyUri value) = isEmpty value
   isEmpty MyEmpty = True
   parseValue (MyString value) = parseValue value
-  parseValue (MyStrings value) = parseValue value
+  parseValue (MyStringArr value) = parseValue value
   parseValue (MyInteger value) = parseValue value
-  parseValue (MyIntegers value) = parseValue value
+  parseValue (MyIntegerArr value) = parseValue value
   parseValue (MyBool value) = parseValue value
-  parseValue (MyBools value) = parseValue value
+  parseValue (MyBoolArr value) = parseValue value
   parseValue (MyDate value) = parseValue value
-  parseValue (MyDates value) = parseValue value
-  parseValue (MyNextval value) = case value of
-    'n':'e':'x':'t':'v':'a':'l':_ -> value
-    _ -> parseValue value
+  parseValue (MyDateArr value) = parseValue value
+  parseValue (MyUri value) = parseValue value
+  parseValue (MyNextval value) =
+    case value of
+      'n':'e':'x':'t':'v':'a':'l':_ -> value
+      _ -> parseValue value
   parseValue MyEmpty = "null"

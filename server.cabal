@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 839c28b5ad0e5906339601322ba1b46c01f298a47a1bf42c760b0f8e390228d2
+-- hash: b5e8d25cde13858060c99e2996c0e2e0db48d809e1252e3c64498737c4dd30e7
 
 name:           server
 version:        0.1.0.0
@@ -37,6 +37,7 @@ library
       Data.Base.Aeson
       Data.Base.Interface
       Data.Base.Lift
+      Data.Base.Parsec
       Data.Base.Path
       Data.Base.Prelude
       Data.Base.Random

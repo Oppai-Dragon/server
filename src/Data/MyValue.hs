@@ -4,11 +4,14 @@
 module Data.MyValue
   ( MyValue(..)
   , parseInteger
+  , parseIntegerArr
   , parseString
+  , parseStringArr
   , parseBool
-  , parseIntegers
-  , parseStrings
+  , parseBoolArr
   , parseDate
+  , parseDateArr
+  , parseUri
   , parseNextval
   , parseMyValue
   , fromBS
@@ -24,7 +27,6 @@ import Data.MyValue.Parse
 import qualified Data.Aeson as A
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC8
-import Data.Char
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Scientific as Scientific
 import qualified Data.Text as T
@@ -45,10 +47,8 @@ data MyValue
   | MyEmpty
   deriving (Read, Show, Eq)
 
-
-parseInteger, parseIntegerArr, parseString, parseStringArr, parseBool, parseBoolArr, parseDate, parseDateArr, parseNextval ::
+parseInteger, parseIntegerArr, parseString, parseStringArr, parseBool, parseBoolArr, parseDate, parseDateArr, parseUri, parseNextval ::
      Parsec String String MyValue
-
 parseInteger = do
   field <- parseIntegerStr
   return . MyInteger $
@@ -57,87 +57,53 @@ parseInteger = do
       _ -> 0
 
 parseIntegerArr = do
-  _ <- char '[' <|> char '{'
-  integers <- many $ digit <|> char ','
-  _ <- char ']' <|> char '}'
-  let arr = '[' : integers <> "]"
-  return . MyIntegerArr $
-    case reads arr :: [([Integer], String)] of
-      [(l, _)] -> l
-      _ -> []
+  integers <- parseIntegerArrStr
+  let readInt str =
+        case reads str of
+          [(l, _)] -> l
+          _ -> 0
+  return . MyIntegerArr $ map readInt integers
 
-parseString = do
-  field <- many1 $ noneOf "[]{}:;\'\",<.>/?\\=+()*&^%$#@!~`\n\t\r"
-  return $ MyString field
+parseString = parseStringStr >>= return . MyString
 
-parseStringArr = do
-  _ <- char '[' <|> char '{'
-  strings <-
-    many (noneOf "[]{}:;\'<,.>/?\\=+()*&^%$#@!~`\n\t\r") `sepBy` char ','
-  _ <- char ']' <|> char '}'
-  let arr = map (filter (/= '\"')) strings
-  return $ MyStringArr arr
+parseStringArr = parseStringArrStr >>= return . MyStringArr
 
 parseBool = do
-  field <-
-    try (string "False") <|> string "FALSE" <|> string "false" <|>
-    try (string "True") <|>
-    string "TRUE" <|>
-    string "true"
+  field <- parseBoolStr
   return . MyBool $
-    case map toUpper field of
+    case field of
       "FALSE" -> False
       "TRUE" -> True
       _ -> False
 
 parseBoolArr = do
-  _ <- char '[' <|> char '{'
-  fields <- many (try (string "False") <|> string "FALSE" <|> string "false" <|>
-    try (string "True") <|>
-    string "TRUE" <|>
-    string "true") `sepBy` char ','
-  _ <- char ']' <|> char '}'
+  arr <- parseBoolArrStr
+  let boolArr =
+        map
+          (\case
+             "FALSE" -> False
+             "True" -> True
+             _ -> False)
+          arr
+  return $ MyBoolArr boolArr
 
-parseDate = do
-  num1 <- try (count 4 digit) <|> count 2 digit
-  sep1 <- char '-'
-  num2 <- count 2 digit
-  sep2 <- char '-'
-  num3 <- try (count 4 digit) <|> count 2 digit
-  return . MyDate $ num1 <> (sep1 : num2) <> (sep2 : num3)
+parseDate = parseDateStr >>= return . MyDate
 
-parseLetterDigitTimes :: Int -> Parsec String String String
-parseLetterDigitTimes 0 = return []
-parseLetterDigitTimes n =
-  (letter <|> digit) >>= (\ch -> (ch :) <$> parseLetterDigitTimes (n - 1))
+parseDateArr = parseDateArrStr >>= return . MyDateArr
 
-parseNextval = do
-  let parseStr = do
-        part1 <- string "nextval("
-        part2 <- many anyChar
-        return $ part1 <> part2
-  let parseAccessKey = do
-        part1 <- parseLetterDigitTimes 8
-        sep1 <- char '-'
-        part2 <- parseLetterDigitTimes 4
-        sep2 <- char '-'
-        part3 <- parseLetterDigitTimes 4
-        sep3 <- char '-'
-        part4 <- parseLetterDigitTimes 4
-        sep4 <- char '-'
-        part5 <- parseLetterDigitTimes 12
-        return $
-          part1 <>
-          (sep1 : part2) <> (sep2 : part3) <> (sep3 : part4) <> (sep4 : part5)
-  result <- try parseStr <|> parseAccessKey
-  return $ MyNextval result
+parseUri = parseUriStr >>= return . MyUri
+
+parseNextval = parseNextvalStr >>= return . MyNextval
 
 parseMyValue :: Parsec String String MyValue
 parseMyValue =
-  try parseBool <|> try parseDate <|> try parseNextval <|> try parseInteger <|>
+  try parseBool <|> try parseBoolArr <|> try parseDate <|> try parseDateArr <|>
+  try parseNextval <|>
+  try parseInteger <|>
+  try parseUri <|>
   try parseString <|>
-  try parseIntegers <|>
-  parseStrings
+  try parseIntegerArr <|>
+  parseStringArr
 
 fromBS :: BS.ByteString -> MyValue
 fromBS = fromStr . BSC8.unpack
@@ -153,11 +119,12 @@ fromValue value =
         then MyEmpty
         else case head (V.toList vector) of
                A.String _ ->
-                 MyStrings . map (\(A.String x) -> T.unpack x) $ V.toList vector
-               A.Number _ -> MyIntegers . map valueToInteger $ V.toList vector
-               A.Bool _ -> MyBools . map (\(A.Bool x) -> x) $ V.toList vector
+                 MyStringArr . map (\(A.String x) -> T.unpack x) $
+                 V.toList vector
+               A.Number _ -> MyIntegerArr . map valueToInteger $ V.toList vector
+               A.Bool _ -> MyBoolArr . map (\(A.Bool x) -> x) $ V.toList vector
                _ -> MyEmpty
-    A.Object obj -> MyStrings . map T.unpack $ HM.keys obj
+    A.Object obj -> MyStringArr . map T.unpack $ HM.keys obj
     A.Null -> MyEmpty
 
 fromStr :: String -> MyValue
@@ -170,27 +137,29 @@ toStr :: MyValue -> String
 toStr myValue =
   case myValue of
     MyInteger num -> show num
+    MyIntegerArr intArr -> show intArr
     MyString str -> str
+    MyStringArr strArr -> filter (/= '\"') $ show strArr
     MyBool bool -> show bool
-    MyIntegers intArr -> show intArr
-    MyStrings strArr -> filter (/= '\"') $ show strArr
-    MyBools boolArr -> show boolArr
+    MyBoolArr boolArr -> show boolArr
     MyNextval val -> val
+    MyUri uri -> uri
     MyDate date -> date
-    MyDates dateArr -> filter (/= '\"') $ show dateArr
+    MyDateArr dateArr -> filter (/= '\"') $ show dateArr
     MyEmpty -> ""
 
 toValue :: MyValue -> A.Value
 toValue myValue =
   case myValue of
     MyInteger num -> A.Number $ Scientific.scientific num 0
-    MyString str -> A.String $ T.pack str
-    MyBool bool -> A.Bool bool
-    MyIntegers arr ->
+    MyIntegerArr arr ->
       A.Array . V.fromList $ map (A.Number . flip Scientific.scientific 0) arr
-    MyStrings arr -> A.Array . V.fromList $ map (A.String . T.pack) arr
-    MyBools arr -> A.Array . V.fromList $ map A.Bool arr
+    MyString str -> A.String $ T.pack str
+    MyStringArr arr -> A.Array . V.fromList $ map (A.String . T.pack) arr
+    MyBool bool -> A.Bool bool
+    MyBoolArr arr -> A.Array . V.fromList $ map A.Bool arr
     MyNextval val -> A.String $ T.pack val
+    MyUri uri -> A.String $ T.pack uri
     MyDate date -> A.String $ T.pack date
-    MyDates arr -> A.Array . V.fromList $ map (A.String . T.pack) arr
+    MyDateArr arr -> A.Array . V.fromList $ map (A.String . T.pack) arr
     MyEmpty -> A.Null

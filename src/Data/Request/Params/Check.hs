@@ -73,9 +73,9 @@ isConstraintCorrect _ [] = tellWApp $ All True
 isConstraintCorrect EssenceColumn {eColAction = "get"} _ = tellWApp $ All True
 isConstraintCorrect EssenceColumn {eColAction = "delete"} _ =
   tellWApp $ All True
-isConstraintCorrect EssenceColumn {} (("tag_ids", MyIntegers arr):_) = do
+isConstraintCorrect EssenceColumn {} (("tag_ids", MyIntegerArr arr):_) = do
   (A.Object pageObj) <-
-    liftUnderApp $ dbGetArray (EssenceList "tag" "get" [("id", MyIntegers arr)])
+    liftUnderApp $ dbGetArray (EssenceList "tag" "get" [("id", MyIntegerArr arr)])
   let bool = length (HM.keys pageObj) == length arr
   tellWApp $ All bool
 isConstraintCorrect (EssenceColumn table action hm) ((field, myValue):rest) =
@@ -94,7 +94,7 @@ isCorrectLengthText valueType (MyString str) =
         CHAR len -> tellBool len
         VARCHAR len -> tellBool len
         _ -> return ()
-isCorrectLengthText valueType (MyStrings arr) =
+isCorrectLengthText valueType (MyStringArr arr) =
   let tellBool x = tellWApp . All $ all ((>=) x . length) arr
    in case valueType of
         CHAR_ARR len -> tellBool len
@@ -144,23 +144,23 @@ compareValueType valueType (MyString _) =
     TEXT -> True
     UUID -> True
     _ -> False
-compareValueType valueType (MyIntegers _) =
+compareValueType valueType (MyIntegerArr _) =
   case valueType of
     SMALLINT_ARR -> True
     BIGINT_ARR -> True
     INTEGER_ARR -> True
     INT_ARR -> True
     _ -> False
-compareValueType valueType (MyStrings _) =
+compareValueType valueType (MyStringArr _) =
   case valueType of
     CHAR_ARR _ -> True
     VARCHAR_ARR _ -> True
     TEXT_ARR -> True
     _ -> False
 compareValueType BOOLEAN (MyBool _) = True
-compareValueType BOOLEAN_ARR (MyBools _) = True
+compareValueType BOOLEAN_ARR (MyBoolArr _) = True
 compareValueType DATE (MyDate _) = True
-compareValueType DATE_ARR (MyDates _) = True
+compareValueType DATE_ARR (MyDateArr _) = True
 compareValueType valueType (MyNextval _) =
   case valueType of
     SERIAL -> True

@@ -151,7 +151,7 @@ getArrayTest listData = do
   let essence = "tag"
   let pare =
         case lookup2 essence "id" listData of
-          Just (MyInteger idNum) -> ("id", MyIntegers [idNum])
+          Just (MyInteger idNum) -> ("id", MyIntegerArr [idNum])
           _ -> ("id", MyEmpty)
   let essenceList = EssenceList essence "get" [pare]
   essenceValue <- dbGetArray essenceList
@@ -228,7 +228,7 @@ handleDraftCase name fields =
     "draft" ->
       case lookup "tag_id" fields of
         Just (MyInteger idNum) ->
-          ("tag_ids", MyIntegers [idNum]) :
+          ("tag_ids", MyIntegerArr [idNum]) :
           Data.Base.deletePair ("tag_id", MyEmpty) fields
         _ -> fields
     _ -> fields

@@ -95,7 +95,7 @@ dbGetOne (EssenceList _ _ list) = do
   return $ A.Object HM.empty
 
 dbGetArray :: Essence List -> UnderApp A.Value
-dbGetArray (EssenceList table action [(field, MyIntegers arr)]) = do
+dbGetArray (EssenceList table action [(field, MyIntegerArr arr)]) = do
   (Config.Handle config _ _ logHandle) <- askUnderApp
   liftIO $ debugM logHandle "Start dbGetArray"
   let uri = getUri config

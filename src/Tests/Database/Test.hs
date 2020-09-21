@@ -121,7 +121,7 @@ getNeededFieldsDraftTest =
     , ("date_of_creation", MyDate "2020-09-03")
     , ("name", MyString "testDraft")
     , ("id", MyInteger 1)
-    , ("tag_ids", MyIntegers [4])
+    , ("tag_ids", MyIntegerArr [4])
     ] $
   getNeededFields "draft" testDraftObj
 
@@ -188,7 +188,7 @@ getNewsRelatedFieldsTest =
     , ("date_of_creation", MyDate "2020-09-03")
     , ("author_id", MyInteger 2)
     , ("category_id", MyInteger 3)
-    , ("tag_ids", MyIntegers [4])
+    , ("tag_ids", MyIntegerArr [4])
     , ("content", MyString "for loxov")
     , ("main_photo", MyEmpty)
     , ("optional_photos", MyEmpty)
@@ -206,7 +206,7 @@ handleDraftCaseTest =
   TestCase $
   assertEqual
     "for (handleDraftCase \"draft\" [(\"tag_id\",MyInteger 1)])"
-    [("tag_ids", MyIntegers [1])] $
+    [("tag_ids", MyIntegerArr [1])] $
   handleDraftCase "draft" [("tag_id", MyInteger 1)]
 
 testEssenceData :: [(String, List)]
@@ -250,7 +250,7 @@ testDraftList =
   , ("date_of_creation", MyDate "2020-09-03")
   , ("author_id", MyInteger 2)
   , ("category_id", MyInteger 3)
-  , ("tag_ids", MyIntegers [4])
+  , ("tag_ids", MyIntegerArr [4])
   , ("content", MyString "for loxov")
   , ("main_photo", MyEmpty)
   , ("optional_photos", MyEmpty)

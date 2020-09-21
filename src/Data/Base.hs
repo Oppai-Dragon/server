@@ -2,6 +2,7 @@ module Data.Base
   ( module Data.Base.Aeson
   , module Data.Base.Interface
   , module Data.Base.Lift
+  , module Data.Base.Parsec
   , module Data.Base.Path
   , module Data.Base.Prelude
   , module Data.Base.Random
@@ -13,6 +14,7 @@ module Data.Base
 import Data.Base.Aeson
 import Data.Base.Interface
 import Data.Base.Lift
+import Data.Base.Parsec
 import Data.Base.Path
 import Data.Base.Prelude
 import Data.Base.Random

@@ -20,8 +20,8 @@ fromBSTests, fromValueTests, fromStrTests :: [Test]
 fromTests = fromBSTests <> fromValueTests <> fromStrTests
 
 fromBSTests =
-  [ TestLabel "fromBSMyIntegersTest" fromBSMyIntegersTest
-  , TestLabel "fromBSMyStringsTest" fromBSMyStringsTest
+  [ TestLabel "fromBSMyIntegerArrTest" fromBSMyIntegerArrTest
+  , TestLabel "fromBSMyStringArrTest" fromBSMyStringArrTest
   , TestLabel "fromBSMyBoolTest" fromBSMyBoolTest
   , TestLabel "fromBSMyDateTest" fromBSMyDateTest
   , TestLabel "fromBSMyNextvalTest" fromBSMyNextvalTest
@@ -30,15 +30,15 @@ fromBSTests =
   , TestLabel "fromBSMyEmptyTest" fromBSMyEmptyTest
   ]
 
-fromBSMyIntegersTest, fromBSMyStringsTest, fromBSMyBoolTest, fromBSMyDateTest, fromBSMyNextvalTest, fromBSMyIntegerTest, fromBSMyStringTest, fromBSMyEmptyTest ::
+fromBSMyIntegerArrTest, fromBSMyStringArrTest, fromBSMyBoolTest, fromBSMyDateTest, fromBSMyNextvalTest, fromBSMyIntegerTest, fromBSMyStringTest, fromBSMyEmptyTest ::
      Test
-fromBSMyIntegersTest =
+fromBSMyIntegerArrTest =
   TestCase $
-  assertEqual "for (fromBS \"[1,2]\")" (MyIntegers [1, 2]) $ fromBS "[1,2]"
+  assertEqual "for (fromBS \"[1,2]\")" (MyIntegerArr [1, 2]) $ fromBS "[1,2]"
 
-fromBSMyStringsTest =
+fromBSMyStringArrTest =
   TestCase $
-  assertEqual "for (fromBS \"[\"k1\",\"k2\"]\")" (MyStrings ["k1", "k2"]) $
+  assertEqual "for (fromBS \"[\"k1\",\"k2\"]\")" (MyStringArr ["k1", "k2"]) $
   fromBS "[\"k1\",\"k2\"]"
 
 fromBSMyBoolTest =
@@ -67,8 +67,8 @@ fromBSMyEmptyTest =
   TestCase $ assertEqual "for (fromBS \"\")" MyEmpty $ fromBS ""
 
 fromValueTests =
-  [ TestLabel "fromValueMyIntegersTest" fromValueMyIntegersTest
-  , TestLabel "fromValueMyStringsTest" fromValueMyStringsTest
+  [ TestLabel "fromValueMyIntegerArrTest" fromValueMyIntegerArrTest
+  , TestLabel "fromValueMyStringArrTest" fromValueMyStringArrTest
   , TestLabel "fromValueMyBoolTest" fromValueMyBoolTest
   , TestLabel "fromValueMyDateTest" fromValueMyDateTest
   , TestLabel "fromValueMyNextValTest" fromValueMyNextvalTest
@@ -77,20 +77,20 @@ fromValueTests =
   , TestLabel "fromValueMyEmptyTest" fromValueMyEmptyTest
   ]
 
-fromValueMyIntegersTest, fromValueMyStringsTest, fromValueMyBoolTest, fromValueMyDateTest, fromValueMyNextvalTest, fromValueMyIntegerTest, fromValueMyStringTest, fromValueMyEmptyTest ::
+fromValueMyIntegerArrTest, fromValueMyStringArrTest, fromValueMyBoolTest, fromValueMyDateTest, fromValueMyNextvalTest, fromValueMyIntegerTest, fromValueMyStringTest, fromValueMyEmptyTest ::
      Test
-fromValueMyIntegersTest =
+fromValueMyIntegerArrTest =
   TestCase $
   assertEqual
     "for (fromValue (Array $ V.fromList [Number 1,Number 2]))"
-    (MyIntegers [1, 2]) $
+    (MyIntegerArr [1, 2]) $
   fromValue (A.Array $ V.fromList [A.Number 1, A.Number 2])
 
-fromValueMyStringsTest =
+fromValueMyStringArrTest =
   TestCase $
   assertEqual
     "for (fromValue (Array $ V.fromList [String \"k1\",String \"k2\"]))"
-    (MyStrings ["k1", "k2"]) $
+    (MyStringArr ["k1", "k2"]) $
   fromValue (A.Array $ V.fromList [A.String "k1", A.String "k2"])
 
 fromValueMyBoolTest =
@@ -138,11 +138,11 @@ fromStrMyIntegersTest, fromStrMyStringsTest, fromStrMyBoolTest, fromStrMyDateTes
      Test
 fromStrMyIntegersTest =
   TestCase $
-  assertEqual "for (fromStr \"[1,2]\")" (MyIntegers [1, 2]) $ fromStr "[1,2]"
+  assertEqual "for (fromStr \"[1,2]\")" (MyIntegerArr [1, 2]) $ fromStr "[1,2]"
 
 fromStrMyStringsTest =
   TestCase $
-  assertEqual "for (fromStr \"[\"k1\",\"k2\"]\")" (MyStrings ["k1", "k2"]) $
+  assertEqual "for (fromStr \"[\"k1\",\"k2\"]\")" (MyStringArr ["k1", "k2"]) $
   fromStr "[\"k1\",\"k2\"]"
 
 fromStrMyBoolTest =
@@ -205,12 +205,12 @@ myBoolToStrTest =
 myIntegersToStrTest =
   TestCase $
   assertEqual "for (toStr (MyIntegers [1,2]))" "[1,2]" $
-  toStr (MyIntegers [1, 2])
+  toStr (MyIntegerArr [1, 2])
 
 myStringsToStrTest =
   TestCase $
   assertEqual "for (toStr (MyStrings [\"k1\",\"k2\"]))" "[k1,k2]" $
-  toStr (MyStrings ["k1", "k2"])
+  toStr (MyStringArr ["k1", "k2"])
 
 myNextValToStrTest =
   TestCase $
@@ -254,16 +254,16 @@ myBoolToValueTest =
 myIntegersToValueTest =
   TestCase $
   assertEqual
-    "for (toValue (MyIntegers [1,2]))"
+    "for (toValue (MyIntegerArr [1,2]))"
     (A.Array $ V.fromList [A.Number 1, A.Number 2]) $
-  toValue (MyIntegers [1, 2])
+  toValue (MyIntegerArr [1, 2])
 
 myStringsToValueTest =
   TestCase $
   assertEqual
-    "for (toValue (MyStrings [\"k1\",\"k2\"]))"
+    "for (toValue (MyStringArr [\"k1\",\"k2\"]))"
     (A.Array $ V.fromList [A.String "k1", A.String "k2"]) $
-  toValue (MyStrings ["k1", "k2"])
+  toValue (MyStringArr ["k1", "k2"])
 
 myNextValToValueTest =
   TestCase $

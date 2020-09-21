@@ -55,7 +55,7 @@ getAddedFieldsTest =
     , ("main_photo", MyEmpty)
     , ("content", MyString "testContent")
     , ("name", MyString "testDraft")
-    , ("tag_ids", MyIntegers [24])
+    , ("tag_ids", MyIntegerArr [24])
     , ("optional_photos", MyEmpty)
     ] $
   getAddedFields
@@ -81,7 +81,7 @@ unpackLeafsTest =
     , ("main_photo", MyEmpty)
     , ("content", MyString "testContent")
     , ("name", MyString "testDraft")
-    , ("tag_ids", MyIntegers [24])
+    , ("tag_ids", MyIntegerArr [24])
     , ("optional_photos", MyEmpty)
     ] .
   unpackLeafs
