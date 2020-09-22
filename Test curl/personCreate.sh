@@ -1,6 +1,6 @@
 #!/bin/bash
-first_name="First"
-last_name="Admin"
+first_name="testFirstName"
+last_name="testLastName"
 generate_post_data()
 {
 cat <<EOF

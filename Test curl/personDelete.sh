@@ -6,7 +6,7 @@ access_key=$(jq .access_key admin.json)
 generate_post_data()
 {
 cat <<EOF
-{ "id": "$id"
+{ "id": $id
 , "access_key": $access_key
 }
 EOF
