@@ -42,6 +42,10 @@ Now you need create tables un your database, before testing.
 ```git
 $ stack exec server-build
 ```
+For updating table and adding new tables.
+```git
+$ stack exec server-update
+```
 For rebuilding tables, it's deleting all tables with data.
 ```git
 $ stack exec server-rebuild
@@ -159,10 +163,14 @@ Also after the assembly bot-exe.exe appeared, it is located in server/.stack-wor
 Basically it is ReaderT Config IO = UnderApp. Then StateT s UnderApp appears on top, where s is usually an entity with three fields: elName is the name, elAction is the action that will eventually be executed in the database, and elList is a list of pairs of fields and values ​​in a custom data type, for convenience.
 
 ### Modules
+* build/Build.hs - module for command $ stack exec server-build
+* rebuild/Rebuild.hs - module for command $ stack exec server-rebuild
+* update/Update.hs - module for command $ stack exec server-update
 * src/Config.hs - Handle, App types, testConfig and testHandle.
     - src/Config/Get.hs - Functions for getting certain values ​​from the config.
     - src/Config/Set.hs - Setting config from Config.json and <Bot>.json.
     - src/Config/Internal.hs - Newtypes and type synonyms for config objects.
+    - src/Config/Exception.hs - For handling exceptions for Config/<file>.json.
 * src/Setup.hs - Functions for first setup: building database and Config.json.
 * src/App.hs - Function for server operation: processes the request and sends a response.
 * src/Log.hs - Imports all Log's module from /src/Log.
@@ -179,6 +187,7 @@ Basically it is ReaderT Config IO = UnderApp. Then StateT s UnderApp appears on 
     - /Exception.hs - Functions for handling errors when working with a database.
     - /Get.hs - Instead of one function, there are many of them, since in the case of news, nested entities need to be returned to the request. Also, several functions play a secondary role when you need to get an entity from the database, for example, to check the correct relationship between the author and the draft.
     - /Test.hs - Functions that are only needed to test functions that create, modify, get, and delete essences.
+    - /Update.hs - For updating tables in database and src/EssenceDatabase/<essence>.json
 * src/Data
     - /Base.hs - Functions that can be used in any module. For greater convenience, the functions are divided into modules in src/Data/Base/ and all are imported into Base.hs.
         - /Aeson.hs - Functions with Value from aeson package.
@@ -191,27 +200,28 @@ Basically it is ReaderT Config IO = UnderApp. Then StateT s UnderApp appears on 
         - /Text.hs - Functions for Text from package text.
         - /Time.hs - Functions that require import from package time.
     - /Essence.hs - Essence data family with instances.
+        - /Column.hs - data Column, data ValueType, data NULL, newtype Default, data Relations, data Constraint, data Action with instances.
         - /GetFields.hs - class GetFields for getting fields from Essence Column and Required fields.
         - /Methods.hs - Functions for working with instances of family Essence.
-        - /Parse.hs - Functions for parsing essence from json.
-            - /Clause.hs - Functions for parsing clauses, which are needed for a more specialized query to the database.
+        - /Parse/Clause.hs - Functions for parsing clauses, which are needed for a more specialized query to the database.
         - /RelationsTree.hs - data RelationsTree with instances.
             - /Methods.hs - Functions for processing a tree of relations. Basically, these are functions for collecting fields from a database, based on entity relationships and the available data obtained from the query.
     - /Request.hs - Functions for handling request to get specific values.
         - /Access.hs - data Access with instances. It is necessary for the separation of rights.
-            -/IsRight.hs - Function for checking access.
+            -/Check.hs - Function for checking access.
         - /Control.hs - Query validation functions: value types, required fields, required access, and more.
         - /Handling.hs - One of the main modules, which handle request and choose database method, and getting response.
-        - /Method.IsRight.hs - Function for checking right method of essence.
-        - /Params.Methods.hs - Functions for working with params of request.
+        - /Method.Check.hs - Function for checking right method of essence.
+        - /Params.Check.hs - Functions for working with params of request.
     - /Required.hs - data Required and instances.
         - /Methods.hs - Functions for working with Required fields.
     - /SQL.hs - data SqlQuery, data family Clause and instances.
+        - /AlterTable.hs - class AlterTable for translating Essence Column to Sql Query to alter table in database.
         - /ShowSql.hs - class ShowSql for translate SqlQuery, Essence List and others to SqlRequest.
         - /ToValue.hs - Functions for translating SqlValue from HDBC package to Value from aeson package.
     - /Empty.hs - class Empty for parsing value to correct format for database and instances.
     - /MyValue.hs - data MyValue with instances and functions for converting from string, to string, from Value, to Value and others.
-    - /Value.hs - Functions for unpacking Value from aeson package.
+        -/Parse.hs - For parsing MyValue from string.
 
 ### Adding new essences
 

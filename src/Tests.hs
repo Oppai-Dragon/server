@@ -53,12 +53,8 @@ testList =
   requestParamsCheckTests <>
   showSqlTests <>
   sqlToValueTests <>
-  databaseCreateTests <> databaseGetTests <> databaseTestTests <> databaseTests
+  databaseCreateTests <>
+  databaseGetTests <> databaseTestTests <> databaseTests <> setupTests
 
 runTest :: IO ()
-runTest = do
-  (Config.Handle (Config config) _ _ _) <- Config.new
-  if HM.null config
-    then runTestTT (TestList setupTests) >>
-         infoIO "Can't find Config.json" --- Need different look
-    else void $ runTestTT (TestList [TestList setupTests, testList])
+runTest = void $ runTestTT testList
