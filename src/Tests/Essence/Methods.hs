@@ -45,7 +45,7 @@ addListTest =
        [ ("first_name", MyString testFirstName)
        , ("last_name", MyString testLastName)
        , ("date_of_creation", MyDate testDate)
-       , ("avatar", MyString testAvatar)
+       , ("avatar", MyUri testAvatar)
        , ("access_key", MyString testAccessKey)
        , ("is_admin", MyBool True)
        , ("access_key", MyString testAccessKey)
@@ -61,7 +61,7 @@ deletePairTest =
        "create"
        [ ("last_name", MyString testLastName)
        , ("date_of_creation", MyDate testDate)
-       , ("avatar", MyString testAvatar)
+       , ("avatar", MyUri testAvatar)
        , ("access_key", MyString testAccessKey)
        , ("is_admin", MyBool True)
        ]) $

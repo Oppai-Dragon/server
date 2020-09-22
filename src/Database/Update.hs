@@ -10,6 +10,7 @@ import Database.Exception
 import Log
 import Setup
 
+import Control.Monad
 import Control.Monad.Trans.Writer.CPS
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as AT
@@ -54,12 +55,11 @@ updateDatabase = do
     then dropTables $ essenceDatabaseArr1 \\ essenceLocalArr1
     else infoIO "No need delete tables"
   if isNewTables essences essenceDatabaseArr1 essenceLocalArr1
-    then createTables $ essenceLocalArr1 \\ essenceDatabaseArr1
+    then void . createTables $ essenceLocalArr1 \\ essenceDatabaseArr1
     else infoIO "No need add tables"
   essenceDatabaseArr2 <- getEssenceArr "EssenceDatabase"
   essenceLocalArr2 <- getEssenceArr "EssenceLocal"
-  changedTables <-
-    getChangedTables (sort essenceDatabaseArr2) (sort essenceLocalArr2)
+  changedTables <- getChangedTables essenceDatabaseArr2 essenceLocalArr2
   if null changedTables
     then infoIO "No need change tables"
     else updateTableArr changedTables
@@ -150,7 +150,7 @@ updateColumn table (column, columnDescriptionLocObj) = do
                 "Database.Update.updateColumn Can't parse to column" <>
                 show columnDescriptionLocObj
       let columnDescriptionDbObj =
-            getValue ["TABLE", T.pack table, column] essenceDbObj
+            getValue [T.pack table, column] essenceDbObj
       let columnDb =
             case AT.parseMaybe A.parseJSON columnDescriptionDbObj of
               Just x -> x
@@ -170,7 +170,7 @@ updateColumn table (column, columnDescriptionLocObj) = do
           infoIO $
             "Table: " <>
             table <> ", Column: " <> T.unpack column <> " was updated"
-        Fail -> HDBC.disconnect conn >> return ()
+        Fail -> void $ HDBC.disconnect conn
 
 dropColumns, createColumns :: Table -> ColumnLocalList -> IO ()
 dropColumns table columnList = do
@@ -179,20 +179,19 @@ dropColumns table columnList = do
     Nothing -> return ()
     Just conn -> do
       let dropQueries = alterTableDrop table columnList
-      let getColumns = fst . unzip
       result <- tryRunIO $ HDBC.runRaw conn dropQueries
       case result of
         Success -> do
-          deleteColumnJson table $ getColumns columnList
+          deleteColumnJson table $ map fst columnList
           HDBC.commit conn
           HDBC.disconnect conn
           infoIO $
             "Table: " <>
             table <>
             ", Columns: " <>
-            (intercalate "," . map T.unpack . getColumns) columnList <>
+            (intercalate "," . map (T.unpack . fst)) columnList <>
             " are deleted"
-        Fail -> HDBC.disconnect conn >> return ()
+        Fail -> void $ HDBC.disconnect conn
 
 createColumns table columnList = do
   maybeConn <- tryConnectIO getConnection
@@ -210,9 +209,9 @@ createColumns table columnList = do
             "Table: " <>
             table <>
             ", Columns: " <>
-            (intercalate "," . map T.unpack . fst . unzip) columnList <>
+            (intercalate "," . map (T.unpack . fst)) columnList <>
             " are created"
-        Fail -> HDBC.disconnect conn >> return ()
+        Fail -> void $ HDBC.disconnect conn
 
 alterTableDrop, alterTableAdd :: Table -> ColumnLocalList -> String
 alterTableDrop _ [] = ""
@@ -227,7 +226,7 @@ alterTableAdd table ((column, value):rest) =
   table <>
   " ADD IF NOT EXISTS " <>
   T.unpack column <>
-  " " <> intercalate " " (toStrArr value) <> ";" <> alterTableAdd table rest
+  " " <> unwords (toStrArr value) <> ";" <> alterTableAdd table rest
 
 replaceColumnJson :: Table -> ColumnLocalObj -> IO ()
 replaceColumnJson table columnLocObj = do
@@ -245,12 +244,12 @@ getColumnDbObj :: Table -> IO (ColumnDatabaseObj, A.Object -> IO ())
 getColumnDbObj table = do
   path <- setPath $ "EssenceDatabase\\" <> table <> ".json"
   essenceDbObj <- trySetIO $ set path
-  let fields = ["TABLE", T.pack table]
+  let fields = [T.pack table]
   let columnDbObj = fromObj $ getValue fields essenceDbObj
   return (columnDbObj, \x -> A.encodeFile path $ toObj x fields)
 
 toColumnList :: Table -> TableObj -> ColumnList
-toColumnList table = HM.toList . fromObj . getValue ["TABLE", T.pack table]
+toColumnList table = HM.toList . fromObj . getValue [T.pack table]
 
 getColumnArr :: Table -> TableObj -> ColumnNameArr
-getColumnArr table = HM.keys . fromObj . getValue ["TABLE", T.pack table]
+getColumnArr table = HM.keys . fromObj . getValue [T.pack table]

@@ -126,14 +126,14 @@ instance ShowSql Column where
             , (\case {Just x -> show x; Nothing -> ""}) maybeRelations
             , (\case {Just x -> show x; Nothing -> ""}) maybeAction
             ]
-     in intercalate " " strArr
+     in unwords strArr
 
 instance ShowSql (Essence Column) where
   showSql (EssenceColumn table "create" columnHM) =
     let columnRows = map (\(l, r) -> T.unpack l <> " " <> showSql r) $ HM.toList columnHM
      in "CREATE TABLE " <>
         T.unpack table <> " ( " <> intercalate ", " columnRows <> " );"
-  showSql (EssenceColumn _ _ _) = ""
+  showSql EssenceColumn {} = ""
 
 -- Apply only to homogeneous list of Clause String
 clauseSequenceA :: [Clause String] -> Clause [String]

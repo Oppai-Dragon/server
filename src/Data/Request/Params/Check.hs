@@ -75,7 +75,8 @@ isConstraintCorrect EssenceColumn {eColAction = "delete"} _ =
   tellWApp $ All True
 isConstraintCorrect EssenceColumn {} (("tag_ids", MyIntegerArr arr):_) = do
   (A.Object pageObj) <-
-    liftUnderApp $ dbGetArray (EssenceList "tag" "get" [("id", MyIntegerArr arr)])
+    liftUnderApp $
+    dbGetArray (EssenceList "tag" "get" [("id", MyIntegerArr arr)])
   let bool = length (HM.keys pageObj) == length arr
   tellWApp $ All bool
 isConstraintCorrect (EssenceColumn table action hm) ((field, myValue):rest) =
@@ -132,6 +133,8 @@ isTypeParamsCorrect essence@(EssenceColumn _ _ hashMap) ((field, myValue):rest) 
 compareValueType :: ValueType -> MyValue -> Bool
 compareValueType valueType (MyInteger _) =
   case valueType of
+    SERIAL -> True
+    BIGSERIAL -> True
     SMALLINT -> True
     BIGINT -> True
     INTEGER -> True
@@ -161,6 +164,12 @@ compareValueType BOOLEAN (MyBool _) = True
 compareValueType BOOLEAN_ARR (MyBoolArr _) = True
 compareValueType DATE (MyDate _) = True
 compareValueType DATE_ARR (MyDateArr _) = True
+compareValueType valueType (MyUri _) =
+  case valueType of
+    CHAR _ -> True
+    VARCHAR _ -> True
+    TEXT -> True
+    _ -> False
 compareValueType valueType (MyNextval _) =
   case valueType of
     SERIAL -> True

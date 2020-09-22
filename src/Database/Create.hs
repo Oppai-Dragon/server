@@ -38,8 +38,8 @@ dbCreate = do
       liftUnderApp . liftIO . debugM logHandle $ "PSQL request: " <> createQuery
       result <- liftUnderApp . tryRun $ HDBC.run conn createQuery []
       case result of
-        Success -> liftUnderApp . liftIO . infoM logHandle $ name <> " wasn't created"
-        Fail -> liftUnderApp . liftIO . infoM logHandle $ name <> " was created"
+        Success -> liftUnderApp . liftIO . infoM logHandle $ name <> " was created"
+        Fail -> liftUnderApp . liftIO . infoM logHandle $ name <> " wasn't created"
       liftUnderApp . liftIO $ HDBC.commit conn
       let getQueryId = "SELECT currval('" <> name <> "_id_seq');"
       idSqlValues <-

@@ -15,6 +15,7 @@ import Data.SQL
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as AT
 import qualified Data.HashMap.Strict as HM
+import Data.Maybe
 import qualified Data.Text as T
 
 type Field = String
@@ -45,10 +46,7 @@ data instance  Essence Column = EssenceColumn{eColName :: T.Text,
 instance A.FromJSON (Essence Column) where
   parseJSON =
     let getName = head . HM.keys
-        toColumn v =
-          case AT.parseMaybe A.parseJSON v of
-            Just column -> column
-            Nothing -> defaultColumn
+        toColumn v = fromMaybe defaultColumn $ AT.parseMaybe A.parseJSON v
         getHashMap obj = HM.map toColumn . fromObj $ getValue [getName obj] obj
      in A.withObject "From JSON Data.Essence.Essence Column" $ \x ->
           pure

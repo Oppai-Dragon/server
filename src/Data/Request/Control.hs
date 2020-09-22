@@ -58,10 +58,10 @@ isPathRequestCorrect req api
           Nothing -> False
 
 ifNotEveryoneUpdate :: Essence Column -> Access -> Essence Column
-ifNotEveryoneUpdate essenceColumn@(EssenceColumn { eColName = name
+ifNotEveryoneUpdate essenceColumn@EssenceColumn { eColName = name
                                                  , eColAction = action
                                                  , eColHashMap = hashMap
-                                                 }) access =
+                                                 } access =
   if access > Everyone
     then EssenceColumn name action $
          HM.insert
@@ -71,10 +71,10 @@ ifNotEveryoneUpdate essenceColumn@(EssenceColumn { eColName = name
     else essenceColumn
 
 ifGetUpdate :: Essence Column -> Essence Column
-ifGetUpdate essenceColumn@(EssenceColumn { eColName = name
-                                         , eColAction = action
-                                         , eColHashMap = hashMap
-                                         }) =
+ifGetUpdate essenceColumn@EssenceColumn { eColName = name
+                                        , eColAction = action
+                                        , eColHashMap = hashMap
+                                        } =
   case action of
     "get" ->
       EssenceColumn name action $

@@ -64,9 +64,9 @@ parseIntegerArr = do
           _ -> 0
   return . MyIntegerArr $ map readInt integers
 
-parseString = parseStringStr >>= return . MyString
+parseString = MyString <$> parseStringStr
 
-parseStringArr = parseStringArrStr >>= return . MyStringArr
+parseStringArr = MyStringArr <$> parseStringArrStr
 
 parseBool = do
   field <- parseBoolStr
@@ -82,18 +82,18 @@ parseBoolArr = do
         map
           (\case
              "FALSE" -> False
-             "True" -> True
+             "TRUE" -> True
              _ -> False)
           arr
   return $ MyBoolArr boolArr
 
-parseDate = parseDateStr >>= return . MyDate
+parseDate = MyDate <$> parseDateStr
 
-parseDateArr = parseDateArrStr >>= return . MyDateArr
+parseDateArr = MyDateArr <$> parseDateArrStr
 
-parseUri = parseUriStr >>= return . MyUri
+parseUri = MyUri <$> parseUriStr
 
-parseNextval = parseNextvalStr >>= return . MyNextval
+parseNextval = MyNextval <$> parseNextvalStr
 
 parseMyValue :: Parsec String String MyValue
 parseMyValue =

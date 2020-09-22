@@ -9,9 +9,7 @@ module Setup
   , createTables
   , replaceTableJson
   , collectEssenceJson
-  , getEssenceDescriptionObjectArr
   , getEssenceLocalObjectArr
-  , getEssenceDescriptionObject
   , getEssenceLocalObject
   , getAllQueris
   , getCreateQuery
@@ -29,7 +27,6 @@ import Log
 import Control.Monad
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as AT
-import Data.Function
 import qualified Data.HashMap.Strict as HM
 import Data.List
 import qualified Data.Text as T
@@ -49,9 +46,10 @@ getDropTablesQuery essences = "DROP TABLE " <> intercalate ", " essences <> ";"
 setup :: IO ()
 setup = do
   essences <- map T.unpack . getEssences <$> setApi
-  createTables essences
-  buildConfigJson
-  createFirstAdmin
+  result <- createTables essences
+  case result of
+    Success -> buildConfigJson >> createFirstAdmin
+    Fail -> return ()
 
 resetup :: IO ()
 resetup = do
@@ -67,6 +65,7 @@ createFirstAdmin = do
           "create"
           [ ("first_name", MyString "First")
           , ("last_name", MyString "Admin")
+          , ("is_admin", MyBool True)
           , ("access_key", MyString "12345678-1234-1234-1234-123456789abc")
           ]
   maybeConn <- tryConnectIO getConnection
@@ -79,8 +78,8 @@ createFirstAdmin = do
         Success -> do
           HDBC.commit conn
           HDBC.disconnect conn
-          infoIO $ "First Admin is created "
-        Fail -> HDBC.disconnect conn >> return ()
+          infoIO "First Admin is created "
+        Fail -> void $ HDBC.disconnect conn
 
 getConnection :: IO PSQL.Connection
 getConnection = do
@@ -103,7 +102,7 @@ dropTables essences = do
           HDBC.commit conn
           HDBC.disconnect conn
           infoIO $ "Tables: " <> intercalate "," essences <> " are deleted"
-        Fail -> HDBC.disconnect conn >> return ()
+        Fail -> void $ HDBC.disconnect conn
 
 buildConfigJson :: IO ()
 buildConfigJson = do
@@ -115,26 +114,25 @@ buildConfigJson = do
   let json = A.Object $ HM.unions [jsonObj, uriObj]
   A.encodeFile path json
 
-createTables :: EssenceArr -> IO ()
+createTables :: EssenceArr -> IO Result
 createTables essences = do
   maybeConn <- tryConnectIO getConnection
   case maybeConn of
-    Nothing -> return ()
+    Nothing -> return Fail
     Just conn -> do
-      sqlQueries <- getAllQueris essences
+      sqlQueries <- concat <$> getAllQueris essences
       _ <- HDBC.run conn extensionQuery []
-      ioStack (flip ((tryRunIO .) . HDBC.run conn) []) sqlQueries
-      tables <- HDBC.getTables conn
-      essencesApi <- map T.unpack . getEssences <$> setApi
-      if tables == essencesApi
-        then do
+      result <- tryRunIO $ HDBC.runRaw conn sqlQueries
+      case result of
+        Success -> do
           HDBC.commit conn
-          replaceTableJson tables
+          replaceTableJson essences
           HDBC.disconnect conn
           infoIO $ "Tables: " <> intercalate "," essences <> " are created"
-        else do
+        Fail -> do
           HDBC.disconnect conn
           infoIO $ "Tables: " <> intercalate "," essences <> " aren't created"
+      return result
 
 replaceTableJson :: EssenceArr -> IO ()
 replaceTableJson [] = return ()
@@ -157,36 +155,17 @@ collectEssenceJson :: IO [A.Object]
 collectEssenceJson = do
   api <- setApi
   let essences = getEssences api
-  nowConfig <- set =<< setPath "Config.json"
-  objList <-
-    map T.unpack essences &
-    if HM.null nowConfig
-      then getEssenceLocalObjectArr
-      else getEssenceDescriptionObjectArr
+  objList <- getEssenceLocalObjectArr $ map T.unpack essences
   return [obj | obj <- objList, not $ null obj]
 
-getEssenceDescriptionObjectArr :: EssenceArr -> IO [A.Object]
-getEssenceDescriptionObjectArr [] = return []
-getEssenceDescriptionObjectArr (essence:rest) =
-  (:) <$> getEssenceDescriptionObject essence <*>
-  getEssenceDescriptionObjectArr rest
-
 getEssenceLocalObjectArr :: EssenceArr -> IO [A.Object]
-getEssenceLocalObjectArr [] = return []
-getEssenceLocalObjectArr (essence:rest) =
-  (:) <$> getEssenceLocalObject essence <*> getEssenceLocalObjectArr rest
-
-getEssenceDescriptionObject :: String -> IO A.Object
-getEssenceDescriptionObject essence = do
-  path <- setPath ("EssenceDatabase\\" <> essence <> ".json")
-  obj <- trySetIO $ set path
-  return obj
+getEssenceLocalObjectArr =
+  foldr (\essence -> (<*>) ((:) <$> getEssenceLocalObject essence)) (return [])
 
 getEssenceLocalObject :: String -> IO A.Object
 getEssenceLocalObject essence = do
   path <- setPath ("EssenceLocal\\" <> essence <> ".json")
-  obj <- trySetIO $ set path
-  return obj
+  trySetIO $ set path
 
 getAllQueris :: EssenceArr -> IO [String]
 getAllQueris essences = do

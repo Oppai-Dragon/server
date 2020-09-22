@@ -20,21 +20,27 @@ import Text.Parsec
 parseIntegerStr, parseStringStr, parseBoolStr, parseDateStr, parseUriStr, parseNextvalStr ::
      Parsec String String String
 parseIntegerArrStr, parseStringArrStr, parseBoolArrStr, parseDateArrStr ::
-      Parsec String String [String]
+     Parsec String String [String]
 parseIntegerStr = many1 digit
+
 parseIntegerArrStr = parseArr digit
+
 parseStringStr = many1 $ noneOf "[]{}:;\'\",<.>/?\\=+()*&^%$#@!~`\n\t\r"
+
 parseStringArrStr = do
-  strings <- parseArr $ noneOf "[]{}:;\'\",<.>/?\\=+()*&^%$#@!~`\n\t\r"
+  strings <- parseArr $ noneOf "[]{}:;\',<.>/?\\=+()*&^%$#@!~`\n\t\r"
   let arr = map (filter (/= '\"')) strings
   return arr
-parseBoolStr = do
-  field <- try (string "False") <|> string "FALSE" <|> string "false" <|>
-    try (string "True") <|>
-    string "TRUE" <|>
-    string "true"
-  return $ map toUpper field
-parseBoolArrStr = parseArr parseBoolStr >>= return . concat
+
+parseBoolStr =
+  fmap (map toUpper) $
+  try (string "False") <|> string "FALSE" <|> string "false" <|>
+  try (string "True") <|>
+  string "TRUE" <|>
+  string "true"
+
+parseBoolArrStr = concat <$> parseArr parseBoolStr
+
 parseDateStr = do
   num1 <- try (count 4 digit) <|> count 2 digit
   sep1 <- char '-'
@@ -42,11 +48,14 @@ parseDateStr = do
   sep2 <- char '-'
   num3 <- try (count 4 digit) <|> count 2 digit
   return $ num1 <> (sep1 : num2) <> (sep2 : num3)
-parseDateArrStr = parseArr parseDateStr >>= return . concat
+
+parseDateArrStr = concat <$> parseArr parseDateStr
+
 parseUriStr = do
   part1 <- string "http"
   part2 <- many1 anyChar
   return $ part1 <> part2
+
 parseNextvalStr = do
   let parseStr = do
         part1 <- string "nextval("
@@ -65,8 +74,7 @@ parseNextvalStr = do
         return $
           part1 <>
           (sep1 : part2) <> (sep2 : part3) <> (sep3 : part4) <> (sep4 : part5)
-  result <- try parseStr <|> parseAccessKey
-  return result
+  try parseStr <|> parseAccessKey
 
 parseArr :: Parsec String String a -> Parsec String String [[a]]
 parseArr parserX = do

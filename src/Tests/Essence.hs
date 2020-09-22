@@ -66,7 +66,7 @@ testFirstName = "testFirstName"
 
 testLastName = "testLastName"
 
-testAccessKey = "12345678-1234-1234-1234-12345678test"
+testAccessKey = "12345678-1234-1234-1234-123456789000"
 
 testAvatar = "https://oppai-dragon.site/images/avatar.jpg"
 
@@ -85,7 +85,7 @@ testPersonListCreateFields =
   [ ("first_name", MyString testFirstName)
   , ("last_name", MyString testLastName)
   , ("date_of_creation", MyDate testDate)
-  , ("avatar", MyString testAvatar)
+  , ("avatar", MyUri testAvatar)
   , ("access_key", MyString testAccessKey)
   , ("is_admin", MyBool True)
   ]
@@ -186,7 +186,7 @@ testAuthorColumnList =
       , cRelations = Just $ Relations "person" "id"
       , cConstraint = Just UNIQUE
       }
-  , defaultColumn {cValueType = VARCHAR (150)}
+  , defaultColumn {cValueType = VARCHAR 150}
   ]
 
 -- | Person

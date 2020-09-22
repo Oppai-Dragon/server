@@ -152,7 +152,7 @@ instance A.FromJSON NULL where
         "NOT NULL" -> pure $ NOT NULL
         _ -> fail $ "Unknown NULL: " <> T.unpack x
 
-data Default =
+newtype Default =
   Default T.Text
   deriving (Eq)
 
@@ -177,7 +177,7 @@ instance Show Relations where
 instance A.FromJSON Relations where
   parseJSON =
     A.withText "From JSON Data.Essence.Relations" $ \x ->
-      pure . fst . head . readsPrec 0 $ T.unpack x
+      pure . fst . head . reads $ T.unpack x
 
 instance Read Relations where
   readsPrec _ input =
@@ -185,7 +185,7 @@ instance Read Relations where
         table = T.pack $ valueArr !! 1
         field = valueArr !! 2
         fieldT = T.pack . init . tail $ valueArr !! 2
-     in if and [length valueArr == 3, head field == '(', last field == ')']
+     in if (length valueArr == 3) && (head field == '(') && (last field == ')')
           then [(Relations table fieldT, "")]
           else error "Read Data.Essence.Relations"
 
