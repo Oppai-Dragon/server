@@ -1,6 +1,6 @@
 # REST API using WAI(Web Application Interface) with Warp
 
-This is a simple web-server, which provides capabilities for publishing the news.
+This is a simple web-server using PostgreSQL like an database, which provides capabilities for publishing the news.
 For now we have several essences, whose number, i guess, ease to increase: person, author, category, tag, draft, news and comments to news. In section "For followers" it's get in detail.
 
 ## How to install
