@@ -45,6 +45,7 @@ getDropTablesQuery essences = "DROP TABLE " <> intercalate ", " essences <> ";"
 
 setup :: IO ()
 setup = do
+  Dir.createDirectoryIfMissing False =<< setPath "EssenceDatabase\\"
   essences <- map T.unpack . getEssences <$> setApi
   result <- createTables essences
   case result of
