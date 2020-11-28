@@ -22,24 +22,28 @@ import qualified Database.HDBC.PostgreSQL as PSQL
 
 dbCreate :: SApp A.Value
 dbCreate = do
-  (Config.Handle config _ _ logHandle) <- liftUnderApp askUnderApp
-  liftUnderApp . liftIO $ debugM logHandle "Start dbCreate"
+  Config.Handle {hConfig = config, hLogHandle = logHandle} <-
+    liftUnderApp askUnderApp
+  liftUnderApp . liftIO $ logDebug logHandle "Start dbCreate"
   addingDefault
-  essenceList@(EssenceList name _ _) <- getSApp
+  essenceList@(EssenceList {elName = name}) <- getSApp
   let createQuery = showSql essenceList
   let uriDB = getUri config
   maybeConn <- liftUnderApp . tryConnect $ PSQL.connectPostgreSQL uriDB
   case maybeConn of
     Nothing ->
-      liftIO (debugM logHandle "Essence not created in database") >>
+      liftIO (logDebug logHandle "Essence not created in database") >>
       return A.Null
     Just conn -> do
       liftUnderApp . liftIO $ HDBC.runRaw conn setEng
-      liftUnderApp . liftIO . debugM logHandle $ "PSQL request: " <> createQuery
+      liftUnderApp . liftIO . logDebug logHandle $
+        "PSQL request: " <> createQuery
       result <- liftUnderApp . tryRun $ HDBC.run conn createQuery []
       case result of
-        Success -> liftUnderApp . liftIO . infoM logHandle $ name <> " was created"
-        Fail -> liftUnderApp . liftIO . infoM logHandle $ name <> " wasn't created"
+        Success ->
+          liftUnderApp . liftIO . logInfo logHandle $ name <> " was created"
+        Fail ->
+          liftUnderApp . liftIO . logInfo logHandle $ name <> " wasn't created"
       liftUnderApp . liftIO $ HDBC.commit conn
       let getQueryId = "SELECT currval('" <> name <> "_id_seq');"
       idSqlValues <-
@@ -53,7 +57,7 @@ dbCreate = do
         liftUnderApp . tryQuickQuery $ HDBC.quickQuery' conn getQueryEssence []
       let value = sqlValuesArrToValue essenceList sqlValues config
       liftUnderApp . liftIO $ HDBC.disconnect conn
-      liftUnderApp . liftIO $ debugM logHandle "End dbCreate"
+      liftUnderApp . liftIO $ logDebug logHandle "End dbCreate"
       pure value
 
 addingDefault :: SApp ()
@@ -61,6 +65,6 @@ addingDefault = addId
 
 addId :: SApp ()
 addId = do
-  (EssenceList name _ _) <- getSApp
+  EssenceList {elName = name} <- getSApp
   let idValue = "nextval('" <> name <> "_id_seq')"
   modifySApp $ addList [("id", MyNextval idValue)]

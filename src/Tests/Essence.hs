@@ -78,7 +78,12 @@ testContent = "testContent"
 
 -- | Person
 testPersonListCreate :: Essence List
-testPersonListCreate = EssenceList "person" "create" testPersonListCreateFields
+testPersonListCreate =
+  EssenceList
+    { elName = "person"
+    , elAction = "create"
+    , elList = testPersonListCreateFields
+    }
 
 testPersonListCreateFields :: List
 testPersonListCreateFields =
@@ -92,7 +97,12 @@ testPersonListCreateFields =
 
 -- | Author
 testAuthorListCreate :: Essence List
-testAuthorListCreate = EssenceList "author" "create" testAuthorListCreateFields
+testAuthorListCreate =
+  EssenceList
+    { elName = "author"
+    , elAction = "create"
+    , elList = testAuthorListCreateFields
+    }
 
 testAuthorListCreateFields :: List
 testAuthorListCreateFields = []
@@ -100,21 +110,29 @@ testAuthorListCreateFields = []
 -- | Category
 testCategoryListCreate :: Essence List
 testCategoryListCreate =
-  EssenceList "category" "create" testCategoryListCreateFields
+  EssenceList
+    { elName = "category"
+    , elAction = "create"
+    , elList = testCategoryListCreateFields
+    }
 
 testCategoryListCreateFields :: List
 testCategoryListCreateFields = []
 
 -- | Tag
 testTagListCreate :: Essence List
-testTagListCreate = EssenceList "tag" "create" testTagListCreateFields
+testTagListCreate =
+  EssenceList
+    {elName = "tag", elAction = "create", elList = testTagListCreateFields}
 
 testTagListCreateFields :: List
 testTagListCreateFields = []
 
 -- | Draft
 testDraftListCreate :: Essence List
-testDraftListCreate = EssenceList "draft" "create" testDraftListCreateFields
+testDraftListCreate =
+  EssenceList
+    {elName = "draft", elAction = "create", elList = testDraftListCreateFields}
 
 testDraftListCreateFields :: List
 testDraftListCreateFields =
@@ -125,7 +143,9 @@ testDraftListCreateFields =
 
 -- | News
 testNewsListCreate :: Essence List
-testNewsListCreate = EssenceList "news" "create" testNewsListCreateFields
+testNewsListCreate =
+  EssenceList
+    {elName = "news", elAction = "create", elList = testNewsListCreateFields}
 
 testNewsListCreateFields :: List
 testNewsListCreateFields = []
@@ -151,7 +171,11 @@ testNewsDeleteFields = [("id", MyInteger 1)]
 -- | Comment
 testCommentListCreate :: Essence List
 testCommentListCreate =
-  EssenceList "comment" "create" testCommentListCreateFields
+  EssenceList
+    { elName = "comment"
+    , elAction = "create"
+    , elList = testCommentListCreateFields
+    }
 
 testCommentListCreateFields :: List
 testCommentListCreateFields =
@@ -162,7 +186,9 @@ testCommentListCreateFields =
 --------------------------------------------------------------------------------------------
 -- | Author
 testAuthorGetColumn :: Essence Column
-testAuthorGetColumn = EssenceColumn "author" "get" testAuthorHMColumn
+testAuthorGetColumn =
+  EssenceColumn
+    {eColName = "author", eColAction = "get", eColHashMap = testAuthorHMColumn}
 
 testAuthorHMColumn :: HM.HashMap T.Text Column
 testAuthorHMColumn = HM.fromList testAuthorColumnFields
@@ -191,7 +217,12 @@ testAuthorColumnList =
 
 -- | Person
 testPersonCreateColumn :: Essence Column
-testPersonCreateColumn = EssenceColumn "person" "create" testPersonHMColumn
+testPersonCreateColumn =
+  EssenceColumn
+    { eColName = "person"
+    , eColAction = "create"
+    , eColHashMap = testPersonHMColumn
+    }
 
 testPersonHMColumn :: HM.HashMap T.Text Column
 testPersonHMColumn = HM.fromList testPersonColumnFields

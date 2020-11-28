@@ -12,5 +12,5 @@ basePathTests = [TestLabel "parsePathTest" parsePathTest]
 parsePathTest :: Test
 parsePathTest =
   TestCase $
-  assertEqual "for (parsePath \"C:Repo\\server\\src\")" "C:Repo\\server" $
-  parsePath "C:Repo\\server\\src"
+  assertEqual "for (parsePath \"C:Repo/server/src\")" "C:Repo/server" $
+  parsePath "C:Repo/server/src"

@@ -33,7 +33,7 @@ set path = do
       case A.decode bsl of
         Just hm -> pure hm
         Nothing -> pure HM.empty
-    Left err -> errorM (Handle logPath Nothing) (show err) >> pure HM.empty
+    Left err -> logError (Handle logPath Nothing) (show err) >> pure HM.empty
 
 setPsql :: IO Psql
 setPsql = (fmap Psql . set) =<< setPsqlPath
@@ -48,10 +48,10 @@ setLocal :: IO Local
 setLocal = (fmap Local . set) =<< setLocalPath
 
 setConfigPath, setPsqlPath, setApiPath, setLocalPath :: IO FilePath
-setConfigPath = setPath "Config.json"
+setConfigPath = setPath "configs/Config.json"
 
-setPsqlPath = setPath "Psql.json"
+setPsqlPath = setPath "configs/Psql.json"
 
-setApiPath = setPath "Api.json"
+setApiPath = setPath "configs/Api.json"
 
-setLocalPath = setPath "Local.json"
+setLocalPath = setPath "configs/Local.json"

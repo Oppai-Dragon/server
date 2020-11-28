@@ -27,17 +27,19 @@ addingDefaultTest =
       runReaderT (execStateT addingDefault testPersonListCreate) testHandle
     assertEqual
       "runReaderT (execStateT addingDefault testPersonListCreate) testHandle"
-      (EssenceList
-         "person"
-         "create"
-         [ ("first_name", MyString testFirstName)
-         , ("last_name", MyString testLastName)
-         , ("date_of_creation", MyDate testDate)
-         , ("avatar", MyUri testAvatar)
-         , ("access_key", MyString testAccessKey)
-         , ("is_admin", MyBool True)
-         , ("id", MyNextval "nextval('person_id_seq')")
-         ])
+      EssenceList
+        { elName = "person"
+        , elAction = "create"
+        , elList =
+            [ ("first_name", MyString testFirstName)
+            , ("last_name", MyString testLastName)
+            , ("date_of_creation", MyDate testDate)
+            , ("avatar", MyUri testAvatar)
+            , ("access_key", MyString testAccessKey)
+            , ("is_admin", MyBool True)
+            , ("id", MyNextval "nextval('person_id_seq')")
+            ]
+        }
       result
 
 addIdTest =
@@ -45,14 +47,16 @@ addIdTest =
   runReaderT (execStateT addId testPersonListCreate) testHandle >>=
   assertEqual
     "runReaderT (execStateT addId testPersonListCreate) testHandle"
-    (EssenceList
-       "person"
-       "create"
-       [ ("first_name", MyString testFirstName)
-       , ("last_name", MyString testLastName)
-       , ("date_of_creation", MyDate testDate)
-       , ("avatar", MyUri testAvatar)
-       , ("access_key", MyString testAccessKey)
-       , ("is_admin", MyBool True)
-       , ("id", MyNextval "nextval('person_id_seq')")
-       ])
+    EssenceList
+      { elName = "person"
+      , elAction = "create"
+      , elList =
+          [ ("first_name", MyString testFirstName)
+          , ("last_name", MyString testLastName)
+          , ("date_of_creation", MyDate testDate)
+          , ("avatar", MyUri testAvatar)
+          , ("access_key", MyString testAccessKey)
+          , ("is_admin", MyBool True)
+          , ("id", MyNextval "nextval('person_id_seq')")
+          ]
+      }

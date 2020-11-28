@@ -1,5 +1,8 @@
 module Data.Request.Control
-  ( isPathRequestCorrect
+  ( RequestInfo(..)
+  , RequestCorrect(..)
+  , RequestAnswer(..)
+  , isPathRequestCorrect
   , ifNotEveryoneUpdate
   , ifGetUpdate
   , parseRequest
@@ -43,6 +46,28 @@ type Action = T.Text
 
 type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
 
+data RequestInfo =
+  RequestInfo
+    { reqIEssenceName :: EssenceName
+    , reqIAction :: Action
+    , reqIQueryMBS :: QueryMBS
+    , reqIMethod :: HTTPTypes.Method
+    }
+  deriving (Show,Eq)
+
+data RequestCorrect =
+  RequestCorrect
+    { reqAnswer :: RequestAnswer
+    , reqCQueryMBS :: QueryMBS
+    , reqCConfigHandle :: Config.Handle
+    }
+
+data RequestAnswer =
+  RequestAnswer
+    { reqAnswerBool :: Bool
+    , reqAnswerResponse :: Wai.Response
+    }
+
 isPathRequestCorrect :: Wai.Request -> Api -> Bool
 isPathRequestCorrect req api
   | length (Wai.pathInfo req) <= 1 = False
@@ -50,56 +75,60 @@ isPathRequestCorrect req api
     let [essence, action] = Wai.pathInfo req
         essences = getEssences api
         apiActions = getApiActions api
-     in case findText essence essences of
-          Just _ ->
-            case findText action apiActions of
-              Just _ -> True
-              Nothing -> False
-          Nothing -> False
+     in all maybeToBool [findText essence essences, findText action apiActions]
 
 ifNotEveryoneUpdate :: Essence Column -> Access -> Essence Column
-ifNotEveryoneUpdate essenceColumn@EssenceColumn { eColName = name
-                                                 , eColAction = action
-                                                 , eColHashMap = hashMap
-                                                 } access =
+ifNotEveryoneUpdate essenceColumn@EssenceColumn {eColHashMap = hashMap} access =
   if access > Everyone
-    then EssenceColumn name action $
-         HM.insert
-           "access_key"
-           defaultColumn {cValueType = UUID, cNULL = Just $ NOT NULL}
-           hashMap
+    then essenceColumn
+           { eColHashMap =
+               HM.insert
+                 "access_key"
+                 defaultColumn {cValueType = UUID, cNULL = Just $ NOT NULL}
+                 hashMap
+           }
     else essenceColumn
 
 ifGetUpdate :: Essence Column -> Essence Column
-ifGetUpdate essenceColumn@EssenceColumn { eColName = name
-                                        , eColAction = action
+ifGetUpdate essenceColumn@EssenceColumn { eColAction = action
                                         , eColHashMap = hashMap
                                         } =
   case action of
     "get" ->
-      EssenceColumn name action $
-      HM.insert "page" defaultColumn {cValueType = INT} hashMap
+      essenceColumn
+        { eColHashMap =
+            HM.insert "page" defaultColumn {cValueType = INT} hashMap
+        }
     _ -> essenceColumn
 
-parseRequest ::
-     Wai.Request -> IO (EssenceName, Action, QueryMBS, HTTPTypes.Method)
+parseRequest :: Wai.Request -> IO RequestInfo
 parseRequest req = do
   let pathReq = Wai.pathInfo req
   let essence = head pathReq
   let action = head $ tail pathReq
   queryMBS <- getQueryString req
   let method = Wai.requestMethod req
-  return (essence, action, queryMBS, method)
+  return
+    RequestInfo
+      { reqIEssenceName = essence
+      , reqIAction = action
+      , reqIQueryMBS = queryMBS
+      , reqIMethod = method
+      }
 
-isRequestCorrect ::
-     Wai.Request -> IO (Bool, Wai.Response, QueryMBS, Config.Handle)
+isRequestCorrect :: Wai.Request -> IO RequestCorrect
 isRequestCorrect req = do
-  (essence', action, queryMBS, method) <- parseRequest req
+  RequestInfo { reqIEssenceName = essence'
+              , reqIAction = action
+              , reqIQueryMBS = queryMBS
+              , reqIMethod = method
+              } <- parseRequest req
   let essence =
         if action == "publish"
           then "news"
           else essence'
-  handle@(Config.Handle config api _ logHandle) <- Config.new
+  handle@(Config.Handle {hConfig = config, hApi = api, hLogHandle = logHandle}) <-
+    Config.new
   let essenceColumn = getEssenceColumn essence action config api
   let essenceFields = getEssenceFields essenceColumn api
   let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
@@ -109,26 +138,58 @@ isRequestCorrect req = do
     runUnderApp
       (execWApp $ isConstraintCorrect essenceColumn listOfPairs)
       handle
-  let checkingList =
-        [ isPathRequestCorrect req api
-        , isMethodCorrect method action api
-        , isAccess essence action accessArr api
-        , isRequiredParams essenceColumn queryMBS api
-        , getAll $ isTypeParamsCorrect essenceColumn listOfPairs
-        , getAll isConstraintsCorrect
-        ]
-  let elseThenList =
-        [ (All False, notFoundWith "Incorrect request path")
-        , (All False, notFoundWith "Incorrect request method")
-        , (All False, notFound)
-        , (All False, notFoundWith paramsMsg)
-        , (All False, notFoundWith "Incorrect type of params")
-        , (All False, notFoundWith "Bad values")
-        , (All True, notFound)
-        ]
-  debugM logHandle $ "Accesses of request " <> show accessArr
-  let (All x1, x2) = ifElseThen checkingList elseThenList
-  pure (x1, x2, queryMBS, handle)
+  let requestAnswer =
+        if isPathRequestCorrect req api
+          then if isMethodCorrect method action api
+                 then if isAccess essence action accessArr api
+                        then if isRequiredParams essenceColumn queryMBS api
+                               then if getAll $
+                                       isTypeParamsCorrect
+                                         essenceColumn
+                                         listOfPairs
+                                      then if getAll isConstraintsCorrect
+                                             then RequestAnswer
+                                                    { reqAnswerBool = True
+                                                    , reqAnswerResponse =
+                                                        notFound
+                                                    }
+                                             else RequestAnswer
+                                                    { reqAnswerBool = False
+                                                    , reqAnswerResponse =
+                                                        notFoundWith
+                                                          "Bad values"
+                                                    }
+                                      else RequestAnswer
+                                             { reqAnswerBool = False
+                                             , reqAnswerResponse =
+                                                 notFoundWith
+                                                   "Incorrect type of params"
+                                             }
+                               else RequestAnswer
+                                      { reqAnswerBool = False
+                                      , reqAnswerResponse =
+                                          notFoundWith paramsMsg
+                                      }
+                        else RequestAnswer
+                               { reqAnswerBool = False
+                               , reqAnswerResponse = notFound
+                               }
+                 else RequestAnswer
+                        { reqAnswerBool = False
+                        , reqAnswerResponse =
+                            notFoundWith "Incorrect request method"
+                        }
+          else RequestAnswer
+                 { reqAnswerBool = False
+                 , reqAnswerResponse = notFoundWith "Incorrect request path"
+                 }
+  logDebug logHandle $ "Accesses of request " <> show accessArr
+  pure
+    RequestCorrect
+      { reqAnswer = requestAnswer
+      , reqCQueryMBS = queryMBS
+      , reqCConfigHandle = handle
+      }
 
 getAccessArr :: QueryMBS -> IO [Access]
 getAccessArr queryMBS =

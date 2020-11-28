@@ -38,16 +38,21 @@ toEssenceClauseTest =
   TestCase $
   assertEqual
     "for (toEssenceClause )"
-    (EssenceClause
-       ["author", "person", "category"]
-       [ Where ("news.id", MyInteger 1)
-       , Filter $
-         "(person.first_name ILIKE 'misha' AND person.last_name ILIKE 'dragon') " <>
-         "OR (person.first_name ILIKE 'dragon' AND person.last_name ILIKE 'misha')"
-       , Filter "category.name ILIKE '%cat%'"
-       , OrderBy "news.date_of_creation"
-       ]) $
-  execWriter $ toEssenceClause (EssenceList "news" "create" testNewsGetFields)
+    EssenceClause
+      { ecNameList = ["author", "person", "category"]
+      , ecClauseList =
+          [ Where ("news.id", MyInteger 1)
+          , Filter $
+            "(person.first_name ILIKE 'misha' AND person.last_name ILIKE 'dragon') " <>
+            "OR (person.first_name ILIKE 'dragon' AND person.last_name ILIKE 'misha')"
+          , Filter "category.name ILIKE '%cat%'"
+          , OrderBy "news.date_of_creation"
+          ]
+      } $
+  execWriter $
+  toEssenceClause
+    EssenceList
+      {elName = "news", elAction = "create", elList = testNewsGetFields}
 
 pickTableNameTest =
   TestCase $
@@ -87,7 +92,7 @@ parseTagsInTest =
   assertEqual
     "for (parseTagsIn $ MyIntegerArr [1,2,3])"
     "1=ANY(tag_ids) OR 2=ANY(tag_ids) OR 3=ANY(tag_ids)" $
-  parseTagsIn $ MyIntegerArr [1,2,3]
+  parseTagsIn $ MyIntegerArr [1, 2, 3]
 
 parseAuthorNameTest =
   TestCase $

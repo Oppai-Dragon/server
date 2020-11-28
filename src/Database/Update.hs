@@ -5,6 +5,7 @@ module Database.Update
 import Config
 import Config.Exception
 import Data.Base
+import Data.Essence.Methods
 import Data.SQL.AlterTable
 import Database.Exception
 import Log
@@ -13,7 +14,6 @@ import Setup
 import Control.Monad
 import Control.Monad.Trans.Writer.CPS
 import qualified Data.Aeson as A
-import qualified Data.Aeson.Types as AT
 import qualified Data.HashMap.Strict as HM
 import Data.List
 import qualified Data.Text as T
@@ -75,8 +75,8 @@ isNewTables apiArr dbArr locArr =
 
 getChangedTables :: [EssenceDatabase] -> [EssenceLocal] -> IO [EssenceLocal]
 getChangedTables (essenceDb:restDb) (essenceLoc:restLoc) = do
-  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> essenceDb <> ".json")
-  essenceLocObj <- set =<< setPath ("EssenceLocal\\" <> essenceLoc <> ".json")
+  essenceDbObj <- set =<< setPath ("configs/EssenceDatabase/" <> essenceDb <> ".json")
+  essenceLocObj <- set =<< setPath ("configs/EssenceLocal/" <> essenceLoc <> ".json")
   if essenceDbObj == essenceLocObj
     then getChangedTables restDb restLoc
     else (essenceLoc :) <$> getChangedTables restDb restLoc
@@ -90,8 +90,8 @@ updateTableArr (essence:rest) = do
 
 updateTable :: EssenceLocal -> IO ()
 updateTable essence = do
-  essenceLocObj <- set =<< setPath ("EssenceLocal\\" <> essence <> ".json")
-  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> essence <> ".json")
+  essenceLocObj <- set =<< setPath ("configs/EssenceLocal/" <> essence <> ".json")
+  essenceDbObj <- set =<< setPath ("configs/EssenceDatabase/" <> essence <> ".json")
   let columnsDbList = toColumnList essence essenceLocObj
   let columnDbArr = getColumnArr essence essenceLocObj
   let columnsLocList = toColumnList essence essenceDbObj
@@ -115,8 +115,8 @@ isNewColumns = ((not . null) .) . flip (\\)
 
 getChangedColumnList :: Table -> IO ColumnLocalList
 getChangedColumnList table = do
-  essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> table <> ".json")
-  essenceLocObj <- set =<< setPath ("EssenceLocal\\" <> table <> ".json")
+  essenceDbObj <- set =<< setPath ("configs/EssenceDatabase/" <> table <> ".json")
+  essenceLocObj <- set =<< setPath ("configs/EssenceLocal/" <> table <> ".json")
   let columnDbList = toColumnList table essenceDbObj
   let columnLocList = toColumnList table essenceLocObj
   return $ getChangedColumnList' columnDbList columnLocList
@@ -136,35 +136,22 @@ updateColumnArr table (columnPair:rest) = do
   updateColumnArr table rest
 
 updateColumn :: Table -> (T.Text, A.Value) -> IO ()
-updateColumn table (column, columnDescriptionLocObj) = do
+updateColumn table (column, columnLocObj) = do
   maybeConn <- tryConnectIO getConnection
   case maybeConn of
     Nothing -> return ()
     Just conn -> do
-      essenceDbObj <- set =<< setPath ("EssenceDatabase\\" <> table <> ".json")
-      let columnLoc =
-            case AT.parseMaybe A.parseJSON columnDescriptionLocObj of
-              Just x -> x
-              Nothing ->
-                error $
-                "Database.Update.updateColumn Can't parse to column" <>
-                show columnDescriptionLocObj
-      let columnDescriptionDbObj =
-            getValue [T.pack table, column] essenceDbObj
-      let columnDb =
-            case AT.parseMaybe A.parseJSON columnDescriptionDbObj of
-              Just x -> x
-              Nothing ->
-                error $
-                "Database.Update.updateColumn Can't parse to column" <>
-                show columnDescriptionDbObj
+      essenceDbObj <- set =<< setPath ("configs/EssenceDatabase/" <> table <> ".json")
+      let columnLoc = setColumn columnLocObj
+      let columnDbObj = getValue [T.pack table, column] essenceDbObj
+      let columnDb = setColumn columnDbObj
       let alterTableQueries =
             execWriter $
             getAlterQueries table (T.unpack column) columnLoc columnDb
       result <- tryRunIO $ HDBC.runRaw conn alterTableQueries
       case result of
         Success -> do
-          replaceColumnJson table $ HM.singleton column columnDescriptionLocObj
+          replaceColumnJson table $ HM.singleton column columnLocObj
           HDBC.commit conn
           HDBC.disconnect conn
           infoIO $
@@ -242,7 +229,7 @@ deleteColumnJson table columnLoc = do
 
 getColumnDbObj :: Table -> IO (ColumnDatabaseObj, A.Object -> IO ())
 getColumnDbObj table = do
-  path <- setPath $ "EssenceDatabase\\" <> table <> ".json"
+  path <- setPath $ "configs/EssenceDatabase/" <> table <> ".json"
   essenceDbObj <- trySetIO $ set path
   let fields = [T.pack table]
   let columnDbObj = fromObj $ getValue fields essenceDbObj

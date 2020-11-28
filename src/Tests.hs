@@ -2,9 +2,6 @@ module Tests
   ( runTest
   ) where
 
-import Config
-import Log
-
 import Tests.Base
 import Tests.Config
 import Tests.Database
@@ -29,7 +26,6 @@ import Tests.SQL.ToValue
 import Tests.Setup
 
 import Control.Monad
-import qualified Data.HashMap.Strict as HM
 
 import Test.HUnit
 

@@ -27,7 +27,7 @@ class GetFields a where
 
 instance GetFields (Required [Field]) where
   getFields :: Essence Column -> Required [Field]
-  getFields (EssenceColumn _ action hashMap) =
+  getFields EssenceColumn {eColAction = action, eColHashMap = hashMap} =
     let arr = iterateHM (HM.toList $ toStringKeys hashMap) action
         andFields =
           requiredSequenceA $
@@ -83,7 +83,7 @@ instance GetFields (Required [Field]) where
 
 instance GetFields [Field] where
   getFields :: Essence Column -> [Field]
-  getFields (EssenceColumn _ action hashMap) =
+  getFields EssenceColumn {eColAction = action, eColHashMap = hashMap} =
     let arr = iterateHM (HM.toList $ toStringKeys hashMap) action
      in concat arr
   iterateHM :: [(Field, Column)] -> Action -> [[Field]]

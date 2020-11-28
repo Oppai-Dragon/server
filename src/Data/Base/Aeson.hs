@@ -10,7 +10,7 @@ module Data.Base.Aeson
   , isNull
   , deleteFields
   , getValue
-  , valueToInteger
+  , Data.Base.Aeson.toInteger
   , toStringKeys
   ) where
 
@@ -75,8 +75,8 @@ getValue (field:rest) objOld =
     Just value -> value
     Nothing -> A.Null
 
-valueToInteger :: A.Value -> Integer
-valueToInteger = fromMaybe 0 . AT.parseMaybe A.parseJSON
+toInteger :: A.Value -> Integer
+toInteger = fromMaybe 0 . AT.parseMaybe A.parseJSON
 
 toStringKeys :: HM.HashMap T.Text a -> HM.HashMap String a
-toStringKeys = HM.fromList . map (\(l,r) -> (T.unpack l,r)) . HM.toList
+toStringKeys = HM.fromList . map (\(l, r) -> (T.unpack l, r)) . HM.toList

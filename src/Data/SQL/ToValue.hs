@@ -26,7 +26,7 @@ fromZip :: [T.Text] -> [A.Value] -> A.Object
 fromZip = (HM.fromList .) . zip
 
 sqlValuesToJsonValue :: Essence List -> [HDBC.SqlValue] -> Config -> A.Value
-sqlValuesToJsonValue (EssenceList name action _) sqlValues (Config conf) =
+sqlValuesToJsonValue EssenceList {elName = name, elAction = action} sqlValues (Config conf) =
   let essenceFields =
         case getValue [T.pack name] conf of
           A.Object fieldsObj -> HM.keys fieldsObj

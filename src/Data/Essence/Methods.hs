@@ -20,6 +20,7 @@ import Config
 import Data.Base hiding (deletePair)
 import Data.Empty
 import Data.Essence
+import Data.Essence.Column
 import Data.Essence.GetFields
 import Data.MyValue
 
@@ -29,6 +30,7 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC8
 import qualified Data.HashMap.Strict as HM
 import qualified Data.List as L
+import Data.Maybe
 import qualified Data.Text as T
 
 type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
@@ -36,16 +38,16 @@ type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
 type Field = String
 
 addList :: List -> Essence List -> Essence List
-addList list1 (EssenceList name action list2) =
-  EssenceList name action $ list2 <> list1
+addList list1 essenceList = essenceList <> mempty {elList = list1}
 
 deletePair :: String -> Essence List -> Essence List
-deletePair field (EssenceList name action list) =
-  EssenceList name action $
-  L.deleteBy (\(l1, _) (l2, _) -> l1 == l2) (field, MyEmpty) list
+deletePair field essenceList@(EssenceList {elList = list}) =
+  essenceList
+    {elList = L.deleteBy (\(l1, _) (l2, _) -> l1 == l2) (field, MyEmpty) list}
 
 getEssenceFields :: Essence Column -> Api -> [Field]
-getEssenceFields (EssenceColumn "news" "create" _) _ = ["id"]
+getEssenceFields EssenceColumn {eColName = "news", eColAction = "create"} _ =
+  ["id"]
 getEssenceFields essenceColumn api =
   let relationsTree = getRelationsTree (eColName essenceColumn) api
       relationFields = getRelationFields relationsTree
@@ -54,23 +56,23 @@ getEssenceFields essenceColumn api =
 getEssenceColumn :: T.Text -> T.Text -> Config -> Api -> Essence Column
 getEssenceColumn essence apiAction (Config conf) (Api api) =
   let dbAction = getApiDBMethod apiAction $ Api api
+      essenceColumn = mempty {eColName = essence, eColAction = dbAction}
    in case getValue [essence] conf of
         A.Object objFromConf ->
           case getValue [essence] api of
             A.Object objFromApi ->
-              EssenceColumn essence dbAction . iterateHMJson $ HM.unions [objFromConf, objFromApi]
-            _ -> EssenceColumn essence dbAction $ iterateHMJson objFromConf
-        _ -> EssenceColumn "" "" HM.empty
+              essenceColumn
+                { eColHashMap =
+                    iterateHMJson $ HM.unions [objFromConf, objFromApi]
+                }
+            _ -> essenceColumn {eColHashMap = iterateHMJson objFromConf}
+        _ -> mempty
 
 iterateHMJson :: A.Object -> HM.HashMap T.Text Column
 iterateHMJson = HM.map setColumn . HM.delete "access_key"
 
 setColumn :: A.Value -> Column
-setColumn v =
-  case AT.parseMaybe A.parseJSON v of
-    Just x -> x
-    Nothing ->
-      error $ "Data.Essence.Methods.setColumn - can't parse " <> show v
+setColumn = fromMaybe defaultColumn . AT.parseMaybe A.parseJSON
 
 parseOnlyValues :: List -> [MyValue]
 parseOnlyValues = map snd
@@ -99,10 +101,12 @@ parseFieldValue (field:fields) bss =
    in parseBSValue field bss' : parseFieldValue fields bss
 
 toEssenceList :: Essence Column -> QueryMBS -> UnderApp (Essence List)
-toEssenceList essenceColumn@(EssenceColumn name action _) queryMBS = do
+toEssenceList essenceColumn@(EssenceColumn { eColName = name
+                                           , eColAction = action
+                                           }) queryMBS = do
   configHandle <- askUnderApp
   let essenceFields = getEssenceFields essenceColumn $ hApi configHandle
   let listOfPairs = withoutEmpty $ parseFieldValue essenceFields queryMBS
   let nameStr = T.unpack name
   let actioStr = T.unpack action
-  pure $ EssenceList nameStr actioStr listOfPairs
+  pure EssenceList {elName = nameStr, elAction = actioStr, elList = listOfPairs}

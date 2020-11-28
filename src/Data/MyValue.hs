@@ -31,6 +31,7 @@ import qualified Data.HashMap.Strict as HM
 import qualified Data.Scientific as Scientific
 import qualified Data.Text as T
 import qualified Data.Vector as V
+import Prelude hiding (toInteger)
 import Text.Parsec
 
 data MyValue
@@ -111,7 +112,7 @@ fromBS = fromStr . BSC8.unpack
 fromValue :: A.Value -> MyValue
 fromValue value =
   case value of
-    A.Number num -> MyInteger . valueToInteger $ A.Number num
+    A.Number num -> MyInteger . toInteger $ A.Number num
     A.String text -> fromStr $ T.unpack text
     A.Bool bool -> MyBool bool
     A.Array vector ->
@@ -121,7 +122,7 @@ fromValue value =
                A.String _ ->
                  MyStringArr . map (\(A.String x) -> T.unpack x) $
                  V.toList vector
-               A.Number _ -> MyIntegerArr . map valueToInteger $ V.toList vector
+               A.Number _ -> MyIntegerArr . map toInteger $ V.toList vector
                A.Bool _ -> MyBoolArr . map (\(A.Bool x) -> x) $ V.toList vector
                _ -> MyEmpty
     A.Object obj -> MyStringArr . map T.unpack $ HM.keys obj

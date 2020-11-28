@@ -1,9 +1,9 @@
 module Log.Console
-  ( logM
-  , debugM
-  , infoM
-  , warningM
-  , errorM
+  ( logMsg
+  , logDebug
+  , logInfo
+  , logWarning
+  , logError
   , tryM
   , endM
   , infoIO
@@ -27,14 +27,14 @@ import GHC.Stack
 
 -------------------------------------------------------------------------------
 -- * Basic
-logM -- Log a message using the given logger at a given level
+logMsg -- Log a message using the given logger at a given level
  ::
      HasCallStack
   => Handle
   -> Level
   -> String -- The log text itself
   -> IO ()
-logM (Handle path maybeLevel) level text = do
+logMsg (Handle path maybeLevel) level text = do
   time <- getTime
   let prettyLoc = lastPrettyCallStack callStack
   let msg = time <> "-" <> prettyLog level text <> "\n\t" <> prettyLoc <> "\n"
@@ -44,18 +44,18 @@ logM (Handle path maybeLevel) level text = do
 
 -------------------------------------------------------------------------------
 -- * Utility Functions
-debugM, infoM, warningM, errorM :: HasCallStack => Handle -> String -> IO ()
-debugM = (`logM` DEBUG)
+logDebug, logInfo, logWarning, logError :: HasCallStack => Handle -> String -> IO ()
+logDebug = (`logMsg` DEBUG)
 
-infoM = (`logM` INFO)
+logInfo = (`logMsg` INFO)
 
-warningM logHandle msg = do
-  logM logHandle WARNING msg
+logWarning logHandle msg = do
+  logMsg logHandle WARNING msg
   traceIO $ prettyLog WARNING msg
   traceIO $ lastPrettyCallStack callStack
 
-errorM logHandle msg = do
-  logM logHandle ERROR msg
+logError logHandle msg = do
+  logMsg logHandle ERROR msg
   traceIO $ prettyLog ERROR msg
   traceIO $ lastPrettyCallStack callStack
 

@@ -28,12 +28,14 @@ type EssenceName = String
 type Field = String
 
 toEssenceClause :: Essence List -> Writer (Essence (Clause String)) ()
-toEssenceClause (EssenceList _ _ []) = return ()
-toEssenceClause (EssenceList name _ ((field, myValue):rest)) =
+toEssenceClause EssenceList {elList = []} = return ()
+toEssenceClause essenceList@(EssenceList { elName = name
+                                         , elList = (field, myValue):rest
+                                         }) =
   let tableList = pickTableName field
       clauseArr = pickClause name (field, myValue)
-   in tellWApp (EssenceClause tableList clauseArr) >>
-      toEssenceClause (EssenceList name "" rest)
+   in tellWApp EssenceClause {ecNameList = tableList, ecClauseList = clauseArr} >>
+      toEssenceClause essenceList {elList = rest}
 
 pickTableName :: Field -> [EssenceName]
 pickTableName field =

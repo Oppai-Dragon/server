@@ -51,8 +51,8 @@ isEssenceRelations essence api =
 
 addRelationsFields :: SApp A.Object
 addRelationsFields = do
-  (Config.Handle _ api _ logHandle) <- liftUnderApp askUnderApp
-  (EssenceList name action _) <- getSApp
+  Config.Handle {hApi = api, hLogHandle = logHandle} <- liftUnderApp askUnderApp
+  EssenceList {elName = name, elAction = action} <- getSApp
   case [name, action] of
     ["news", "delete"] -> return goodResult
     ["news", "get"] -> return goodResult
@@ -60,16 +60,16 @@ addRelationsFields = do
     _ ->
       if isEssenceRelations name api
         then (liftUnderApp . liftIO)
-               (debugM logHandle "Will be added relations fields") >>
+               (logDebug logHandle "Will be added relations fields") >>
              relationsHandler name
         else return goodResult
 
 relationsHandler :: Name -> SApp A.Object
 relationsHandler name = do
-  (Config.Handle _ api _ logHandle) <- liftUnderApp askUnderApp
+  Config.Handle {hApi = api, hLogHandle = logHandle} <- liftUnderApp askUnderApp
   essenceList <- getSApp
   let relations = getRelationsTree (T.pack name) api
-  liftUnderApp . liftIO . debugM logHandle $
+  liftUnderApp . liftIO . logDebug logHandle $
     "Realtions tree is " <> show relations
   case relations of
     Root rEssence trunk@(Trunk tEssence _) -> do
@@ -84,42 +84,52 @@ relationsHandler name = do
     Root rEssence (Leaf key) ->
       case lookup key (elList essenceList) of
         (Just accessKey) -> do
-          liftUnderApp . liftIO . debugM logHandle $
+          liftUnderApp . liftIO . logDebug logHandle $
             "Find " <> rEssence <> " by " <> key <> " from queryString"
           (A.Object obj) <-
             liftUnderApp $
-            dbGetOne (EssenceList rEssence "get" [(key, accessKey)])
+            dbGetOne
+              EssenceList
+                { elName = rEssence
+                , elAction = "get"
+                , elList = [(key, accessKey)]
+                }
           return obj
         _ -> return HM.empty
     _ -> return HM.empty
 
 iterateRelations :: RelationsTree -> A.Object -> SApp A.Object
 iterateRelations (Trunk t (Branch b leafs)) objOld = do
-  (Config.Handle config api _ logHandle) <- liftUnderApp askUnderApp
-  (EssenceList _ action list) <- getSApp
+  Config.Handle {hConfig = config, hApi = api, hLogHandle = logHandle} <-
+    liftUnderApp askUnderApp
+  EssenceList {elAction = action, elList = list} <- getSApp
   let name = beforeUnderscore t
   let field = afterUnderscore t
   case lookup field list of
     Just value ->
       case b of
         "news" -> do
-          liftUnderApp . liftIO . debugM logHandle $
+          liftUnderApp . liftIO . logDebug logHandle $
             "Find " <> name <> " by " <> field <> " from queryString"
           (A.Object objNew) <-
-            liftUnderApp $ dbGetOne (EssenceList name "get" [(field, value)])
+            liftUnderApp $
+            dbGetOne
+              EssenceList
+                {elName = name, elAction = "get", elList = [(field, value)]}
                 -- Draft have only one "not null" field for creating - "name"
                 -- But news, which copies draft values, need more then just "name"
-          let essenceColumn = getEssenceColumn (T.pack b) (T.pack action) config api
+          let essenceColumn =
+                getEssenceColumn (T.pack b) (T.pack action) config api
           let addedFields = getAddedFields name leafs objNew
           let requiredFields = toFields $ getRequiredFields essenceColumn api
           let bool1 = isRightRelations objOld objNew t b
           let bool2 = ifFieldsFill requiredFields addedFields
-          liftUnderApp . liftIO . debugM logHandle $
+          liftUnderApp . liftIO . logDebug logHandle $
             "isRightRelations - " <>
             show bool1 <> ", isFieldsFill -  " <> show bool2
           if bool1 && bool2
             then do
-              liftUnderApp . liftIO . debugM logHandle $
+              liftUnderApp . liftIO . logDebug logHandle $
                 "Add these fields " <> show leafs <> " from " <> name
               -- Need delete "id" from Essence List, because it was needed only
               -- for getting from database, and now it'll be crush PSQL request
@@ -128,19 +138,22 @@ iterateRelations (Trunk t (Branch b leafs)) objOld = do
               return goodResult
             else return HM.empty
         _ -> do
-          liftUnderApp . liftIO . debugM logHandle $
+          liftUnderApp . liftIO . logDebug logHandle $
             "Find " <> b <> " by " <> field <> " from queryString"
-          (A.Object objNew) <-
-            liftUnderApp $ dbGetOne (EssenceList b "get" [(field, value)])
+          objNew <-
+            fmap fromObj . liftUnderApp $
+            dbGetOne
+              EssenceList
+                {elName = b, elAction = "get", elList = [(field, value)]}
           let addedFields = getAddedFields name leafs objOld
           let bool = isRightRelations objOld objNew t b
-          liftUnderApp . liftIO . debugM logHandle $
+          liftUnderApp . liftIO . logDebug logHandle $
             "isRightRelations - " <> show bool
           if bool
             then modifySApp (addList addedFields) >> return goodResult
             else return HM.empty
     Nothing -> do
-      liftUnderApp . liftIO . debugM logHandle $
+      liftUnderApp . liftIO . logDebug logHandle $
         "Add these fields " <> show leafs <> " from " <> name
       let addedFields = getAddedFields name leafs objOld
       modifySApp $ addList addedFields
@@ -163,9 +176,10 @@ findEssence :: Name -> [(String, MyValue.MyValue)] -> UnderApp A.Value
 findEssence name listOfPair =
   case listOfPair of
     [(field, _)] -> do
-      (Config.Handle _ _ _ logHandle) <- askUnderApp
-      liftIO . debugM logHandle $ "Find " <> name <> " by " <> field
-      dbGetOne $ EssenceList name "get" listOfPair
+      Config.Handle {hLogHandle = logHandle} <- askUnderApp
+      liftIO . logDebug logHandle $ "Find " <> name <> " by " <> field
+      dbGetOne
+        EssenceList {elName = name, elAction = "get", elList = listOfPair}
     _ -> return . A.Object . HM.singleton "result" $ A.Number 0
 
 getAddedFields ::
@@ -244,17 +258,25 @@ getIdPairFromObj name obj =
 
 isNewsExiste :: SApp Bool
 isNewsExiste = do
-  (EssenceList name _ list) <- getSApp
+  EssenceList {elName = name, elList = list} <- getSApp
   let isNews = name == "news"
   let isExiste =
         case lookup "draft_id" list of
           Just myValue -> do
             (A.Object obj) <-
               liftUnderApp $
-              dbGetOne (EssenceList name "get" [("draft_id", myValue)])
+              dbGetOne
+                EssenceList
+                  { elName = name
+                  , elAction = "get"
+                  , elList = [("draft_id", myValue)]
+                  }
             let isGet = not $ HM.null obj
             if isGet
-              then putSApp (EssenceList name "edit" list) >> return True
+              then putSApp
+                     EssenceList
+                       {elName = name, elAction = "edit", elList = list} >>
+                   return True
               else return False
           _ -> return False
   if isNews

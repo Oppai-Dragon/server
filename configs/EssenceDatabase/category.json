@@ -1,0 +1,1 @@
+{"category":{"name":{"null":"NOT NULL","constraint":"UNIQUE","type":"VARCHAR(35)"},"child_category":{"relations":"REFERENCES category (id)","action":"ON DELETE SET NULL","type":"INT"},"id":{"constraint":"PRIMARY KEY","type":"BIGSERIAL"}}}

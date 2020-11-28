@@ -12,5 +12,5 @@ trySetIO set = do
   logHandle <- Log.new
   result <- tryM set
   case result of
-    Right obj -> debugM logHandle "Success on setting object" >> return obj
-    Left err -> errorM logHandle (show err) >> return HM.empty
+    Right obj -> logDebug logHandle "Success on setting object" >> return obj
+    Left err -> logError logHandle (show err) >> return HM.empty

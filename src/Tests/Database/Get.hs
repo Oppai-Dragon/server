@@ -21,4 +21,4 @@ addOffsetLimitTest =
   runReaderT (execStateT addOffsetLimit mempty) testHandle >>=
   assertEqual
     "for (runReaderT (runStateT addOffsetLimit mempty) (Config HM.empty))"
-    (EssenceList "" "" [("page", MyString "OFFSET 0 LIMIT 10")])
+    mempty {elList = [("page", MyString "OFFSET 0 LIMIT 10")]}

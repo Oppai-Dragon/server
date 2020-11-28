@@ -45,7 +45,7 @@ getDropTablesQuery essences = "DROP TABLE " <> intercalate ", " essences <> ";"
 
 setup :: IO ()
 setup = do
-  Dir.createDirectoryIfMissing False =<< setPath "EssenceDatabase\\"
+  Dir.createDirectoryIfMissing False =<< setPath "configs/EssenceDatabase/"
   essences <- map T.unpack . getEssences <$> setApi
   result <- createTables essences
   case result of
@@ -62,13 +62,15 @@ createFirstAdmin :: IO ()
 createFirstAdmin = do
   let adminEssenceList =
         EssenceList
-          "person"
-          "create"
-          [ ("first_name", MyString "First")
-          , ("last_name", MyString "Admin")
-          , ("is_admin", MyBool True)
-          , ("access_key", MyString "12345678-1234-1234-1234-123456789abc")
-          ]
+          { elName = "person"
+          , elAction = "create"
+          , elList =
+              [ ("first_name", MyString "First")
+              , ("last_name", MyString "Admin")
+              , ("is_admin", MyBool True)
+              , ("access_key", MyString "12345678-1234-1234-1234-123456789abc")
+              ]
+          }
   maybeConn <- tryConnectIO getConnection
   case maybeConn of
     Nothing -> return ()
@@ -138,16 +140,16 @@ createTables essences = do
 replaceTableJson :: EssenceArr -> IO ()
 replaceTableJson [] = return ()
 replaceTableJson (essence:rest) = do
-  essencePath <- setPath $ "EssenceLocal\\" <> essence <> ".json"
+  essencePath <- setPath $ "configs/EssenceLocal/" <> essence <> ".json"
   obj <- trySetIO $ set essencePath
-  path <- setPath $ "EssenceDatabase\\" <> essence <> ".json"
+  path <- setPath $ "configs/EssenceDatabase/" <> essence <> ".json"
   A.encodeFile path $ A.Object obj
   replaceTableJson rest
 
 deleteTableJson :: EssenceArr -> IO ()
 deleteTableJson [] = return ()
 deleteTableJson (essence:rest) = do
-  path <- setPath $ "EssenceDatabase\\" <> essence <> ".json"
+  path <- setPath $ "configs/EssenceDatabase/" <> essence <> ".json"
   isExist <- Dir.doesFileExist path
   when isExist $ Dir.removeFile path
   deleteTableJson rest
@@ -165,7 +167,7 @@ getEssenceLocalObjectArr =
 
 getEssenceLocalObject :: String -> IO A.Object
 getEssenceLocalObject essence = do
-  path <- setPath ("EssenceLocal\\" <> essence <> ".json")
+  path <- setPath ("configs/EssenceLocal/" <> essence <> ".json")
   trySetIO $ set path
 
 getAllQueris :: EssenceArr -> IO [String]

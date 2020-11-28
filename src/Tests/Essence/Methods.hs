@@ -39,32 +39,36 @@ addListTest =
   TestCase $
   assertEqual
     "for (addList [(\"access_key\",\"key\")] testPersonListCreate)"
-    (EssenceList
-       "person"
-       "create"
-       [ ("first_name", MyString testFirstName)
-       , ("last_name", MyString testLastName)
-       , ("date_of_creation", MyDate testDate)
-       , ("avatar", MyUri testAvatar)
-       , ("access_key", MyString testAccessKey)
-       , ("is_admin", MyBool True)
-       , ("access_key", MyString testAccessKey)
-       ]) $
+    EssenceList
+      { elName = "person"
+      , elAction = "create"
+      , elList =
+          [ ("first_name", MyString testFirstName)
+          , ("last_name", MyString testLastName)
+          , ("date_of_creation", MyDate testDate)
+          , ("avatar", MyUri testAvatar)
+          , ("access_key", MyString testAccessKey)
+          , ("is_admin", MyBool True)
+          , ("access_key", MyString testAccessKey)
+          ]
+      } $
   addList [("access_key", MyString testAccessKey)] testPersonListCreate
 
 deletePairTest =
   TestCase $
   assertEqual
     "for (deletePair \"first_name\" testPersonListCreate)"
-    (EssenceList
-       "person"
-       "create"
-       [ ("last_name", MyString testLastName)
-       , ("date_of_creation", MyDate testDate)
-       , ("avatar", MyUri testAvatar)
-       , ("access_key", MyString testAccessKey)
-       , ("is_admin", MyBool True)
-       ]) $
+    EssenceList
+      { elName = "person"
+      , elAction = "create"
+      , elList =
+          [ ("last_name", MyString testLastName)
+          , ("date_of_creation", MyDate testDate)
+          , ("avatar", MyUri testAvatar)
+          , ("access_key", MyString testAccessKey)
+          , ("is_admin", MyBool True)
+          ]
+      } $
   deletePair "first_name" testPersonListCreate
 
 getEssenceFieldsTest =
@@ -145,7 +149,9 @@ toEssenceListTest =
     testHandle >>=
   assertEqual
     "for (toEssenceList testPersonCreateColumn [(\"first_name\",Just \"misha\"),(\"last_name\",Just \"dragon\")])"
-    (EssenceList
-       "person"
-       "create"
-       [("last_name", MyString "dragon"), ("first_name", MyString "misha")])
+    EssenceList
+      { elName = "person"
+      , elAction = "create"
+      , elList =
+          [("last_name", MyString "dragon"), ("first_name", MyString "misha")]
+      }

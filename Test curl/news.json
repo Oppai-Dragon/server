@@ -1,15 +1,15 @@
 {
   "news1": {
-    "draft_id": 4,
-    "author_id": 4,
-    "category_id": 4,
+    "draft_id": 1,
+    "author_id": 1,
+    "category_id": 1,
     "main_photo": null,
     "content": "testContent",
-    "date_of_creation": "2020-09-22",
+    "date_of_creation": "2020-11-28",
     "name": "testDraft",
-    "id": 4,
+    "id": 1,
     "tag_ids": [
-      4
+      1
     ],
     "optional_photos": null
   }

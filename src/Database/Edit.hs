@@ -16,9 +16,10 @@ import qualified Database.HDBC.PostgreSQL as PSQL
 
 dbEdit :: SApp A.Value
 dbEdit = do
-  essenceList@(EssenceList name _ _) <- getSApp
-  (Config.Handle config _ _ logHandle) <- liftUnderApp askUnderApp
-  liftUnderApp . liftIO $ debugM logHandle "Start dbEdit"
+  essenceList@(EssenceList {elName = name}) <- getSApp
+  Config.Handle {hConfig = config, hLogHandle = logHandle} <-
+    liftUnderApp askUnderApp
+  liftUnderApp . liftIO $ logDebug logHandle "Start dbEdit"
   let editQuery = showSql essenceList
   let uriDB = getUri config
   maybeConn <- liftUnderApp . tryConnect $ PSQL.connectPostgreSQL uriDB
@@ -26,14 +27,15 @@ dbEdit = do
     Nothing -> return A.Null
     Just conn -> do
       liftUnderApp . liftIO $ HDBC.runRaw conn setEng
-      liftUnderApp . liftIO . debugM logHandle $ "PSQL request: " <> editQuery
+      liftUnderApp . liftIO . logDebug logHandle $ "PSQL request: " <> editQuery
       result <- liftUnderApp . tryRun $ HDBC.run conn editQuery []
       case result of
         Success ->
-          liftUnderApp . liftIO . infoM logHandle $ name <> " was not changed"
-        Fail -> liftUnderApp . liftIO . infoM logHandle $ name <> " was changed"
+          liftUnderApp . liftIO . logInfo logHandle $ name <> " was not changed"
+        Fail ->
+          liftUnderApp . liftIO . logInfo logHandle $ name <> " was changed"
       liftUnderApp . liftIO $ HDBC.commit conn
       let value = A.object ["result" A..= (A.String . T.pack . show) result]
       liftUnderApp . liftIO $ HDBC.disconnect conn
-      liftUnderApp . liftIO $ debugM logHandle "End dbEdit"
+      liftUnderApp . liftIO $ logDebug logHandle "End dbEdit"
       pure value

@@ -14,17 +14,17 @@ getEssenceArr :: FilePath -> IO [FilePath]
 getEssenceArr = (=<<) (fmap (map $ takeWhile (/= '.')) . Dir.listDirectory) . setPath
 
 setPath :: FilePath -> IO FilePath
-setPath path = fmap (flip (<>) $ "\\src\\" <> path) getRepDir
+setPath path = fmap (flip (<>) $ "/" <> path) getRepDir
 
 parsePath :: FilePath -> FilePath
 parsePath =
-  intercalate "\\" .
+  intercalate "/" .
   takeWhile (/= "src") .
   words .
   intercalate "" .
   map
     (\case
-       "\\" -> " "
+       "/" -> " "
        x -> x) .
   group
 

@@ -3,6 +3,7 @@ module Tests.Base.Aeson
   ) where
 
 import Data.Base.Aeson
+import Prelude hiding (toInteger)
 
 import qualified Data.Aeson as A
 
@@ -12,17 +13,15 @@ baseAesonTests, valueTests, toStrTests :: [Test]
 baseAesonTests = valueTests <> toStrTests
 
 valueTests =
-  [ TestLabel "isNullTest" isNullTest
-  , TestLabel "valueToIntegerTest" valueToIntegerTest
-  ]
+  [TestLabel "isNullTest" isNullTest, TestLabel "toIntegerTest" toIntegerTest]
 
-isNullTest, valueToIntegerTest :: Test
+isNullTest, toIntegerTest :: Test
 isNullTest = TestCase $ assertEqual "for (isNull Null)" True (isNull A.Null)
 
-valueToIntegerTest =
+toIntegerTest =
   TestCase $
-  assertEqual "for (valueToInteger (A.Number 21321312))" 21321312 $
-  valueToInteger (A.Number 21321312)
+  assertEqual "for (toInteger (A.Number 21321312))" 21321312 $
+  toInteger (A.Number 21321312)
 
 toStrTests =
   [ TestLabel "numberToStrTest" numberToStrTest

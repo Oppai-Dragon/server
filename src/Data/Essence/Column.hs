@@ -107,27 +107,27 @@ instance A.FromJSON ValueType where
             ']':'[':')':rest2 ->
               if all isDigit rest2
                 then pure . CHAR_ARR . read $ takeWhile isDigit rest1
-                else error
+                else fail
                        "FROM JSON Data.Essence.ValueType cann't parse CHAR(x)[]"
             ')':rest2 ->
               if all isDigit rest2
                 then pure . CHAR . read $ takeWhile isDigit rest1
-                else error
+                else fail
                        "FROM JSON Data.Essence.ValueType cann't parse CHAR(x)"
-            _ -> error "FROM JSON Data.Essence.ValueType cann't parse CHAR"
+            _ -> fail "FROM JSON Data.Essence.ValueType cann't parse CHAR"
         'V':'A':'R':'C':'H':'A':'R':'(':rest1 ->
           case reverse rest1 of
             ']':'[':')':rest2 ->
               if all isDigit rest2
                 then pure . VARCHAR_ARR . read $ takeWhile isDigit rest1
-                else error
+                else fail
                        "FROM JSON Data.Essence.ValueType cann't parse VARCHAR(x)[]"
             ')':rest2 ->
               if all isDigit rest2
                 then pure . VARCHAR . read $ takeWhile isDigit rest1
-                else error
+                else fail
                        "FROM JSON Data.Essence.ValueType cann't parse VARCHAR(x)"
-            _ -> error "FROM JSON Data.Essence.ValueType cann't parse VARCHAR"
+            _ -> fail "FROM JSON Data.Essence.ValueType cann't parse VARCHAR"
         "DATE" -> pure DATE
         "DATE[]" -> pure DATE_ARR
         "INTEGER" -> pure INTEGER
@@ -187,7 +187,7 @@ instance Read Relations where
         fieldT = T.pack . init . tail $ valueArr !! 2
      in if (length valueArr == 3) && (head field == '(') && (last field == ')')
           then [(Relations table fieldT, "")]
-          else error "Read Data.Essence.Relations"
+          else fail "Read Data.Essence.Relations"
 
 data Constraint
   = UNIQUE

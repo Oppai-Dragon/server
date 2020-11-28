@@ -31,7 +31,7 @@ type QueryMBS = [(BS.ByteString, Maybe BS.ByteString)]
 type QueryBS = [(BS.ByteString, BS.ByteString)]
 
 isRequiredParams :: Essence Column -> QueryMBS -> Api -> Bool
-isRequiredParams (EssenceColumn "news" "create" _) queryMBS _ =
+isRequiredParams EssenceColumn {eColName = "news", eColAction = "create"} queryMBS _ =
   case lookup "id" queryMBS of
     Just (Just _) -> True
     _ -> False
@@ -73,20 +73,24 @@ isConstraintCorrect _ [] = tellWApp $ All True
 isConstraintCorrect EssenceColumn {eColAction = "get"} _ = tellWApp $ All True
 isConstraintCorrect EssenceColumn {eColAction = "delete"} _ =
   tellWApp $ All True
-isConstraintCorrect EssenceColumn {} (("tag_ids", MyIntegerArr arr):_) = do
+isConstraintCorrect _ (("tag_ids", MyIntegerArr arr):_) = do
   (A.Object pageObj) <-
     liftUnderApp $
-    dbGetArray (EssenceList "tag" "get" [("id", MyIntegerArr arr)])
+    dbGetArray
+      EssenceList
+        {elName = "tag", elAction = "get", elList = [("id", MyIntegerArr arr)]}
   let bool = length (HM.keys pageObj) == length arr
   tellWApp $ All bool
-isConstraintCorrect (EssenceColumn table action hm) ((field, myValue):rest) =
+isConstraintCorrect essenceColumn@(EssenceColumn { eColName = table
+                                                 , eColHashMap = hm
+                                                 }) ((field, myValue):rest) =
   case HM.lookup (T.pack field) hm of
     Just column -> do
       isCorrectLengthText (cValueType column) myValue
       isUniqueParams table (field, myValue) (cConstraint column)
       isRightRelationsParams (cRelations column) myValue
-      isConstraintCorrect (EssenceColumn table action hm) rest
-    Nothing -> isConstraintCorrect (EssenceColumn table action hm) rest
+      isConstraintCorrect essenceColumn rest
+    Nothing -> isConstraintCorrect essenceColumn rest
 
 isCorrectLengthText :: ValueType -> MyValue -> WApp ()
 isCorrectLengthText valueType (MyString str) =
@@ -107,7 +111,9 @@ isCorrectLengthText _ _ = return ()
 isUniqueParams :: T.Text -> (String, MyValue) -> Maybe Constraint -> WApp ()
 isUniqueParams table pare (Just UNIQUE) = do
   let name = T.unpack table
-  (A.Object obj) <- liftUnderApp $ dbGetOne (EssenceList name "get" [pare])
+  A.Object obj <-
+    liftUnderApp $
+    dbGetOne EssenceList {elName = name, elAction = "get", elList = [pare]}
   tellWApp . All $ HM.null obj
 isUniqueParams _ _ _ = return ()
 
@@ -118,17 +124,19 @@ isRightRelationsParams (Just (Relations table fieldT)) myValue = do
   let name = T.unpack table
   let field = T.unpack fieldT
   let pare = (field, myValue)
-  (A.Object obj) <- liftUnderApp $ dbGetOne (EssenceList name "get" [pare])
+  A.Object obj <-
+    liftUnderApp $
+    dbGetOne EssenceList {elName = name, elAction = "get", elList = [pare]}
   tellWApp . All . not $ HM.null obj
 
 isTypeParamsCorrect :: Essence Column -> [(String, MyValue)] -> All
 isTypeParamsCorrect _ [] = All True
-isTypeParamsCorrect essence@(EssenceColumn _ _ hashMap) ((field, myValue):rest) =
+isTypeParamsCorrect essenceColumn@(EssenceColumn {eColHashMap = hashMap}) ((field, myValue):rest) =
   case HM.lookup (T.pack field) hashMap of
     Just column ->
       All (compareValueType (cValueType column) myValue) <>
-      isTypeParamsCorrect essence rest
-    Nothing -> isTypeParamsCorrect essence rest
+      isTypeParamsCorrect essenceColumn rest
+    Nothing -> isTypeParamsCorrect essenceColumn rest
 
 compareValueType :: ValueType -> MyValue -> Bool
 compareValueType valueType (MyInteger _) =

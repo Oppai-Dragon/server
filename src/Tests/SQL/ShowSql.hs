@@ -148,14 +148,18 @@ showSqlEssenceCreateTest =
   assertEqual
     "for (showSql (EssenceList \"news\" \"create\" testNewsCreateFields))"
     "INSERT INTO news (id,content) VALUES (1,'kek');" $
-  showSql (EssenceList "news" "create" testNewsCreateFields)
+  showSql
+    EssenceList
+      {elName = "news", elAction = "create", elList = testNewsCreateFields}
 
 showSqlEssenceEditTest =
   TestCase $
   assertEqual
     "for (showS (EssenceList \"news\" \"edit\" testNewsEditFields))"
     "UPDATE news SET id=1,content='kek' WHERE id=1;" $
-  showSql (EssenceList "news" "edit" testNewsEditFields)
+  showSql
+    EssenceList
+      {elName = "news", elAction = "edit", elList = testNewsEditFields}
 
 showSqlEssenceGetTest =
   TestCase $
@@ -167,14 +171,17 @@ showSqlEssenceGetTest =
      "AND (person.first_name ILIKE 'misha' AND person.last_name ILIKE 'dragon') " <>
      "OR (person.first_name ILIKE 'dragon' AND person.last_name ILIKE 'misha') " <>
      "AND category.name ILIKE '%cat%' ORDER BY (news.date_of_creation);") $
-  showSql (EssenceList "news" "get" testNewsGetFields)
+  showSql
+    EssenceList {elName = "news", elAction = "get", elList = testNewsGetFields}
 
 showSqlEssenceDeleteTest =
   TestCase $
   assertEqual
     "for (showSql (EssenceList \"news\" \"delete\" testNewsDeleteFields))"
     "DELETE FROM news WHERE id=1;" $
-  showSql (EssenceList "news" "delete" testNewsDeleteFields)
+  showSql
+    EssenceList
+      {elName = "news", elAction = "delete", elList = testNewsDeleteFields}
 
 clauseSequenceATest =
   TestCase $

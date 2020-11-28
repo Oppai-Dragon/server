@@ -16,9 +16,10 @@ import qualified Database.HDBC.PostgreSQL as PSQL
 
 dbDelete :: SApp A.Value
 dbDelete = do
-  essenceList@(EssenceList name _ _) <- getSApp
-  (Config.Handle config _ _ logHandle) <- liftUnderApp askUnderApp
-  liftUnderApp . liftIO $ debugM logHandle "Start dbDelete"
+  essenceList@(EssenceList {elName = name}) <- getSApp
+  Config.Handle {hConfig = config, hLogHandle = logHandle} <-
+    liftUnderApp askUnderApp
+  liftUnderApp . liftIO $ logDebug logHandle "Start dbDelete"
   let deleteQuery = showSql essenceList
   let uriDB = getUri config
   maybeConn <- liftUnderApp . tryConnect $ PSQL.connectPostgreSQL uriDB
@@ -26,14 +27,16 @@ dbDelete = do
     Nothing -> return A.Null
     Just conn -> do
       liftUnderApp . liftIO $ HDBC.runRaw conn setEng
-      liftUnderApp . liftIO . debugM logHandle $ "PSQL request: " <> deleteQuery
+      liftUnderApp . liftIO . logDebug logHandle $
+        "PSQL request: " <> deleteQuery
       result <- liftUnderApp . tryRun $ HDBC.run conn deleteQuery []
       case result of
         Success ->
-          liftUnderApp . liftIO . infoM logHandle $ name <> " was not deleted"
-        Fail -> liftUnderApp . liftIO . infoM logHandle $ name <> " was deleted"
+          liftUnderApp . liftIO . logInfo logHandle $ name <> " was not deleted"
+        Fail ->
+          liftUnderApp . liftIO . logInfo logHandle $ name <> " was deleted"
       liftUnderApp . liftIO $ HDBC.commit conn
       let value = A.object ["result" A..= (A.String . T.pack . show) result]
       liftUnderApp . liftIO $ HDBC.disconnect conn
-      liftUnderApp . liftIO $ debugM logHandle "End dbDelete"
+      liftUnderApp . liftIO $ logDebug logHandle "End dbDelete"
       pure value

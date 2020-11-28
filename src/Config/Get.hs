@@ -78,9 +78,11 @@ getRelationFields relationsTree =
     _ -> []
 
 getRequiredFields :: Essence Column -> Api -> Required [String]
-getRequiredFields (EssenceColumn "comment" "get" _) _ =
+getRequiredFields EssenceColumn {eColName = "comment", eColAction = "get"} _ =
   Required [AND ["news_id"]]
-getRequiredFields newsDB@(EssenceColumn "news" "create" _) _ = getFields newsDB
+getRequiredFields newsDB@(EssenceColumn { eColName = "comment"
+                                        , eColAction = "create"
+                                        }) _ = getFields newsDB
 getRequiredFields essenceColumn api =
   let relationsTree = getRelationsTree (eColName essenceColumn) api
       relationFields = getRelationFields relationsTree

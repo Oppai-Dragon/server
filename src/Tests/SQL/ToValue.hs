@@ -42,7 +42,11 @@ sqlValuesToJsonValueTest =
     "for (sqlValuesToJsonValue (EssenceList \"author\" \"create\" [(\"person_id\",\"1\")]) [SqlInteger 1] testConfig)"
     (A.object ["person_id" A..= A.Number 1]) $
   sqlValuesToJsonValue
-    (EssenceList "author" "create" [("person_id", MyInteger 1)])
+    EssenceList
+      { elName = "author"
+      , elAction = "create"
+      , elList = [("person_id", MyInteger 1)]
+      }
     [HDBC.SqlInteger 1]
     testConfig
 
@@ -53,7 +57,11 @@ sqlValuesArrToObjTest =
     (HM.singleton "author1" (A.object ["person_id" A..= A.Number 1])) $
   sqlValuesArrToObj
     1
-    (EssenceList "author" "create" [("person_id", MyInteger 1)])
+    EssenceList
+      { elName = "author"
+      , elAction = "create"
+      , elList = [("person_id", MyInteger 1)]
+      }
     [[HDBC.SqlInteger 1]]
     testConfig
 
@@ -63,6 +71,10 @@ sqlValuesArrToValueTest =
     "for (sqlValuesArrToValue (EssenceList \"author\" \"create\" [(\"person_id\",\"1\")]) [[SqlInteger 1]] testConfig)"
     (A.object ["author1" A..= A.object ["person_id" A..= A.Number 1]]) $
   sqlValuesArrToValue
-    (EssenceList "author" "create" [("person_id", MyInteger 1)])
+    EssenceList
+      { elName = "author"
+      , elAction = "create"
+      , elList = [("person_id", MyInteger 1)]
+      }
     [[HDBC.SqlInteger 1]]
     testConfig

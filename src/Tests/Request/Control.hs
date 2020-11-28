@@ -3,7 +3,6 @@ module Tests.Request.Control
   ) where
 
 import Config
-import Data.Base
 import Data.Essence
 import Data.Essence.Column
 import Data.Request.Access
@@ -37,41 +36,51 @@ ifNotEveryoneUpdateTest =
   TestCase $
   assertEqual
     "for (ifNotEveryoneUpdate testAuthorGetColumn Author)"
-    (EssenceColumn "author" "get" $
-     HM.fromList
-       [ ( "id"
-         , defaultColumn {cValueType = BIGSERIAL, cConstraint = Just PrimaryKey})
-       , ( "person_id"
-         , defaultColumn
-             { cValueType = BIGINT
-             , cNULL = Just $ NOT NULL
-             , cRelations = Just $ Relations "person" "id"
-             , cConstraint = Just UNIQUE
-             })
-       , ("description", defaultColumn {cValueType = VARCHAR 150})
-       , ( "access_key"
-         , defaultColumn {cValueType = UUID, cNULL = Just $ NOT NULL})
-       ]) $
+    EssenceColumn
+      { eColName = "author"
+      , eColAction = "get"
+      , eColHashMap =
+          HM.fromList
+            [ ( "id"
+              , defaultColumn
+                  {cValueType = BIGSERIAL, cConstraint = Just PrimaryKey})
+            , ( "person_id"
+              , defaultColumn
+                  { cValueType = BIGINT
+                  , cNULL = Just $ NOT NULL
+                  , cRelations = Just $ Relations "person" "id"
+                  , cConstraint = Just UNIQUE
+                  })
+            , ("description", defaultColumn {cValueType = VARCHAR 150})
+            , ( "access_key"
+              , defaultColumn {cValueType = UUID, cNULL = Just $ NOT NULL})
+            ]
+      } $
   ifNotEveryoneUpdate testAuthorGetColumn Author
 
 ifGetUpdateTest =
   TestCase $
   assertEqual
     "for (ifGetUpdate testAuthorGetColumn)"
-    (EssenceColumn "author" "get" $
-     HM.fromList
-       [ ( "id"
-         , defaultColumn {cValueType = BIGSERIAL, cConstraint = Just PrimaryKey})
-       , ("page", defaultColumn {cValueType = INT})
-       , ( "person_id"
-         , defaultColumn
-             { cValueType = BIGINT
-             , cNULL = Just $ NOT NULL
-             , cRelations = Just $ Relations "person" "id"
-             , cConstraint = Just UNIQUE
-             })
-       , ("description", defaultColumn {cValueType = VARCHAR 150})
-       ]) $
+    EssenceColumn
+      { eColName = "author"
+      , eColAction = "get"
+      , eColHashMap =
+          HM.fromList
+            [ ( "id"
+              , defaultColumn
+                  {cValueType = BIGSERIAL, cConstraint = Just PrimaryKey})
+            , ("page", defaultColumn {cValueType = INT})
+            , ( "person_id"
+              , defaultColumn
+                  { cValueType = BIGINT
+                  , cNULL = Just $ NOT NULL
+                  , cRelations = Just $ Relations "person" "id"
+                  , cConstraint = Just UNIQUE
+                  })
+            , ("description", defaultColumn {cValueType = VARCHAR 150})
+            ]
+      } $
   ifGetUpdate testAuthorGetColumn
 
 parseRequestTest =
@@ -79,15 +88,19 @@ parseRequestTest =
   parseRequest testPersonCreateReq >>=
   assertEqual
     "for (parseRequest testPersonCreateReq)"
-    ( "person"
-    , "create"
-    , [("first_name", Just "misha"), ("last_name", Just "dragon")]
-    , "POST")
+    RequestInfo
+      { reqIEssenceName = "person"
+      , reqIAction = "create"
+      , reqIQueryMBS =
+          [("first_name", Just "misha"), ("last_name", Just "dragon")]
+      , reqIMethod = "POST"
+      }
 
 isRequestCorrectTest =
   TestCase $
   isRequestCorrect testPersonCreateReq >>=
-  assertEqual "for (isRequestCorrect testPersonCreateReq)" True . fst4
+  assertEqual "for (isRequestCorrect testPersonCreateReq)" True .
+  reqAnswerBool . reqAnswer
 
 getAccessArrTest =
   TestCase $

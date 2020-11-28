@@ -41,7 +41,7 @@ data Handle =
     { hConfig :: Config
     , hApi :: Api
     , hLocal :: Local
-    , hLog :: Log.Handle
+    , hLogHandle :: Log.Handle
     }
   deriving (Show, Eq)
 
@@ -54,7 +54,10 @@ new = do
   config <- setConfig
   api <- setApi
   loc <- setLocal
-  Config.Handle config api loc <$> Log.new
+  logHandle <- Log.new
+  return
+    Config.Handle
+      {hConfig = config, hApi = api, hLocal = loc, hLogHandle = logHandle}
 
 testHandle :: Config.Handle
 {-# NOINLINE testHandle #-}

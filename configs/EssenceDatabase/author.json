@@ -1,0 +1,1 @@
+{"author":{"person_id":{"relations":"REFERENCES person (id)","null":"NOT NULL","constraint":"UNIQUE","type":"BIGINT"},"id":{"constraint":"PRIMARY KEY","type":"BIGSERIAL"},"description":{"type":"VARCHAR(150)"}}}

@@ -37,37 +37,43 @@ import qualified Network.HTTP.Types as HTTPTypes
 
 pathHandler :: Wai.Request -> IO Wai.Response
 pathHandler req = do
-  (isValidRequest, response@(Wai.ResponseBuilder _ _ textBuilder), query, configHandle@(Config.Handle _ _ _ logHandle)) <-
-    isRequestCorrect req
+  RequestCorrect { reqAnswer = RequestAnswer { reqAnswerBool = isValidRequest
+                                             , reqAnswerResponse = response@(Wai.ResponseBuilder _ _ textBuilder)
+                                             }
+                 , reqCQueryMBS = query
+                 , reqCConfigHandle = configHandle@Config.Handle {hLogHandle = logHandle}
+                 } <- isRequestCorrect req
   let req' = req {Wai.queryString = query}
   let responseMsg = show $ BSB.toLazyByteString textBuilder
   if isValidRequest
     then runUnderApp (evalSApp (essenceResponse req') mempty) configHandle >>= \x ->
            endM logHandle >> pure x
-    else debugM logHandle responseMsg >> endM logHandle >> pure response
+    else logDebug logHandle responseMsg >> endM logHandle >> pure response
 
 getEssenceList :: Wai.Request -> UnderApp (Essence List)
 getEssenceList req = do
-  (Config.Handle config api _ logHandle) <- askUnderApp
+  Config.Handle {hConfig = config, hApi = api, hLogHandle = logHandle} <-
+    askUnderApp
   let [essence', action] = Wai.pathInfo req
-  liftIO . debugM logHandle $
+  liftIO . logDebug logHandle $
     "Path of request: " <> T.unpack essence' <> "/" <> T.unpack action
   let essence =
         if action == "publish"
           then "news"
           else essence'
   let queryMBS = Wai.queryString req
-  liftIO . debugM logHandle $ "Query of request: " <> show queryMBS
-  let essenceColumn@(EssenceColumn nameT actionT _) =
+  liftIO . logDebug logHandle $ "Query of request: " <> show queryMBS
+  let essenceColumn@(EssenceColumn {eColName = nameT, eColAction = actionT}) =
         getEssenceColumn essence action config api
-  liftIO . debugM logHandle $
+  liftIO . logDebug logHandle $
     "Essence - " <> T.unpack nameT <> ", Action - " <> T.unpack actionT
   toEssenceList essenceColumn queryMBS
 
 addAccessKey :: Wai.Request -> SApp ()
 addAccessKey req = do
-  (Config.Handle _ api _ _) <- liftUnderApp askUnderApp
-  (EssenceList name action list) <- getSApp
+  Config.Handle {hApi = api} <- liftUnderApp askUnderApp
+  essenceList@(EssenceList {elName = name, elAction = action}) <-
+    getSApp
   let queryMBS = Wai.queryString req
   let access = getAccess (T.pack name) (T.pack action) api
   let isNeed = access > Everyone
@@ -75,8 +81,7 @@ addAccessKey req = do
         case lookup "access_key" queryMBS of
           Just (Just accessKey) -> [("access_key", fromBS accessKey)]
           _ -> []
-  let essenceList = list <> accessKeyList
-  when isNeed $ putSApp (EssenceList name action essenceList)
+  when isNeed . putSApp $ addList accessKeyList essenceList
 
 setEssenceList :: Wai.Request -> SApp ()
 setEssenceList req = do
@@ -112,7 +117,7 @@ jsonResponse =
 postEssenceResponse :: SApp Wai.Response
 postEssenceResponse = do
   let wrapResponse = pure . jsonResponse
-  (EssenceList _ action _) <- getSApp
+  EssenceList {elAction = action} <- getSApp
   isExiste <- isNewsExiste
   case action of
     "create" ->

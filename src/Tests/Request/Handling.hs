@@ -29,39 +29,51 @@ getEssenceListTest =
   runReaderT (getEssenceList testPersonCreateReq) testHandle >>=
   assertEqual
     "for (runReaderT (getEssenceList testPersonCreateReq) testHandle)"
-    (EssenceList
-       "person"
-       "create"
-       [("last_name", MyString "dragon"), ("first_name", MyString "misha")])
+    EssenceList
+      { elName = "person"
+      , elAction = "create"
+      , elList =
+          [("last_name", MyString "dragon"), ("first_name", MyString "misha")]
+      }
 
 addAccessKeyTest =
   TestCase $
   runReaderT
     (execStateT
        (addAccessKey testAuthorCreateReq)
-       (EssenceList "author" "create" []))
+       mempty {elName = "author", elAction = "create"})
     testHandle >>=
   assertEqual
     "for (runReaderT (execStateT (addAccessKey testAuthorCreateReq) (EssenceList \"author\" \"create\" [])) testHandle)"
-    (EssenceList "author" "create" [("access_key", MyString "key")])
+    EssenceList
+      { elName = "author"
+      , elAction = "create"
+      , elList = [("access_key", MyString "key")]
+      }
 
 setEssenceListTest =
   TestCase $
   runReaderT (execStateT (setEssenceList testPersonCreateReq) mempty) testHandle >>=
   assertEqual
     "for (runReaderT (setEssenceList testPersonCreateReq) testHandle)"
-    (EssenceList
-       "person"
-       "create"
-       [("last_name", MyString "dragon"), ("first_name", MyString "misha")])
+    EssenceList
+      { elName = "person"
+      , elAction = "create"
+      , elList =
+          [("last_name", MyString "dragon"), ("first_name", MyString "misha")]
+      }
 
 deleteAccessKeyTest =
   TestCase $
   runReaderT
     (execStateT
        deleteAccessKey
-       (EssenceList "author" "create" [("access_key", MyString "key")]))
-       testHandle >>=
+       EssenceList
+         { elName = "author"
+         , elAction = "create"
+         , elList = [("access_key", MyString "key")]
+         })
+    testHandle >>=
   assertEqual
     "for (runReaderT (execStateT deleteAccessKey (EssenceList \"author\" \"create\" [(\"access_key\",MyString \"key\")])) testHandle)"
-    (EssenceList "author" "create" [])
+    mempty {elName = "author", elAction = "create"}

@@ -64,28 +64,28 @@ buildCreateEssenceValueTest =
   assertEqual
     "for (buildEssenceValue (EssenceList \"author\" \"create\" []))"
     (A.object ["author1" A..= A.Null]) $
-  buildEssenceValue (EssenceList "author" "create" [])
+  buildEssenceValue mempty {elName = "author", elAction = "create"}
 
 buildEditEssenceValueTest =
   TestCase $
   assertEqual
     "for (buildEssenceValue (EssenceList \"author\" \"edit\" []))"
     goodResultValue $
-  buildEssenceValue (EssenceList "author" "edit" [])
+  buildEssenceValue mempty {elName = "author", elAction = "edit"}
 
 buildGetEssenceValueTest =
   TestCase $
   assertEqual
     "for (buildEssenceValue (EssenceList \"author\" \"get\" []))"
     (A.object ["author1" A..= A.Null]) $
-  buildEssenceValue (EssenceList "author" "get" [])
+  buildEssenceValue mempty {elName = "author", elAction = "get"}
 
 buildDeleteEssenceValueTest =
   TestCase $
   assertEqual
     "for (buildEssenceValue (EssenceList \"author\" \"delete\" []))"
     goodResultValue $
-  buildEssenceValue (EssenceList "author" "edit" [])
+  buildEssenceValue mempty {elName = "author", elAction = "edit"}
 
 updateHmListTest =
   TestCase $

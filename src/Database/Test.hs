@@ -62,7 +62,7 @@ getDefaultValues (field:rest) =
     Nothing -> (T.pack field, A.Null) : getDefaultValues rest
 
 buildEssenceValue :: Essence List -> A.Value
-buildEssenceValue (EssenceList name action _) =
+buildEssenceValue EssenceList {elName = name, elAction = action} =
   case action of
     "edit" -> goodResultValue
     "delete" -> goodResultValue
@@ -83,7 +83,7 @@ updateEssenceList essence ((field, value):rest) =
     else (field, value) : updateEssenceList essence rest
 
 getTest :: Essence List -> String -> A.Value -> Test.Test
-getTest essenceList@(EssenceList name action _) funcName got@(A.Object gotObj) =
+getTest essenceList@(EssenceList {elName = name, elAction = action}) funcName got@(A.Object gotObj) =
   let expected@(A.Object expectedObj) = buildEssenceValue essenceList
    in case action of
         "edit" -> testAction funcName name expected got
@@ -92,18 +92,23 @@ getTest essenceList@(EssenceList name action _) funcName got@(A.Object gotObj) =
 getTest _ _ _ = Test.TestCase $ Test.assertBool "getTest take only " False
 
 createEssenceTest :: [Essence List] -> StateT EssenceData UnderApp [Test.Test]
-createEssenceTest ((EssenceList name "create" list):rest) = do
+createEssenceTest (essenceListX@(EssenceList { elName = name
+                                             , elAction = "create"
+                                             , elList = list
+                                             }):rest) = do
   currentData <- getSApp
   randomInt <- liftUnderApp $ liftIO getRandomInteger
   let fields = handleDraftCase name $ getRelatedFields name currentData
   let randomPair = ("name", MyString $ testName <> show randomInt)
   let finishList = list <> fields
   let essenceList =
-        EssenceList name "create" $
-        case name of
-          "tag" -> randomPair : finishList
-          "category" -> randomPair : finishList
-          _ -> finishList
+        essenceListX
+          { elList =
+              case name of
+                "tag" -> randomPair : finishList
+                "category" -> randomPair : finishList
+                _ -> finishList
+          }
   essenceValue <- liftUnderApp $ evalSApp dbCreate essenceList
   updateData (T.pack name) essenceValue
   let funcName = "createEssenceTest"
@@ -116,9 +121,11 @@ editEssenceTest :: [String] -> EssenceData -> UnderApp [Test.Test]
 editEssenceTest [] _ = return []
 editEssenceTest (essence:rest) listData = do
   let fields = updateEssenceList essence $ fromJust (lookup essence listData)
-  resultValue <- evalSApp dbEdit (EssenceList essence "edit" fields)
+  let essenceList =
+        EssenceList {elName = essence, elAction = "edit", elList = fields}
+  resultValue <- evalSApp dbEdit essenceList
   let funcName = "editEssenceTest"
-  let test = getTest (EssenceList essence "edit" []) funcName resultValue
+  let test = getTest essenceList {elList = []} funcName resultValue
   let label = funcName <> "_" <> essence
   (Test.TestLabel label test :) <$> editEssenceTest rest listData
 
@@ -126,9 +133,11 @@ getEssenceTest :: [String] -> EssenceData -> UnderApp [Test.Test]
 getEssenceTest [] _ = return []
 getEssenceTest (essence:rest) listData = do
   let fields = updateEssenceList essence $ fromJust (lookup essence listData)
-  essenceValue <- evalSApp dbGet (EssenceList essence "get" fields)
+  let essenceList =
+        EssenceList {elName = essence, elAction = "get", elList = fields}
+  essenceValue <- evalSApp dbGet essenceList
   let funcName = "getEssenceTest"
-  let test = getTest (EssenceList essence "get" fields) funcName essenceValue
+  let test = getTest essenceList funcName essenceValue
   let label = funcName <> "_" <> essence
   (Test.TestLabel label test :) <$> getEssenceTest rest listData
 
@@ -139,7 +148,8 @@ getOneTest listData = do
         case lookup2 essence "id" listData of
           Just x -> ("id", x)
           Nothing -> ("id", MyEmpty)
-  let essenceList = EssenceList essence "get" [pare]
+  let essenceList =
+        EssenceList {elName = essence, elAction = "get", elList = [pare]}
   essenceValue <- dbGetOne essenceList
   let funcName = "getOneTest"
   let test = getTest essenceList funcName essenceValue
@@ -153,7 +163,8 @@ getArrayTest listData = do
         case lookup2 essence "id" listData of
           Just (MyInteger idNum) -> ("id", MyIntegerArr [idNum])
           _ -> ("id", MyEmpty)
-  let essenceList = EssenceList essence "get" [pare]
+  let essenceList =
+        EssenceList {elName = essence, elAction = "get", elList = [pare]}
   essenceValue <- dbGetArray essenceList
   let funcName = "getArrayTest"
   let test = getTest essenceList "dbGetArray" essenceValue
@@ -164,9 +175,11 @@ deleteEssenceTest :: [String] -> EssenceData -> UnderApp [Test.Test]
 deleteEssenceTest [] _ = return []
 deleteEssenceTest (essence:rest) listData = do
   let fields = updateEssenceList essence $ fromJust (lookup essence listData)
-  resultValue <- evalSApp dbDelete (EssenceList essence "delete" fields)
+  let essenceList =
+        EssenceList {elName = essence, elAction = "delete", elList = fields}
+  resultValue <- evalSApp dbDelete essenceList
   let funcName = "deleteEssenceTest"
-  let test = getTest (EssenceList essence "delete" []) funcName resultValue
+  let test = getTest essenceList {elList = []} funcName resultValue
   let label = funcName <> "_" <> essence
   (Test.TestLabel label test :) <$> deleteEssenceTest rest listData
 

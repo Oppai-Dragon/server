@@ -70,11 +70,11 @@ instance ShowSql [Clause [String]] where
     reverse . withoutManyWhere . reverse . words . unwords . map showSql . sort
 
 instance ShowSql (Essence List) where
-  showSql (EssenceList name "create" listOfPairs) =
+  showSql EssenceList {elName = name, elAction = "create", elList = listOfPairs} =
     let fields = parseOnlyFields listOfPairs
         values = parseOnlyValues listOfPairs
      in showSql $ Insert name fields values
-  showSql (EssenceList name "edit" listOfPairs) =
+  showSql EssenceList {elName = name, elAction = "edit", elList = listOfPairs} =
     let newsWhere =
           case lookup "draft_id" listOfPairs of
             Just draftId -> [Where ("draft_id", draftId)]
@@ -91,10 +91,10 @@ instance ShowSql (Essence List) where
                 Nothing -> [Where ("id", MyInteger 0)]
         setPart = map Set listOfPairs
      in showSql $ Edit name setPart whereС
-  showSql essenceList@(EssenceList name "get" _) =
-    let (EssenceClause names clauseArr) =
+  showSql essenceList@(EssenceList {elName = name, elAction = "get"}) =
+    let EssenceClause {ecNameList = names, ecClauseList = clauseArr} =
           runIdentity . execWApp $
-          tellWApp (EssenceClause [name] []) >> toEssenceClause essenceList
+          tellWApp mempty {ecNameList = [name]} >> toEssenceClause essenceList
         uniqueNames = nub names
         getName = intercalate "," uniqueNames
         matchingClauses =
@@ -102,7 +102,7 @@ instance ShowSql (Essence List) where
             1 -> []
             _ -> matchEssence uniqueNames
      in showSql . Get getName $ matchingClauses <> clauseArr
-  showSql (EssenceList name "delete" listOfPairs) =
+  showSql EssenceList {elName = name, elAction = "delete", elList = listOfPairs} =
     let myId = fromMaybe MyEmpty $ lookup "id" listOfPairs
         whereC = [Where ("id", myId)]
      in showSql $ Delete name whereC
@@ -120,17 +120,36 @@ instance ShowSql Column where
           show valueType :
           filter
             (/= "")
-            [ (\case {Just x -> show x; Nothing -> ""}) maybeNULL
-            , (\case {Just x -> show x; Nothing -> ""}) maybeDefault
-            , (\case {Just x -> show x; Nothing -> ""}) maybeConstraint
-            , (\case {Just x -> show x; Nothing -> ""}) maybeRelations
-            , (\case {Just x -> show x; Nothing -> ""}) maybeAction
+            [ (\case
+                 Just x -> show x
+                 Nothing -> "")
+                maybeNULL
+            , (\case
+                 Just x -> show x
+                 Nothing -> "")
+                maybeDefault
+            , (\case
+                 Just x -> show x
+                 Nothing -> "")
+                maybeConstraint
+            , (\case
+                 Just x -> show x
+                 Nothing -> "")
+                maybeRelations
+            , (\case
+                 Just x -> show x
+                 Nothing -> "")
+                maybeAction
             ]
      in unwords strArr
 
 instance ShowSql (Essence Column) where
-  showSql (EssenceColumn table "create" columnHM) =
-    let columnRows = map (\(l, r) -> T.unpack l <> " " <> showSql r) $ HM.toList columnHM
+  showSql EssenceColumn { eColName = table
+                        , eColAction = "create"
+                        , eColHashMap = columnHM
+                        } =
+    let columnRows =
+          map (\(l, r) -> T.unpack l <> " " <> showSql r) $ HM.toList columnHM
      in "CREATE TABLE " <>
         T.unpack table <> " ( " <> intercalate ", " columnRows <> " );"
   showSql EssenceColumn {} = ""
